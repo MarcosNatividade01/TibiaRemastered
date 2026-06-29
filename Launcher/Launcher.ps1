@@ -363,7 +363,11 @@ function Ensure-WebEndpoint {
 
     if ($ProgressCallback) { & $ProgressCallback 'Starting local web endpoint...' 0 }
     Write-LauncherLog "Starting web endpoint: $webServerExe $webServerArguments"
-    Start-Process -FilePath $webServerExe -ArgumentList $webServerArguments -WorkingDirectory $webServerWorkingDirectory -WindowStyle Hidden | Out-Null
+    if ([string]::IsNullOrWhiteSpace($webServerArguments)) {
+        Start-Process -FilePath $webServerExe -WorkingDirectory $webServerWorkingDirectory -WindowStyle Hidden | Out-Null
+    } else {
+        Start-Process -FilePath $webServerExe -ArgumentList $webServerArguments -WorkingDirectory $webServerWorkingDirectory -WindowStyle Hidden | Out-Null
+    }
 
     $timeout = 30
     if ($Config.PSObject.Properties.Name -contains 'webServerStartupTimeoutSeconds') { $timeout = [int]$Config.webServerStartupTimeoutSeconds }
@@ -543,6 +547,7 @@ try {
     if ($NoGui -or $SelfTest -or $Repair -or $Play) { throw }
     [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Launcher error') | Out-Null
 }
+
 
 
 
