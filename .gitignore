@@ -1,0 +1,74 @@
+# Dados locais e sensiveis
+UserData/
+Logs/
+Backup/
+Backups/
+Saves/
+Save/
+
+# Banco de dados real e dumps privados
+*.db
+*.sqlite
+*.sqlite3
+*.mdb
+*.sql
+*.dump
+*.bak
+*.backup
+Database/
+Databases/
+PrivateDatabase/
+
+# Contas, personagens e dados reais
+accounts/
+Accounts/
+players/
+Players/
+characters/
+Characters/
+world/
+World/
+
+# Segredos, tokens e configuracoes privadas
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.token
+*token*
+*secret*
+*password*
+secrets/
+Secrets/
+credentials/
+Credentials/
+
+# Cache e temporarios
+cache/
+Cache/
+tmp/
+temp/
+Temp/
+*.tmp
+*.temp
+*.log
+
+# Build e pacotes gerados
+build/
+dist/
+release/
+Release/
+*.zip
+*.rar
+*.7z
+
+# Sistema operacional e editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
