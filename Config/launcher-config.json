@@ -7,12 +7,17 @@
                         7171,
                         7172
                     ],
-    "serverStartupTimeoutSeconds":  120,
+    "serverStartupTimeoutSeconds":  300,
     "clientExe":  "C:\\Users\\marco\\Tibiafriends\\bin\\client-local.exe",
     "clientWorkingDirectory":  "C:\\Users\\marco\\Tibiafriends",
     "preserve":  [
                      "UserData/**",
                      "Logs/**",
                      "Backup/**"
-                 ]
+                 ],
+    "databaseExe":  "C:\\xampp\\mysql\\bin\\mysqld.exe",
+    "databaseArguments":  "--defaults-file=C:\\xampp\\mysql\\bin\\my.ini",
+    "databaseWorkingDirectory":  "C:\\xampp\\mysql\\bin",
+    "databasePort":  3306,
+    "databaseStartupTimeoutSeconds":  60
 }

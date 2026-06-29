@@ -51,14 +51,28 @@ function Get-LauncherConfig {
         serverExe = 'C:\otserv\crystalserver.exe'
         serverWorkingDirectory = 'C:\otserv'
         serverPorts = @(7171, 7172)
-        serverStartupTimeoutSeconds = 120
+        serverStartupTimeoutSeconds = 300
+        databaseExe = 'C:\xampp\mysql\bin\mysqld.exe'
+        databaseArguments = '--defaults-file=C:\xampp\mysql\bin\my.ini'
+        databaseWorkingDirectory = 'C:\xampp\mysql\bin'
+        databasePort = 3306
+        databaseStartupTimeoutSeconds = 60
         clientExe = 'C:\Users\marco\Tibiafriends\bin\client-local.exe'
         clientWorkingDirectory = 'C:\Users\marco\Tibiafriends'
         preserve = @('UserData/**','Logs/**','Backup/**')
     }
     $path = Join-Path $Script:Root 'Config\launcher-config.json'
     if (-not (Test-Path $path)) { Save-JsonFile -Path $path -Value $default }
-    return Read-JsonFile -Path $path -Default $default
+    $config = Read-JsonFile -Path $path -Default $default
+    $changed = $false
+    foreach ($property in $default.PSObject.Properties) {
+        if (-not ($config.PSObject.Properties.Name -contains $property.Name)) {
+            $config | Add-Member -NotePropertyName $property.Name -NotePropertyValue $property.Value
+            $changed = $true
+        }
+    }
+    if ($changed) { Save-JsonFile -Path $path -Value $config }
+    return $config
 }
 
 function Get-Sha256 {
@@ -271,6 +285,51 @@ function Wait-ServerPorts {
     return $false
 }
 
+function Test-LocalPortListening {
+    param([int]$Port)
+    $open = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
+    return ($null -ne $open)
+}
+
+function Ensure-DatabaseServer {
+    param([object]$Config, [scriptblock]$ProgressCallback)
+    $port = 3306
+    if ($Config.PSObject.Properties.Name -contains 'databasePort') { $port = [int]$Config.databasePort }
+    if (Test-LocalPortListening -Port $port) { return }
+
+    if (-not ($Config.PSObject.Properties.Name -contains 'databaseExe')) {
+        Write-LauncherLog 'Database port is closed and databaseExe is not configured.' 'WARN'
+        return
+    }
+
+    $databaseExe = [string]$Config.databaseExe
+    if ([string]::IsNullOrWhiteSpace($databaseExe)) { return }
+    if (-not (Test-Path $databaseExe)) {
+        Write-LauncherLog "Database exe not found: $databaseExe" 'WARN'
+        return
+    }
+
+    $databaseWorkingDirectory = Split-Path -Parent $databaseExe
+    if ($Config.PSObject.Properties.Name -contains 'databaseWorkingDirectory' -and -not [string]::IsNullOrWhiteSpace([string]$Config.databaseWorkingDirectory)) {
+        $databaseWorkingDirectory = [string]$Config.databaseWorkingDirectory
+    }
+
+    $databaseArguments = ''
+    if ($Config.PSObject.Properties.Name -contains 'databaseArguments') { $databaseArguments = [string]$Config.databaseArguments }
+
+    if ($ProgressCallback) { & $ProgressCallback 'Starting local database...' 0 }
+    Write-LauncherLog "Starting database: $databaseExe $databaseArguments"
+    Start-Process -FilePath $databaseExe -ArgumentList $databaseArguments -WorkingDirectory $databaseWorkingDirectory -WindowStyle Hidden | Out-Null
+
+    $timeout = 60
+    if ($Config.PSObject.Properties.Name -contains 'databaseStartupTimeoutSeconds') { $timeout = [int]$Config.databaseStartupTimeoutSeconds }
+    $deadline = (Get-Date).AddSeconds($timeout)
+    while ((Get-Date) -lt $deadline) {
+        if (Test-LocalPortListening -Port $port) { return }
+        Start-Sleep -Seconds 1
+    }
+    throw "Database did not open port $port before timeout."
+}
 function Start-Game {
     param([scriptblock]$ProgressCallback)
     Initialize-FirstRun
@@ -280,6 +339,8 @@ function Start-Game {
     }
     if (-not (Test-Path ([string]$config.serverExe))) { throw "Server exe not found: $($config.serverExe)" }
     if (-not (Test-Path ([string]$config.clientExe))) { throw "Client exe not found: $($config.clientExe)" }
+
+    Ensure-DatabaseServer -Config $config -ProgressCallback $ProgressCallback
 
     $serverRunning = Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq ([string]$config.serverExe) }
     if (-not $serverRunning) {
@@ -430,6 +491,9 @@ try {
     if ($NoGui -or $SelfTest -or $Repair -or $Play) { throw }
     [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Launcher error') | Out-Null
 }
+
+
+
 
 
 
