@@ -1,12 +1,12 @@
 ﻿{
     "version":  "0.1.0",
-    "generatedAt":  "2026-06-29T10:25:33",
+    "generatedAt":  "2026-06-29T10:36:34",
     "files":  [
                   {
                       "path":  "Assets/.gitkeep",
                       "sha256":  "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
                       "size":  1,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/a2c3477343bb06cc36ae020f8618154442d8e4d1/Assets/.gitkeep",
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/76e8d0000f2eec4d168a0ba5d64d20aa330032a0/Assets/.gitkeep",
                       "overwrite":  true,
                       "category":  "Assets"
                   },
@@ -14,7 +14,7 @@
                       "path":  "CHANGELOG.md",
                       "sha256":  "4d36c8057b9752283e1c921dcfb24ea4fdd526f958565eecd62fd8a804feac65",
                       "size":  304,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/a2c3477343bb06cc36ae020f8618154442d8e4d1/CHANGELOG.md",
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/76e8d0000f2eec4d168a0ba5d64d20aa330032a0/CHANGELOG.md",
                       "overwrite":  true,
                       "category":  "CHANGELOG.md"
                   },
@@ -22,7 +22,7 @@
                       "path":  "Client/.gitkeep",
                       "sha256":  "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
                       "size":  1,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/a2c3477343bb06cc36ae020f8618154442d8e4d1/Client/.gitkeep",
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/76e8d0000f2eec4d168a0ba5d64d20aa330032a0/Client/.gitkeep",
                       "overwrite":  true,
                       "category":  "Client"
                   },
@@ -30,7 +30,7 @@
                       "path":  "Config/launcher-config.json",
                       "sha256":  "8fec0dc9de9945e88b9a58c0c2f549503e9323c3d2ddbc7a60e622118819ab22",
                       "size":  1236,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/a2c3477343bb06cc36ae020f8618154442d8e4d1/Config/launcher-config.json",
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/76e8d0000f2eec4d168a0ba5d64d20aa330032a0/Config/launcher-config.json",
                       "overwrite":  false,
                       "category":  "Config"
                   },
@@ -38,7 +38,7 @@
                       "path":  "DatabaseTemplate/.gitkeep",
                       "sha256":  "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
                       "size":  1,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/a2c3477343bb06cc36ae020f8618154442d8e4d1/DatabaseTemplate/.gitkeep",
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/76e8d0000f2eec4d168a0ba5d64d20aa330032a0/DatabaseTemplate/.gitkeep",
                       "overwrite":  true,
                       "category":  "DatabaseTemplate"
                   },
@@ -46,7 +46,7 @@
                       "path":  "Docs/.gitkeep",
                       "sha256":  "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
                       "size":  1,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/a2c3477343bb06cc36ae020f8618154442d8e4d1/Docs/.gitkeep",
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/76e8d0000f2eec4d168a0ba5d64d20aa330032a0/Docs/.gitkeep",
                       "overwrite":  true,
                       "category":  "Docs"
                   },
@@ -54,7 +54,7 @@
                       "path":  "IDEIAS.md",
                       "sha256":  "ae7ae396c3b13cdbd71ed69c3901c96ddb6b3cfcd394702133bd5fc285610c53",
                       "size":  401,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/a2c3477343bb06cc36ae020f8618154442d8e4d1/IDEIAS.md",
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/76e8d0000f2eec4d168a0ba5d64d20aa330032a0/IDEIAS.md",
                       "overwrite":  true,
                       "category":  "IDEIAS.md"
                   },
@@ -62,15 +62,15 @@
                       "path":  "Launcher/.gitkeep",
                       "sha256":  "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
                       "size":  1,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/a2c3477343bb06cc36ae020f8618154442d8e4d1/Launcher/.gitkeep",
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/76e8d0000f2eec4d168a0ba5d64d20aa330032a0/Launcher/.gitkeep",
                       "overwrite":  true,
                       "category":  "Launcher"
                   },
                   {
                       "path":  "Launcher/Launcher.ps1",
-                      "sha256":  "6a7349da2db62efa38d51875b1b40db8936fcbad1a16b8af244cab666dd48919",
-                      "size":  25009,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/a2c3477343bb06cc36ae020f8618154442d8e4d1/Launcher/Launcher.ps1",
+                      "sha256":  "8fc36e5da1185e5131c0e97e72aa5a67334e61256f67b79cc277afd75e87402a",
+                      "size":  25122,
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/76e8d0000f2eec4d168a0ba5d64d20aa330032a0/Launcher/Launcher.ps1",
                       "overwrite":  true,
                       "category":  "Launcher"
                   },
@@ -78,7 +78,7 @@
                       "path":  "Launcher/Tools/Generate-Manifest.ps1",
                       "sha256":  "56436456f9f48bd4895d68d8a56574d0f4eb8df6b32dddbd3debf4622e652a37",
                       "size":  2377,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/a2c3477343bb06cc36ae020f8618154442d8e4d1/Launcher/Tools/Generate-Manifest.ps1",
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/76e8d0000f2eec4d168a0ba5d64d20aa330032a0/Launcher/Tools/Generate-Manifest.ps1",
                       "overwrite":  true,
                       "category":  "Launcher"
                   },
@@ -86,7 +86,7 @@
                       "path":  "README.md",
                       "sha256":  "446af347550e69c36ec974ca74c739bf3756e39fb0b7ace1bf4d57d3ad80579e",
                       "size":  1099,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/a2c3477343bb06cc36ae020f8618154442d8e4d1/README.md",
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/76e8d0000f2eec4d168a0ba5d64d20aa330032a0/README.md",
                       "overwrite":  true,
                       "category":  "README.md"
                   },
@@ -94,7 +94,7 @@
                       "path":  "ROADMAP.md",
                       "sha256":  "ec5a55ab60acc62e61a9bf631c9be0bee70a6253c3e641e8dca7477129ef4620",
                       "size":  832,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/a2c3477343bb06cc36ae020f8618154442d8e4d1/ROADMAP.md",
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/76e8d0000f2eec4d168a0ba5d64d20aa330032a0/ROADMAP.md",
                       "overwrite":  true,
                       "category":  "ROADMAP.md"
                   },
@@ -102,7 +102,7 @@
                       "path":  "Scripts/.gitkeep",
                       "sha256":  "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
                       "size":  1,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/a2c3477343bb06cc36ae020f8618154442d8e4d1/Scripts/.gitkeep",
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/76e8d0000f2eec4d168a0ba5d64d20aa330032a0/Scripts/.gitkeep",
                       "overwrite":  true,
                       "category":  "Scripts"
                   },
@@ -110,7 +110,7 @@
                       "path":  "Server/.gitkeep",
                       "sha256":  "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
                       "size":  1,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/a2c3477343bb06cc36ae020f8618154442d8e4d1/Server/.gitkeep",
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/76e8d0000f2eec4d168a0ba5d64d20aa330032a0/Server/.gitkeep",
                       "overwrite":  true,
                       "category":  "Server"
                   },
@@ -118,7 +118,7 @@
                       "path":  "Start Launcher.bat",
                       "sha256":  "931083b1447290d2dd55e67fc786dbf65a1138d52fbd8cd8a2273c0e8bba73d1",
                       "size":  127,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/a2c3477343bb06cc36ae020f8618154442d8e4d1/Start%20Launcher.bat",
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/76e8d0000f2eec4d168a0ba5d64d20aa330032a0/Start%20Launcher.bat",
                       "overwrite":  true,
                       "category":  "Start Launcher.bat"
                   },
@@ -126,7 +126,7 @@
                       "path":  "Tools/.gitkeep",
                       "sha256":  "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
                       "size":  1,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/a2c3477343bb06cc36ae020f8618154442d8e4d1/Tools/.gitkeep",
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/76e8d0000f2eec4d168a0ba5d64d20aa330032a0/Tools/.gitkeep",
                       "overwrite":  true,
                       "category":  "Tools"
                   }
