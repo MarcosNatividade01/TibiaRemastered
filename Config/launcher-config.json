@@ -1,0 +1,18 @@
+﻿{
+    "remoteVersionUrl":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/version.json",
+    "remoteManifestUrl":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/manifest.json",
+    "serverExe":  "C:\\otserv\\crystalserver.exe",
+    "serverWorkingDirectory":  "C:\\otserv",
+    "serverPorts":  [
+                        7171,
+                        7172
+                    ],
+    "serverStartupTimeoutSeconds":  120,
+    "clientExe":  "C:\\Users\\marco\\Tibiafriends\\bin\\client-local.exe",
+    "clientWorkingDirectory":  "C:\\Users\\marco\\Tibiafriends",
+    "preserve":  [
+                     "UserData/**",
+                     "Logs/**",
+                     "Backup/**"
+                 ]
+}
