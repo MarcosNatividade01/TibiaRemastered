@@ -351,6 +351,10 @@ function Start-Game {
         throw 'Server did not open expected ports before timeout.'
     }
     if ($ProgressCallback) { & $ProgressCallback 'Starting client...' 100 }
+    $env:QT_QUICK_BACKEND = 'software'
+    $env:QT_OPENGL = 'software'
+    $env:QSG_RENDER_LOOP = 'basic'
+    Write-LauncherLog 'Starting client with Qt software rendering environment'
     Start-Process -FilePath ([string]$config.clientExe) -WorkingDirectory ([string]$config.clientWorkingDirectory) | Out-Null
 }
 
@@ -491,6 +495,7 @@ try {
     if ($NoGui -or $SelfTest -or $Repair -or $Play) { throw }
     [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Launcher error') | Out-Null
 }
+
 
 
 
