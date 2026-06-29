@@ -57,6 +57,11 @@ function Get-LauncherConfig {
         databaseWorkingDirectory = 'C:\xampp\mysql\bin'
         databasePort = 3306
         databaseStartupTimeoutSeconds = 60
+        webServerExe = 'C:\xampp\apache\bin\httpd.exe'
+        webServerArguments = ''
+        webServerWorkingDirectory = 'C:\xampp\apache\bin'
+        webServerPort = 80
+        webServerStartupTimeoutSeconds = 30
         clientExe = 'C:\Users\marco\Tibiafriends\bin\client-local.exe'
         clientWorkingDirectory = 'C:\Users\marco\Tibiafriends'
         preserve = @('UserData/**','Logs/**','Backup/**')
@@ -330,6 +335,45 @@ function Ensure-DatabaseServer {
     }
     throw "Database did not open port $port before timeout."
 }
+function Ensure-WebEndpoint {
+    param([object]$Config, [scriptblock]$ProgressCallback)
+    $port = 80
+    if ($Config.PSObject.Properties.Name -contains 'webServerPort') { $port = [int]$Config.webServerPort }
+    if (Test-LocalPortListening -Port $port) { return }
+
+    if (-not ($Config.PSObject.Properties.Name -contains 'webServerExe')) {
+        Write-LauncherLog 'Web endpoint port is closed and webServerExe is not configured.' 'WARN'
+        return
+    }
+
+    $webServerExe = [string]$Config.webServerExe
+    if ([string]::IsNullOrWhiteSpace($webServerExe)) { return }
+    if (-not (Test-Path $webServerExe)) {
+        Write-LauncherLog "Web server exe not found: $webServerExe" 'WARN'
+        return
+    }
+
+    $webServerWorkingDirectory = Split-Path -Parent $webServerExe
+    if ($Config.PSObject.Properties.Name -contains 'webServerWorkingDirectory' -and -not [string]::IsNullOrWhiteSpace([string]$Config.webServerWorkingDirectory)) {
+        $webServerWorkingDirectory = [string]$Config.webServerWorkingDirectory
+    }
+
+    $webServerArguments = ''
+    if ($Config.PSObject.Properties.Name -contains 'webServerArguments') { $webServerArguments = [string]$Config.webServerArguments }
+
+    if ($ProgressCallback) { & $ProgressCallback 'Starting local web endpoint...' 0 }
+    Write-LauncherLog "Starting web endpoint: $webServerExe $webServerArguments"
+    Start-Process -FilePath $webServerExe -ArgumentList $webServerArguments -WorkingDirectory $webServerWorkingDirectory -WindowStyle Hidden | Out-Null
+
+    $timeout = 30
+    if ($Config.PSObject.Properties.Name -contains 'webServerStartupTimeoutSeconds') { $timeout = [int]$Config.webServerStartupTimeoutSeconds }
+    $deadline = (Get-Date).AddSeconds($timeout)
+    while ((Get-Date) -lt $deadline) {
+        if (Test-LocalPortListening -Port $port) { return }
+        Start-Sleep -Seconds 1
+    }
+    throw "Web endpoint did not open port $port before timeout."
+}
 function Start-Game {
     param([scriptblock]$ProgressCallback)
     Initialize-FirstRun
@@ -341,11 +385,15 @@ function Start-Game {
     if (-not (Test-Path ([string]$config.clientExe))) { throw "Client exe not found: $($config.clientExe)" }
 
     Ensure-DatabaseServer -Config $config -ProgressCallback $ProgressCallback
+    Ensure-WebEndpoint -Config $config -ProgressCallback $ProgressCallback
 
-    $serverRunning = Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq ([string]$config.serverExe) }
-    if (-not $serverRunning) {
-        if ($ProgressCallback) { & $ProgressCallback 'Starting local server...' 0 }
-        Start-Process -FilePath ([string]$config.serverExe) -WorkingDirectory ([string]$config.serverWorkingDirectory) -WindowStyle Minimized | Out-Null
+    $serverPortsOpen = Wait-ServerPorts -Ports @($config.serverPorts) -TimeoutSeconds 1
+    if (-not $serverPortsOpen) {
+        $serverRunning = Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq ([string]$config.serverExe) }
+        if (-not $serverRunning) {
+            if ($ProgressCallback) { & $ProgressCallback 'Starting local server...' 0 }
+            Start-Process -FilePath ([string]$config.serverExe) -WorkingDirectory ([string]$config.serverWorkingDirectory) -WindowStyle Minimized | Out-Null
+        }
     }
     if (-not (Wait-ServerPorts -Ports @($config.serverPorts) -TimeoutSeconds ([int]$config.serverStartupTimeoutSeconds))) {
         throw 'Server did not open expected ports before timeout.'
@@ -495,6 +543,7 @@ try {
     if ($NoGui -or $SelfTest -or $Repair -or $Play) { throw }
     [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Launcher error') | Out-Null
 }
+
 
 
 

@@ -19,5 +19,10 @@
     "databaseArguments":  "--defaults-file=C:\\xampp\\mysql\\bin\\my.ini",
     "databaseWorkingDirectory":  "C:\\xampp\\mysql\\bin",
     "databasePort":  3306,
-    "databaseStartupTimeoutSeconds":  60
+    "databaseStartupTimeoutSeconds":  60,
+    "webServerExe":  "C:\\xampp\\apache\\bin\\httpd.exe",
+    "webServerArguments":  "",
+    "webServerWorkingDirectory":  "C:\\xampp\\apache\\bin",
+    "webServerPort":  80,
+    "webServerStartupTimeoutSeconds":  30
 }
