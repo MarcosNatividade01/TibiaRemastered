@@ -98,6 +98,15 @@ function Test-ProtectedPath {
     return $false
 }
 
+function Get-RequestUrl {
+    param([string]$Url)
+    if ($Url -match '^https://raw\.githubusercontent\.com/' -and $Url -match '/main/') {
+        $separator = '?'
+        if ($Url.Contains('?')) { $separator = '&' }
+        return $Url + $separator + 'cb=' + [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+    }
+    return $Url
+}
 function Get-GitHubRequestHeaders {
     param([string]$Url)
     if ($Url -notmatch '(^https://raw\.githubusercontent\.com/|^https://api\.github\.com/)') { return @{} }
@@ -120,7 +129,8 @@ function Get-RemoteJson {
     if ([string]::IsNullOrWhiteSpace($Url)) { throw 'Remote URL is not configured.' }
     Write-LauncherLog "Downloading json: $Url"
     $headers = Get-GitHubRequestHeaders $Url
-    $response = Invoke-WebRequest -Uri $Url -Headers $headers -UseBasicParsing -TimeoutSec 30
+    $requestUrl = Get-RequestUrl $Url
+    $response = Invoke-WebRequest -Uri $requestUrl -Headers $headers -UseBasicParsing -TimeoutSec 30
     $raw = [string]$response.Content
     $raw = $raw.TrimStart([char]0xFEFF)
     if ($raw.StartsWith('ï»¿')) { $raw = $raw.Substring(3) }
@@ -133,7 +143,8 @@ function Test-InternetConnection {
     try {
         if ([string]::IsNullOrWhiteSpace($Url)) { return $false }
         $headers = Get-GitHubRequestHeaders $Url
-        Invoke-WebRequest -Uri $Url -Headers $headers -UseBasicParsing -Method Head -TimeoutSec 12 | Out-Null
+        $requestUrl = Get-RequestUrl $Url
+        Invoke-WebRequest -Uri $requestUrl -Headers $headers -UseBasicParsing -Method Head -TimeoutSec 12 | Out-Null
         return $true
     } catch {
         Write-LauncherLog "Internet/remote check failed: $($_.Exception.Message)" 'WARN'
@@ -548,6 +559,7 @@ try {
     if ($NoGui -or $SelfTest -or $Repair -or $Play) { throw }
     [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Launcher error') | Out-Null
 }
+
 
 
 
