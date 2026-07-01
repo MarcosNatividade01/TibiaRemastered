@@ -55,6 +55,7 @@ Temp/
 *.tmp
 *.temp
 *.log
+Reports/
 
 # Build e pacotes gerados
 build/
@@ -71,4 +72,3 @@ Thumbs.db
 desktop.ini
 .vscode/
 .idea/
-

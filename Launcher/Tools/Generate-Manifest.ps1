@@ -1,19 +1,32 @@
-﻿param(
+param(
     [string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)),
     [string]$Version = '0.1.0',
     [string]$RawBaseUrl = '',
-    [string]$Output = ''
+    [string]$Output = '',
+    [string]$VersionOutput = ''
 )
 
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
-if ([string]::IsNullOrWhiteSpace($Output)) { $Output = Join-Path $Root 'manifest.json' }
 
-$excludeRoots = @('UserData','Logs','Backup','Backups','Saves','.git','.github','.vs','.vscode','.idea')
-$excludePatterns = @('.gitignore','.gitattributes','manifest.json','version.json','*.tmp','*.temp','*.log','*.bak*','*.backup','*.download','*.pdb','*.dmp','*.db','*.sqlite','*.sqlite3','*.sql','*.token','*.key','*.pem','crashdump/*','cache/*','Cache/*','tmp/*','temp/*')
+if ([string]::IsNullOrWhiteSpace($Output)) { $Output = Join-Path $Root 'manifest.json' }
+if ([string]::IsNullOrWhiteSpace($VersionOutput)) { $VersionOutput = Join-Path $Root 'version.json' }
+
+$excludeRoots = @(
+    'UserData','Logs','Backup','Backups','Saves','Save','.git','.github','.vs','.vscode','.idea',
+    'Reports','release','Release','dist','build','tmp','temp','cache','Cache'
+)
+$excludePatterns = @(
+    '.gitignore','.gitattributes','manifest.json','version.json','*.tmp','*.temp','*.log','*.bak*',
+    '*.backup','*.download','*.pdb','*.dmp','*.db','*.sqlite','*.sqlite3','*.sql','*.token',
+    '*.key','*.pem','*.p12','*.pfx','*.crt','*token*','*secret*','*password*','desktop.ini',
+    'Thumbs.db','.DS_Store','Config/launcher-config.json'
+)
 
 function Convert-ToRelativePath([string]$Base, [string]$Path) {
-    $rel = $Path.Substring($Base.TrimEnd('\','/').Length).TrimStart('\','/')
+    $basePath = (Resolve-Path $Base).Path.TrimEnd('\','/')
+    $fullPath = (Resolve-Path $Path).Path
+    $rel = $fullPath.Substring($basePath.Length).TrimStart('\','/')
     return ($rel -replace '\\','/')
 }
 
@@ -53,10 +66,16 @@ Get-ChildItem -Path $Root -File -Recurse | ForEach-Object {
 $manifest = [pscustomobject]@{
     version = $Version
     generatedAt = (Get-Date).ToString('s')
+    hashAlgorithm = 'SHA256'
     files = @($files | Sort-Object path)
 }
+$versionJson = [pscustomobject]@{
+    name = 'TibiaRemastered'
+    version = $Version
+    channel = 'dev'
+    releaseDate = (Get-Date -Format 'yyyy-MM-dd')
+    minimumLauncherVersion = '0.1.0'
+}
 $manifest | ConvertTo-Json -Depth 8 | Set-Content -Path $Output -Encoding UTF8
-[pscustomobject]@{Output=$Output; Version=$Version; Files=$files.Count}
-
-
-
+$versionJson | ConvertTo-Json -Depth 8 | Set-Content -Path $VersionOutput -Encoding UTF8
+[pscustomobject]@{Output=$Output; VersionOutput=$VersionOutput; Version=$Version; Files=$files.Count}

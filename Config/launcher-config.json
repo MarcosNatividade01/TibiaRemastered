@@ -24,5 +24,11 @@
     "webServerArguments":  "",
     "webServerWorkingDirectory":  "C:\\xampp\\apache\\bin",
     "webServerPort":  80,
-    "webServerStartupTimeoutSeconds":  30
+    "webServerStartupTimeoutSeconds":  30,
+    "requiredRuntimeFiles":  [
+                                 "Launcher/Launcher.ps1",
+                                 "manifest.json",
+                                 "version.json"
+                             ],
+    "lastUpdateReport":  "Reports\\last-update.json"
 }

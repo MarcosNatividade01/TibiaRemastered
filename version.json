@@ -1,8 +1,7 @@
-{
-  "name": "TibiaRemastered",
-  "version": "0.1.0",
-  "channel": "dev",
-  "releaseDate": "2026-06-29",
-  "minimumLauncherVersion": "0.1.0"
+﻿{
+    "name":  "TibiaRemastered",
+    "version":  "0.1.0",
+    "channel":  "dev",
+    "releaseDate":  "2026-07-01",
+    "minimumLauncherVersion":  "0.1.0"
 }
-

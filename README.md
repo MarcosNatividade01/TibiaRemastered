@@ -42,3 +42,18 @@ Nao devem ser versionados:
 
 O arquivo `version.json` guarda a versao atual do projeto. O arquivo `manifest.json` sera usado pelo launcher para comparar arquivos locais com os arquivos publicados no GitHub.
 
+## Launcher profissional
+
+O launcher fica em `Launcher/Launcher.ps1` e usa modulos em `Launcher/Modules/` para separar configuracao, update, validacao e inicializacao do jogo.
+
+Comandos uteis:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Launcher\Launcher.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Launcher\Launcher.ps1 -Repair
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Launcher\Launcher.ps1 -SelfTest
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Test-Project.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Publish-Release.ps1 -Version 0.1.1
+```
+
+A arquitetura completa esta documentada em `Docs/ARCHITECTURE.md`.
