@@ -65,6 +65,65 @@ function Ensure-TrmWebEndpoint {
     throw "Web endpoint did not open port $port before timeout."
 }
 
+function Resolve-TrmRuntimePath {
+    param([string]$Path)
+    if ([System.IO.Path]::IsPathRooted($Path)) { return $Path }
+    return (Join-Path (Get-TrmRoot) $Path)
+}
+
+function Ensure-TrmPlayerPackage {
+    param(
+        [object]$Config,
+        [string]$ServerExe,
+        [string]$ClientExe,
+        [scriptblock]$ProgressCallback
+    )
+    if ((Test-Path $ServerExe) -and (Test-Path $ClientExe)) { return }
+
+    $packageUrl = ''
+    if ($Config.PSObject.Properties.Name -contains 'playerPackageUrl') { $packageUrl = [string]$Config.playerPackageUrl }
+    if ([string]::IsNullOrWhiteSpace($packageUrl)) {
+        throw "Server/client files are missing and playerPackageUrl is not configured. Missing server=$ServerExe client=$ClientExe"
+    }
+
+    $root = Get-TrmRoot
+    $tmpRoot = Join-Path $root 'tmp\player-package-download'
+    $zipPath = Join-Path $tmpRoot 'TibiaRemastered-Player.zip'
+    $extractPath = Join-Path $tmpRoot 'extract'
+    if (-not (Test-Path $tmpRoot)) { New-Item -ItemType Directory -Force -Path $tmpRoot | Out-Null }
+    if (Test-Path $zipPath) { Remove-Item -Path $zipPath -Force }
+    if (Test-Path $extractPath) { Remove-Item -Path $extractPath -Recurse -Force }
+
+    if ($ProgressCallback) { & $ProgressCallback 'Baixando pacote completo do jogo...' 0 0 0 }
+    Write-TrmLog "Downloading player package: $packageUrl"
+    Invoke-WebRequest -Uri $packageUrl -OutFile $zipPath -UseBasicParsing -TimeoutSec 1800
+
+    if ($Config.PSObject.Properties.Name -contains 'playerPackageSha256' -and -not [string]::IsNullOrWhiteSpace([string]$Config.playerPackageSha256)) {
+        if ($ProgressCallback) { & $ProgressCallback 'Validando pacote completo...' 50 0 0 }
+        $actual = Get-TrmSha256 $zipPath
+        $expected = ([string]$Config.playerPackageSha256).ToLowerInvariant()
+        if ($actual -ne $expected) {
+            Remove-Item -Path $zipPath -Force -ErrorAction SilentlyContinue
+            throw "Player package hash mismatch. expected=$expected actual=$actual"
+        }
+    }
+
+    if ($ProgressCallback) { & $ProgressCallback 'Extraindo pacote completo...' 75 0 0 }
+    Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+    foreach ($folder in @('Client','Server')) {
+        $source = Join-Path $extractPath $folder
+        $dest = Join-Path $root $folder
+        if (-not (Test-Path $source)) { throw "Player package is invalid: missing $folder folder." }
+        if (-not (Test-Path $dest)) { New-Item -ItemType Directory -Force -Path $dest | Out-Null }
+        Copy-Item -Path (Join-Path $source '*') -Destination $dest -Recurse -Force
+    }
+
+    if (-not ((Test-Path $ServerExe) -and (Test-Path $ClientExe))) {
+        throw "Player package was extracted, but runtime files are still missing. server=$ServerExe client=$ClientExe"
+    }
+    if ($ProgressCallback) { & $ProgressCallback 'Pacote completo instalado.' 100 0 0 }
+}
+
 function Start-TrmGame {
     param([scriptblock]$ProgressCallback)
     Ensure-TrmProjectStructure
@@ -79,6 +138,7 @@ function Start-TrmGame {
     if (-not [System.IO.Path]::IsPathRooted($clientExe)) { $clientExe = Join-Path $root $clientExe }
     if (-not [System.IO.Path]::IsPathRooted($serverWorkingDirectory)) { $serverWorkingDirectory = Join-Path $root $serverWorkingDirectory }
     if (-not [System.IO.Path]::IsPathRooted($clientWorkingDirectory)) { $clientWorkingDirectory = Join-Path $root $clientWorkingDirectory }
+    Ensure-TrmPlayerPackage -Config $config -ServerExe $serverExe -ClientExe $clientExe -ProgressCallback $ProgressCallback
     if (-not (Test-Path $serverExe)) { throw "Server exe not found: $serverExe" }
     if (-not (Test-Path $clientExe)) { throw "Client exe not found: $clientExe" }
 

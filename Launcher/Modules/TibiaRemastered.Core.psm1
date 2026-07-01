@@ -73,6 +73,8 @@ function Get-TrmDefaultConfig {
         preserve = @('UserData/**','Logs/**','Backup/**','Backups/**','Saves/**')
         requiredRuntimeFiles = @('Launcher/Launcher.ps1','manifest.json','version.json')
         lastUpdateReport = 'Reports\last-update.json'
+        playerPackageUrl = 'https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.1/TibiaRemastered-Player.zip'
+        playerPackageSha256 = 'c087fe181586fe0fe86b07430fb5362d65ef97d6a12d4711c1149321b45cc644'
     }
 }
 

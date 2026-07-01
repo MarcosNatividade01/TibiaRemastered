@@ -7,12 +7,20 @@ function New-TrmValidationIssue {
     return [pscustomobject]@{severity=$Severity; code=$Code; message=$Message; path=$Path}
 }
 
+function Test-TrmValidationIgnoredPath {
+    param([string]$Path)
+    $normalized = ($Path -replace '\\','/')
+    return ($normalized -match '/(\.git|tmp|Release|Reports|Backup|Backups|Logs|UserData)/')
+}
+
 function Test-TrmJsonFiles {
     param([string]$Root)
     $issues = @()
     Get-ChildItem -Path $Root -Filter *.json -File -Recurse | ForEach-Object {
-        try { Get-Content -Path $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json | Out-Null }
-        catch { $issues += New-TrmValidationIssue 'error' 'json.invalid' $_.Exception.Message (ConvertTo-TrmRelativePath $Root $_.FullName) }
+        $file = $_
+        if (Test-TrmValidationIgnoredPath $file.FullName) { return }
+        try { Get-Content -Path $file.FullName -Raw -Encoding UTF8 | ConvertFrom-Json | Out-Null }
+        catch { $issues += New-TrmValidationIssue 'error' 'json.invalid' $_.Exception.Message (ConvertTo-TrmRelativePath $Root $file.FullName) }
     }
     return $issues
 }
@@ -21,8 +29,10 @@ function Test-TrmXmlFiles {
     param([string]$Root)
     $issues = @()
     Get-ChildItem -Path $Root -Filter *.xml -File -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
-        try { [xml](Get-Content -Path $_.FullName -Raw -Encoding UTF8) | Out-Null }
-        catch { $issues += New-TrmValidationIssue 'error' 'xml.invalid' $_.Exception.Message (ConvertTo-TrmRelativePath $Root $_.FullName) }
+        $file = $_
+        if (Test-TrmValidationIgnoredPath $file.FullName) { return }
+        try { [xml](Get-Content -Path $file.FullName -Raw -Encoding UTF8) | Out-Null }
+        catch { $issues += New-TrmValidationIssue 'error' 'xml.invalid' $_.Exception.Message (ConvertTo-TrmRelativePath $Root $file.FullName) }
     }
     return $issues
 }
@@ -33,7 +43,7 @@ function Test-TrmLuaFiles {
     $lua = Get-Command lua -ErrorAction SilentlyContinue
     $luac = Get-Command luac -ErrorAction SilentlyContinue
     $checker = if ($luac) { $luac.Source } elseif ($lua) { $lua.Source } else { $null }
-    $files = @(Get-ChildItem -Path $Root -Filter *.lua -File -Recurse -ErrorAction SilentlyContinue)
+    $files = @(Get-ChildItem -Path $Root -Filter *.lua -File -Recurse -ErrorAction SilentlyContinue | Where-Object { -not (Test-TrmValidationIgnoredPath $_.FullName) })
     if ($files.Count -gt 0 -and -not $checker) {
         return @(New-TrmValidationIssue 'warning' 'lua.checker.missing' 'Lua files exist, but lua/luac was not found in PATH.')
     }

@@ -1,6 +1,6 @@
 ﻿{
-    "version":  "0.1.1",
-    "generatedAt":  "2026-07-01T19:49:03",
+    "version":  "0.1.2",
+    "generatedAt":  "2026-07-01T20:24:35",
     "hashAlgorithm":  "SHA256",
     "files":  [
                   {
@@ -77,16 +77,16 @@
                   },
                   {
                       "path":  "Launcher/Modules/TibiaRemastered.Core.psm1",
-                      "sha256":  "0208abd772ad147e5a14b20541c961ce176734ccf63ad550d2654a7a79f1a9ca",
-                      "size":  6020,
+                      "sha256":  "fe2f95549c4d53088381ee132e0860a38f95cdfff7e0328584e51c6fb8269932",
+                      "size":  6252,
                       "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Launcher/Modules/TibiaRemastered.Core.psm1",
                       "overwrite":  true,
                       "category":  "Launcher"
                   },
                   {
                       "path":  "Launcher/Modules/TibiaRemastered.Runtime.psm1",
-                      "sha256":  "9d83e6346c5cd9c1725593190f0244d0c16ca7bc6744dd014b8dd9a990b94faf",
-                      "size":  5495,
+                      "sha256":  "88b8dd6130ae755cc55f5b24b72985000f4dc9422760701fd7e8086b827528b9",
+                      "size":  8509,
                       "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Launcher/Modules/TibiaRemastered.Runtime.psm1",
                       "overwrite":  true,
                       "category":  "Launcher"
@@ -101,8 +101,8 @@
                   },
                   {
                       "path":  "Launcher/Modules/TibiaRemastered.Validation.psm1",
-                      "sha256":  "fcf37f63862b3e6ac2e2371478d41b893b6959728bb99615098d865f28a5b67e",
-                      "size":  7102,
+                      "sha256":  "eab81a9ffca97630e6684845d192e8db05a881506deec2be182369b7c81bad25",
+                      "size":  7564,
                       "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Launcher/Modules/TibiaRemastered.Validation.psm1",
                       "overwrite":  true,
                       "category":  "Launcher"
