@@ -54,8 +54,8 @@ function Get-TrmDefaultConfig {
     return [pscustomobject]@{
         remoteVersionUrl = 'https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/version.json'
         remoteManifestUrl = 'https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/manifest.json'
-        serverExe = 'C:\otserv\crystalserver.exe'
-        serverWorkingDirectory = 'C:\otserv'
+        serverExe = 'Server\crystalserver.exe'
+        serverWorkingDirectory = 'Server'
         serverPorts = @(7171, 7172)
         serverStartupTimeoutSeconds = 300
         databaseExe = 'C:\xampp\mysql\bin\mysqld.exe'
@@ -68,8 +68,8 @@ function Get-TrmDefaultConfig {
         webServerWorkingDirectory = 'C:\xampp\apache\bin'
         webServerPort = 80
         webServerStartupTimeoutSeconds = 30
-        clientExe = 'C:\Users\marco\Tibiafriends\bin\client-local.exe'
-        clientWorkingDirectory = 'C:\Users\marco\Tibiafriends'
+        clientExe = 'Client\bin\client-local.exe'
+        clientWorkingDirectory = 'Client'
         preserve = @('UserData/**','Logs/**','Backup/**','Backups/**','Saves/**')
         requiredRuntimeFiles = @('Launcher/Launcher.ps1','manifest.json','version.json')
         lastUpdateReport = 'Reports\last-update.json'

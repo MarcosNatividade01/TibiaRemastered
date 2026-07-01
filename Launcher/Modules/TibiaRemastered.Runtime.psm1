@@ -70,18 +70,27 @@ function Start-TrmGame {
     Ensure-TrmProjectStructure
     $config = Get-TrmConfig
     if ($config.remoteManifestUrl) { Invoke-TrmUpdateOrRepair -ProgressCallback $ProgressCallback | Out-Null }
-    if (-not (Test-Path ([string]$config.serverExe))) { throw "Server exe not found: $($config.serverExe)" }
-    if (-not (Test-Path ([string]$config.clientExe))) { throw "Client exe not found: $($config.clientExe)" }
+    $root = Get-TrmRoot
+    $serverExe = [string]$config.serverExe
+    $clientExe = [string]$config.clientExe
+    $serverWorkingDirectory = [string]$config.serverWorkingDirectory
+    $clientWorkingDirectory = [string]$config.clientWorkingDirectory
+    if (-not [System.IO.Path]::IsPathRooted($serverExe)) { $serverExe = Join-Path $root $serverExe }
+    if (-not [System.IO.Path]::IsPathRooted($clientExe)) { $clientExe = Join-Path $root $clientExe }
+    if (-not [System.IO.Path]::IsPathRooted($serverWorkingDirectory)) { $serverWorkingDirectory = Join-Path $root $serverWorkingDirectory }
+    if (-not [System.IO.Path]::IsPathRooted($clientWorkingDirectory)) { $clientWorkingDirectory = Join-Path $root $clientWorkingDirectory }
+    if (-not (Test-Path $serverExe)) { throw "Server exe not found: $serverExe" }
+    if (-not (Test-Path $clientExe)) { throw "Client exe not found: $clientExe" }
 
     Ensure-TrmDatabaseServer -Config $config -ProgressCallback $ProgressCallback
     Ensure-TrmWebEndpoint -Config $config -ProgressCallback $ProgressCallback
 
     $serverPortsOpen = Wait-TrmServerPorts -Ports @($config.serverPorts) -TimeoutSeconds 1
     if (-not $serverPortsOpen) {
-        $serverRunning = Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq ([string]$config.serverExe) }
+        $serverRunning = Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $serverExe }
         if (-not $serverRunning) {
             if ($ProgressCallback) { & $ProgressCallback 'Iniciando servidor local...' 0 0 0 }
-            Start-Process -FilePath ([string]$config.serverExe) -WorkingDirectory ([string]$config.serverWorkingDirectory) -WindowStyle Minimized | Out-Null
+            Start-Process -FilePath $serverExe -WorkingDirectory $serverWorkingDirectory -WindowStyle Minimized | Out-Null
         }
     }
     if (-not (Wait-TrmServerPorts -Ports @($config.serverPorts) -TimeoutSeconds ([int]$config.serverStartupTimeoutSeconds))) {
@@ -92,7 +101,7 @@ function Start-TrmGame {
     Remove-Item Env:\QT_OPENGL -ErrorAction SilentlyContinue
     Remove-Item Env:\QSG_RHI_BACKEND -ErrorAction SilentlyContinue
     $env:QSG_RENDER_LOOP = 'basic'
-    Start-Process -FilePath ([string]$config.clientExe) -WorkingDirectory ([string]$config.clientWorkingDirectory) | Out-Null
+    Start-Process -FilePath $clientExe -WorkingDirectory $clientWorkingDirectory | Out-Null
 }
 
 Export-ModuleMember -Function *-Trm*

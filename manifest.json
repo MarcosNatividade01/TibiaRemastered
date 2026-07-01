@@ -1,6 +1,6 @@
 ﻿{
-    "version":  "0.1.0",
-    "generatedAt":  "2026-07-01T19:34:33",
+    "version":  "0.1.1",
+    "generatedAt":  "2026-07-01T19:49:03",
     "hashAlgorithm":  "SHA256",
     "files":  [
                   {
@@ -77,16 +77,16 @@
                   },
                   {
                       "path":  "Launcher/Modules/TibiaRemastered.Core.psm1",
-                      "sha256":  "3ac31778379a16bdede6878360b6a7c67a3bc8232cd51fbf97ad2773a0e17dde",
-                      "size":  6068,
+                      "sha256":  "0208abd772ad147e5a14b20541c961ce176734ccf63ad550d2654a7a79f1a9ca",
+                      "size":  6020,
                       "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Launcher/Modules/TibiaRemastered.Core.psm1",
                       "overwrite":  true,
                       "category":  "Launcher"
                   },
                   {
                       "path":  "Launcher/Modules/TibiaRemastered.Runtime.psm1",
-                      "sha256":  "3151b2983038990926303e481fc98f708b791aa3c33a9156a8be9f0d2a14c258",
-                      "size":  4904,
+                      "sha256":  "9d83e6346c5cd9c1725593190f0244d0c16ca7bc6744dd014b8dd9a990b94faf",
+                      "size":  5495,
                       "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Launcher/Modules/TibiaRemastered.Runtime.psm1",
                       "overwrite":  true,
                       "category":  "Launcher"
@@ -136,6 +136,14 @@
                       "sha256":  "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
                       "size":  1,
                       "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Scripts/.gitkeep",
+                      "overwrite":  true,
+                      "category":  "Scripts"
+                  },
+                  {
+                      "path":  "Scripts/New-PlayerPackage.ps1",
+                      "sha256":  "67439e7f11035ae2658059e7d20b8b5a967ff6f3c280ef84162f19e6d6d2c6ef",
+                      "size":  2642,
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Scripts/New-PlayerPackage.ps1",
                       "overwrite":  true,
                       "category":  "Scripts"
                   },
