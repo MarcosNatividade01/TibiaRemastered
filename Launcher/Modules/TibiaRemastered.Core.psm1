@@ -58,11 +58,13 @@ function Get-TrmDefaultConfig {
         serverWorkingDirectory = 'Server'
         serverPorts = @(7171, 7172)
         serverStartupTimeoutSeconds = 300
-        databaseExe = 'C:\xampp\mysql\bin\mysqld.exe'
-        databaseArguments = '--defaults-file=C:\xampp\mysql\bin\my.ini'
-        databaseWorkingDirectory = 'C:\xampp\mysql\bin'
+        databaseExe = 'Database\mysql\bin\mysqld.exe'
+        databaseArguments = ''
+        databaseWorkingDirectory = 'Database\mysql\bin'
         databasePort = 3306
         databaseStartupTimeoutSeconds = 60
+        databaseName = 'otserv'
+        databaseSeedSql = 'Server\schema.sql'
         webServerExe = 'C:\xampp\apache\bin\httpd.exe'
         webServerArguments = ''
         webServerWorkingDirectory = 'C:\xampp\apache\bin'
@@ -73,8 +75,8 @@ function Get-TrmDefaultConfig {
         preserve = @('UserData/**','Logs/**','Backup/**','Backups/**','Saves/**')
         requiredRuntimeFiles = @('Launcher/Launcher.ps1','manifest.json','version.json')
         lastUpdateReport = 'Reports\last-update.json'
-        playerPackageUrl = 'https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.1/TibiaRemastered-Player.zip'
-        playerPackageSha256 = 'c087fe181586fe0fe86b07430fb5362d65ef97d6a12d4711c1149321b45cc644'
+        playerPackageUrl = 'https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.3/TibiaRemastered-Player.zip'
+        playerPackageSha256 = '2a7a4993fb1659ce8ddb65298718c3670170690f3b955ff5bf6d80242d89772b'
     }
 }
 

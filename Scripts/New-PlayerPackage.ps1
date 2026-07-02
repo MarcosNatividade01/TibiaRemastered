@@ -19,6 +19,7 @@ New-Item -ItemType Directory -Force -Path $staging | Out-Null
 $repoExcludes = @('\.git($|\\)','\\Logs($|\\)','\\Backup($|\\)','\\Backups($|\\)','\\Reports($|\\)','\\tmp($|\\)','\\Release($|\\)','\\UserData($|\\)')
 $clientExcludes = @('\.git($|\\)','\\cache($|\\)','\\log($|\\)','\\crashdump($|\\)','\\screenshots($|\\)','\\backup','\\characterdata($|\\)','\\minimap($|\\)','\.bak','partial\.')
 $serverExcludes = @('\.git($|\\)','\\backup','\\logs($|\\)','\\reports($|\\)','\\tests($|\\)','\\src($|\\)','\\vcproj($|\\)','\\cmake($|\\)','\\docs($|\\)','crystalserver\.pdb$','key\.pem$','\.bak','\.backup')
+$mysqlExcludes = @('\\data($|\\)','\\backup($|\\)','\\scripts($|\\)','\.pdb$','mysql_error\.log$','mysql\.pid$')
 
 function Test-PackageExcluded([string]$Path, [string[]]$Patterns) {
     foreach ($pattern in $Patterns) {
@@ -41,6 +42,7 @@ function Copy-PackageTree([string]$Source, [string]$Destination, [string[]]$Patt
 Copy-PackageTree -Source $root -Destination $staging -Patterns $repoExcludes
 Copy-PackageTree -Source $ClientSource -Destination (Join-Path $staging 'Client') -Patterns $clientExcludes
 Copy-PackageTree -Source $ServerSource -Destination (Join-Path $staging 'Server') -Patterns $serverExcludes
+Copy-PackageTree -Source 'C:\xampp\mysql' -Destination (Join-Path $staging 'Database\mysql') -Patterns $mysqlExcludes
 
 $outDir = Split-Path -Parent $Output
 if (-not (Test-Path $outDir)) { New-Item -ItemType Directory -Force -Path $outDir | Out-Null }
