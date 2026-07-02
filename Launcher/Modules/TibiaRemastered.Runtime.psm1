@@ -4,20 +4,35 @@ Import-Module (Join-Path $PSScriptRoot 'TibiaRemastered.Update.psm1') -Force -Di
 
 function Test-TrmLocalPortListening {
     param([int]$Port)
-    $open = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
-    return ($null -ne $open)
+    $client = New-Object System.Net.Sockets.TcpClient
+    try {
+        $async = $client.BeginConnect('127.0.0.1', $Port, $null, $null)
+        if (-not $async.AsyncWaitHandle.WaitOne(800, $false)) { return $false }
+        $client.EndConnect($async)
+        return $true
+    } catch {
+        return $false
+    } finally {
+        $client.Close()
+    }
 }
 
 function Wait-TrmServerPorts {
     param([int[]]$Ports, [int]$TimeoutSeconds)
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    $stableChecks = 0
     while ((Get-Date) -lt $deadline) {
         $allOpen = $true
         foreach ($port in $Ports) {
             if (-not (Test-TrmLocalPortListening -Port $port)) { $allOpen = $false; break }
         }
-        if ($allOpen) { return $true }
-        Start-Sleep -Seconds 2
+        if ($allOpen) {
+            $stableChecks++
+            if ($stableChecks -ge 2) { return $true }
+        } else {
+            $stableChecks = 0
+        }
+        Start-Sleep -Seconds 1
     }
     return $false
 }
@@ -380,7 +395,8 @@ function Start-TrmGame {
         }
     }
     if (-not (Wait-TrmServerPorts -Ports @($config.serverPorts) -TimeoutSeconds ([int]$config.serverStartupTimeoutSeconds))) {
-        throw 'Server did not open expected ports before timeout.'
+        $ports = (@($config.serverPorts) -join ', ')
+        throw "Connection refused: o Crystal Server nao abriu as portas esperadas ($ports). Abra pelo Start Launcher.bat e confira se o banco de dados iniciou sem erro."
     }
     if ($ProgressCallback) { & $ProgressCallback 'Iniciando cliente...' 100 0 0 }
     Remove-Item Env:\QT_QUICK_BACKEND -ErrorAction SilentlyContinue
