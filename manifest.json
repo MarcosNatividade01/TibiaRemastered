@@ -85,8 +85,8 @@
                   },
                   {
                       "path":  "Launcher/Modules/TibiaRemastered.Runtime.psm1",
-                      "sha256":  "5f052ca2a3a9880e07955b0d0794788c67a8ae6df925fe2727291924d4c42d61",
-                      "size":  20426,
+                      "sha256":  "1051dfb93f1ecf3bb60589d179f936a86df32f85f4bff9debd39cb945114adc3",
+                      "size":  20055,
                       "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Launcher/Modules/TibiaRemastered.Runtime.psm1",
                       "overwrite":  true,
                       "category":  "Launcher"
