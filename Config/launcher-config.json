@@ -34,5 +34,20 @@
                              ],
     "lastUpdateReport":  "Reports\\last-update.json",
     "playerPackageUrl":  "https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.3/TibiaRemastered-Player.zip",
-    "playerPackageSha256":  "2a7a4993fb1659ce8ddb65298718c3670170690f3b955ff5bf6d80242d89772b"
+    "playerPackageSha256":  "2a7a4993fb1659ce8ddb65298718c3670170690f3b955ff5bf6d80242d89772b",
+    "playerPackageParts":  [
+                               {"url":"https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.6/TibiaRemastered-Player.zip.001","sha256":"7d768f3ec343729a003a1f0d84cec360375e8d98fc7ce965d0c400c4313ae6f4","size":52428800},
+                               {"url":"https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.6/TibiaRemastered-Player.zip.002","sha256":"4d4dc1d844f6a7fceb757d5d5b72f6f3024bbb27154701f10f694fde50164e7d","size":52428800},
+                               {"url":"https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.6/TibiaRemastered-Player.zip.003","sha256":"de226d94ad226dfca6c47f12eaf9b4e5e268c0c8abc5176e3c1b406f7623f5eb","size":52428800},
+                               {"url":"https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.6/TibiaRemastered-Player.zip.004","sha256":"63d337a60946b9518c08340124dc0e2762bca9e8e662f4e990b8192e5aa5a052","size":52428800},
+                               {"url":"https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.6/TibiaRemastered-Player.zip.005","sha256":"6579e135ad095512d6b40588702246b0326994cd031ac1971214740036df5ba5","size":52428800},
+                               {"url":"https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.6/TibiaRemastered-Player.zip.006","sha256":"078e228a8a65674fbc480acf07e28bdf5d2ff261e7c47e51d9e25432d1fbb9a4","size":52428800},
+                               {"url":"https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.6/TibiaRemastered-Player.zip.007","sha256":"e7f23502bd8aa4780caf602f7f4e60d5495af6504a211a05f59dbd50065fc824","size":52428800},
+                               {"url":"https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.6/TibiaRemastered-Player.zip.008","sha256":"27f89a899804e243b9c86f8e5d881361a9c7755e613f9c984a7814ee51523a7d","size":52428800},
+                               {"url":"https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.6/TibiaRemastered-Player.zip.009","sha256":"0de139259218dcd82fa7cebdcca07df2ba410ed37aced7106d67dd581660dd17","size":52428800},
+                               {"url":"https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.6/TibiaRemastered-Player.zip.010","sha256":"0bf8c6a8eb91434b459202dac7bc6d1860bd39189dc10b55b9472b027e584682","size":52428800},
+                               {"url":"https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.6/TibiaRemastered-Player.zip.011","sha256":"8afe5b32bd1e8a735a3346c110555084373e0ff10027e9e4eb4582d8f0d1a970","size":52428800},
+                               {"url":"https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.6/TibiaRemastered-Player.zip.012","sha256":"f9659b36bd14a6a2c8dd3c1e4a71b3890eef02185be202792038b0c710931bfc","size":52428800},
+                               {"url":"https://github.com/MarcosNatividade01/TibiaRemastered/releases/download/v0.1.6/TibiaRemastered-Player.zip.013","sha256":"167ce715d07d5ec9ae50f4a7ca575cc81c01c8b0553351a80867cd23e3bf3017","size":49950974}
+                           ]
 }

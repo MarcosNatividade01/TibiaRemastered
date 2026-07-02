@@ -185,7 +185,13 @@ function Ensure-TrmPlayerPackage {
 
     if ($ProgressCallback) { & $ProgressCallback 'Baixando pacote completo do jogo...' 0 0 0 }
     Write-TrmLog "Downloading player package: $packageUrl"
-    Save-TrmLargeDownload -Url $packageUrl -Destination $zipPath -ProgressCallback $ProgressCallback
+    $parts = @()
+    if ($Config.PSObject.Properties.Name -contains 'playerPackageParts') { $parts = @($Config.playerPackageParts) }
+    if ($parts.Count -gt 0) {
+        Save-TrmPackagePartsDownload -Parts $parts -Destination $zipPath -WorkDirectory $tmpRoot -ProgressCallback $ProgressCallback
+    } else {
+        Save-TrmLargeDownload -Url $packageUrl -Destination $zipPath -ProgressCallback $ProgressCallback
+    }
 
     if ($Config.PSObject.Properties.Name -contains 'playerPackageSha256' -and -not [string]::IsNullOrWhiteSpace([string]$Config.playerPackageSha256)) {
         if ($ProgressCallback) { & $ProgressCallback 'Validando pacote completo...' 50 0 0 }
@@ -220,6 +226,18 @@ function Save-TrmLargeDownload {
         [scriptblock]$ProgressCallback
     )
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    if (Test-Path $Url) {
+        Copy-Item -Path $Url -Destination $Destination -Force
+        return
+    }
+    try {
+        $uri = [System.Uri]$Url
+        if ($uri.IsFile) {
+            Copy-Item -LiteralPath $uri.LocalPath -Destination $Destination -Force
+            return
+        }
+    } catch {
+    }
     $lastError = $null
     for ($attempt = 1; $attempt -le 3; $attempt++) {
         try {
@@ -253,6 +271,62 @@ function Save-TrmLargeDownload {
     }
 
     throw "Nao foi possivel baixar o pacote completo automaticamente. Tente baixar manualmente: $Url . Erro: $lastError"
+}
+
+function Save-TrmPackagePartsDownload {
+    param(
+        [object[]]$Parts,
+        [string]$Destination,
+        [string]$WorkDirectory,
+        [scriptblock]$ProgressCallback
+    )
+    if ($Parts.Count -eq 0) { throw 'Player package parts are not configured.' }
+    $partDir = Join-Path $WorkDirectory 'parts'
+    if (-not (Test-Path $partDir)) { New-Item -ItemType Directory -Force -Path $partDir | Out-Null }
+
+    $index = 0
+    foreach ($part in $Parts) {
+        $index++
+        $partUrl = [string]$part.url
+        if ([string]::IsNullOrWhiteSpace($partUrl)) { throw "Player package part $index has no URL." }
+        $partName = Split-Path -Leaf ([System.Uri]$partUrl).AbsolutePath
+        if ([string]::IsNullOrWhiteSpace($partName)) { $partName = 'part-{0:D3}' -f $index }
+        $partPath = Join-Path $partDir $partName
+        $expected = ''
+        if ($part.PSObject.Properties.Name -contains 'sha256') { $expected = ([string]$part.sha256).ToLowerInvariant() }
+
+        $valid = $false
+        if ((Test-Path $partPath) -and -not [string]::IsNullOrWhiteSpace($expected)) {
+            $valid = ((Get-TrmSha256 $partPath) -eq $expected)
+        }
+        if (-not $valid) {
+            if ($ProgressCallback) { & $ProgressCallback ("Baixando pacote parte {0}/{1}" -f $index, $Parts.Count) (($index - 1) / $Parts.Count * 70) 0 0 }
+            Save-TrmLargeDownload -Url $partUrl -Destination $partPath -ProgressCallback $null
+        }
+        if (-not [string]::IsNullOrWhiteSpace($expected)) {
+            $actual = Get-TrmSha256 $partPath
+            if ($actual -ne $expected) {
+                Remove-Item -Path $partPath -Force -ErrorAction SilentlyContinue
+                throw "Player package part hash mismatch for part $index. expected=$expected actual=$actual"
+            }
+        }
+    }
+
+    if ($ProgressCallback) { & $ProgressCallback 'Montando pacote completo...' 72 0 0 }
+    if (Test-Path $Destination) { Remove-Item -Path $Destination -Force -ErrorAction SilentlyContinue }
+    $output = [System.IO.File]::Create($Destination)
+    try {
+        foreach ($part in $Parts) {
+            $partUrl = [string]$part.url
+            $partName = Split-Path -Leaf ([System.Uri]$partUrl).AbsolutePath
+            $partPath = Join-Path $partDir $partName
+            $input = [System.IO.File]::OpenRead($partPath)
+            try { $input.CopyTo($output) }
+            finally { $input.Dispose() }
+        }
+    } finally {
+        $output.Dispose()
+    }
 }
 
 function Start-TrmGame {
