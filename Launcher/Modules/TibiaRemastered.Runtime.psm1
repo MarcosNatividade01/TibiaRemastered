@@ -185,7 +185,7 @@ function Ensure-TrmPlayerPackage {
 
     if ($ProgressCallback) { & $ProgressCallback 'Baixando pacote completo do jogo...' 0 0 0 }
     Write-TrmLog "Downloading player package: $packageUrl"
-    Invoke-WebRequest -Uri $packageUrl -OutFile $zipPath -UseBasicParsing -TimeoutSec 1800
+    Save-TrmLargeDownload -Url $packageUrl -Destination $zipPath -ProgressCallback $ProgressCallback
 
     if ($Config.PSObject.Properties.Name -contains 'playerPackageSha256' -and -not [string]::IsNullOrWhiteSpace([string]$Config.playerPackageSha256)) {
         if ($ProgressCallback) { & $ProgressCallback 'Validando pacote completo...' 50 0 0 }
@@ -211,6 +211,48 @@ function Ensure-TrmPlayerPackage {
         throw "Player package was extracted, but runtime files are still missing. server=$ServerExe client=$ClientExe database=$databaseExe"
     }
     if ($ProgressCallback) { & $ProgressCallback 'Pacote completo instalado.' 100 0 0 }
+}
+
+function Save-TrmLargeDownload {
+    param(
+        [string]$Url,
+        [string]$Destination,
+        [scriptblock]$ProgressCallback
+    )
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $lastError = $null
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        try {
+            if (Test-Path $Destination) { Remove-Item -Path $Destination -Force -ErrorAction SilentlyContinue }
+            if ($ProgressCallback) { & $ProgressCallback "Baixando pacote completo do jogo... tentativa $attempt/3" 0 0 0 }
+            Write-TrmLog "Player package download attempt $attempt via BITS: $Url"
+            Import-Module BitsTransfer -ErrorAction Stop
+            Start-BitsTransfer -Source $Url -Destination $Destination -DisplayName 'Tibia Remastered Player Package' -Description 'Download do pacote completo do jogo' -TransferType Download -ErrorAction Stop
+            if (Test-Path $Destination) { return }
+            throw 'BITS finished without creating the destination file.'
+        } catch {
+            $lastError = $_.Exception.Message
+            Write-TrmLog "BITS download attempt $attempt failed: $lastError" 'WARN'
+            Start-Sleep -Seconds (5 * $attempt)
+        }
+    }
+
+    for ($attempt = 1; $attempt -le 2; $attempt++) {
+        try {
+            if (Test-Path $Destination) { Remove-Item -Path $Destination -Force -ErrorAction SilentlyContinue }
+            if ($ProgressCallback) { & $ProgressCallback "Baixando pacote completo por HTTP... tentativa $attempt/2" 0 0 0 }
+            Write-TrmLog "Player package download attempt $attempt via HTTP: $Url"
+            Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -TimeoutSec 3600
+            if (Test-Path $Destination) { return }
+            throw 'HTTP download finished without creating the destination file.'
+        } catch {
+            $lastError = $_.Exception.Message
+            Write-TrmLog "HTTP download attempt $attempt failed: $lastError" 'WARN'
+            Start-Sleep -Seconds (5 * $attempt)
+        }
+    }
+
+    throw "Nao foi possivel baixar o pacote completo automaticamente. Tente baixar manualmente: $Url . Erro: $lastError"
 }
 
 function Start-TrmGame {
