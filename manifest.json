@@ -1,6 +1,6 @@
 ﻿{
-    "version":  "0.1.4",
-    "generatedAt":  "2026-07-01T22:06:09",
+    "version":  "0.1.5",
+    "generatedAt":  "2026-07-01T22:25:36",
     "hashAlgorithm":  "SHA256",
     "files":  [
                   {
@@ -85,8 +85,8 @@
                   },
                   {
                       "path":  "Launcher/Modules/TibiaRemastered.Runtime.psm1",
-                      "sha256":  "c90856e5d8f05afdd63bc87e9e8fcddf7726fa7a266625946b211399feb99441",
-                      "size":  15048,
+                      "sha256":  "fd3b75c6f39ffd937d76df89f256845bdd9bd03efdd7e5d613cc4a70648e50a8",
+                      "size":  16408,
                       "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Launcher/Modules/TibiaRemastered.Runtime.psm1",
                       "overwrite":  true,
                       "category":  "Launcher"

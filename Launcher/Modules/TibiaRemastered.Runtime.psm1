@@ -259,7 +259,28 @@ function Start-TrmGame {
     param([scriptblock]$ProgressCallback)
     Ensure-TrmProjectStructure
     $config = Get-TrmConfig
-    if ($config.remoteManifestUrl) { Invoke-TrmUpdateOrRepair -ProgressCallback $ProgressCallback | Out-Null }
+    if ($config.remoteManifestUrl) {
+        $updateReport = Invoke-TrmUpdateOrRepair -ProgressCallback $ProgressCallback
+        $launcherUpdated = $false
+        foreach ($action in @($updateReport.actions)) {
+            $path = ''
+            if ($action.PSObject.Properties.Name -contains 'path') { $path = ([string]$action.path -replace '\\','/') }
+            $actionName = ''
+            if ($action.PSObject.Properties.Name -contains 'action') { $actionName = [string]$action.action }
+            if ($actionName -eq 'downloaded' -and ($path -eq 'Launcher/Launcher.ps1' -or $path.StartsWith('Launcher/Modules/', [System.StringComparison]::OrdinalIgnoreCase))) {
+                $launcherUpdated = $true
+                break
+            }
+        }
+        if ($launcherUpdated -and [string]::IsNullOrWhiteSpace($env:TRM_RESTARTED_AFTER_UPDATE)) {
+            if ($ProgressCallback) { & $ProgressCallback 'Launcher atualizado. Reiniciando para continuar...' 100 0 0 }
+            $launcherPath = Join-Path (Get-TrmRoot) 'Launcher\Launcher.ps1'
+            if ($env:TRM_TEST_RESTART_AFTER_UPDATE -eq '1') { throw 'TRM_TEST_RESTART_AFTER_UPDATE: launcher restart requested.' }
+            $env:TRM_RESTARTED_AFTER_UPDATE = '1'
+            Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File', $launcherPath, '-Play') -WorkingDirectory (Get-TrmRoot) | Out-Null
+            [Environment]::Exit(0)
+        }
+    }
     $root = Get-TrmRoot
     $serverExe = [string]$config.serverExe
     $clientExe = [string]$config.clientExe
