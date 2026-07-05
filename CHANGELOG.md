@@ -2,6 +2,14 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.3-test] - Publicacao GitHub
+
+- Publicada versao 0.1.3-test como versao de teste para validacao multiplayer em dois computadores.
+- Separado o fluxo `Entrar no Meu Mundo`, que usa `127.0.0.1`, do fluxo `Entrar em Mundo`, que preserva o IP do convite para convidados.
+- Adicionados logs temporarios antes de abrir o client com modo, IP usado, porta, configuracao aplicada e comando de abertura.
+- Atualizados `version.json` e `manifest.json` para o Launcher baixar arquivos pelo GitHub.
+- Mantidas protecoes para `UserData`, logs, backups, saves, banco local e arquivos pessoais.
+
 ## [0.1.4] - Publicacao GitHub
 
 - Removidos dados locais do client do indice Git (`Client/characterdata/` e `Client/minimap/`) sem apagar os arquivos da maquina do usuario.
@@ -74,4 +82,5 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Criada a estrutura inicial do repositorio.
 - Adicionados arquivos base para README, roadmap, ideias, versao e manifest.
 - Adicionado `.gitignore` para proteger dados reais e arquivos sensiveis.
+
 

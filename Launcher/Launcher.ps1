@@ -315,6 +315,8 @@ function Show-LauncherGui {
 
         $state = Get-TrmOnlineState
         $currentInvite = ''
+        $currentHostPort = 7172
+        $currentHostWorld = ''
 
         function Format-FriendlyError([string]$Message) {
             if ($Message -match 'Host inacessivel|Connection refused|actively refused') {
@@ -368,6 +370,8 @@ function Show-LauncherGui {
                 $statusLabel.Text = 'Status: servidor iniciando'
                 $result = Start-TrmHostedWorld -ProgressCallback ${function:Set-UiStatus}
                 $currentInvite = [string]$result.invite
+                $currentHostPort = [int]$result.port
+                $currentHostWorld = [string]$result.worldName
                 $hostInfo.Text = "Servidor online`r`nMundo: $($result.worldName)`r`nJogadores conectados: $($result.playersOnline)`r`nIP local: $($result.localIp)`r`nIP publico: $($result.publicIp)`r`nPorta: $($result.port)`r`nVersao: $($result.version)`r`n`r`nConvite:`r`n$currentInvite`r`n`r`n$(Format-OnlineDiagnosticText $result.diagnostic)"
                 $statusLabel.Text = 'Status: servidor online'
             } catch {
@@ -394,9 +398,27 @@ function Show-LauncherGui {
         Set-LauncherButtonStyle $btnCopyHost
         $hostGroup.Controls.Add($btnCopyHost)
 
+        $btnJoinOwnHost = New-Object System.Windows.Forms.Button
+        $btnJoinOwnHost.Text = 'Entrar no Meu Mundo'
+        $btnJoinOwnHost.Location = New-Object System.Drawing.Point(264, 172)
+        $btnJoinOwnHost.Size = New-Object System.Drawing.Size(150, 32)
+        $btnJoinOwnHost.Add_Click({
+            try {
+                $statusLabel.Text = 'Status: conectando localmente'
+                $result = JoinOwnHostedWorld -Port $currentHostPort -WorldName $currentHostWorld -ProgressCallback ${function:Set-UiStatus}
+                $hostInfo.Text = "Cliente local iniciado.`r`nModo: $($result.mode)`r`nHost usado: $($result.clientWorldAddress)`r`nPorta: $($result.port)`r`nHistorico salvo em: $($result.statePath)`r`n`r`n$(Format-OnlineDiagnosticText $result.diagnostic)"
+                $statusLabel.Text = 'Status: cliente local iniciado'
+            } catch {
+                $hostInfo.Text = Format-FriendlyError $_.Exception.Message
+                $statusLabel.Text = 'Status: erro ao entrar no meu mundo'
+            }
+        })
+        Set-LauncherButtonStyle $btnJoinOwnHost
+        $hostGroup.Controls.Add($btnJoinOwnHost)
+
         $btnHostLogs = New-Object System.Windows.Forms.Button
         $btnHostLogs.Text = 'Abrir Logs'
-        $btnHostLogs.Location = New-Object System.Drawing.Point(264, 172)
+        $btnHostLogs.Location = New-Object System.Drawing.Point(424, 172)
         $btnHostLogs.Size = New-Object System.Drawing.Size(90, 32)
         $btnHostLogs.Add_Click({ Start-Process explorer.exe (Join-Path (Get-TrmRoot) 'Logs') })
         Set-LauncherButtonStyle $btnHostLogs
@@ -404,7 +426,7 @@ function Show-LauncherGui {
 
         $btnStopHost = New-Object System.Windows.Forms.Button
         $btnStopHost.Text = 'Parar Mundo'
-        $btnStopHost.Location = New-Object System.Drawing.Point(364, 172)
+        $btnStopHost.Location = New-Object System.Drawing.Point(524, 172)
         $btnStopHost.Size = New-Object System.Drawing.Size(110, 32)
         $btnStopHost.Add_Click({
             try {
@@ -562,8 +584,8 @@ function Show-LauncherGui {
                 $port = 7172
                 [void][int]::TryParse($portInput.Text, [ref]$port)
                 $statusLabel.Text = 'Status: conectando'
-                $result = Start-TrmOnlineClient -Host $hostInput.Text -Port $port -WorldName $script:TrmInviteWorld -ExpectedVersion $script:TrmInviteVersion -ProgressCallback ${function:Set-UiStatus}
-                $joinOutput.Text = "Conectando ao mundo.`r`nMundo: $($result.worldName)`r`nHost: $($result.host)`r`nPorta: $($result.port)`r`nHistorico salvo em: $($result.statePath)`r`n`r`n$(Format-OnlineDiagnosticText $result.diagnostic)"
+                $result = JoinRemoteWorld -Host $hostInput.Text -Port $port -WorldName $script:TrmInviteWorld -ExpectedVersion $script:TrmInviteVersion -ProgressCallback ${function:Set-UiStatus}
+                $joinOutput.Text = "Conectando ao mundo.`r`nModo: $($result.mode)`r`nMundo: $($result.worldName)`r`nHost do convite: $($result.host)`r`nIP usado pelo client: $($result.clientWorldAddress)`r`nPorta: $($result.port)`r`nHistorico salvo em: $($result.statePath)`r`n`r`n$(Format-OnlineDiagnosticText $result.diagnostic)"
                 $statusLabel.Text = 'Status: cliente online iniciado'
             } catch {
                 $joinOutput.Text = Format-FriendlyError $_.Exception.Message

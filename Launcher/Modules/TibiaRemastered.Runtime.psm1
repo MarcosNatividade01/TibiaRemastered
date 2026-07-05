@@ -681,6 +681,20 @@ function Resolve-TrmClientWorldAddress {
     return $Host
 }
 
+function Write-TrmClientLaunchLog {
+    param(
+        [string]$Mode,
+        [string]$Host,
+        [int]$Port,
+        [string]$ClientWorldAddress,
+        [string]$ConfigDescription,
+        [string]$ClientExe,
+        [string]$ClientWorkingDirectory
+    )
+    $command = '"{0}" (WorkingDirectory="{1}")' -f $ClientExe, $ClientWorkingDirectory
+    Write-TrmLog ("Client launch: mode={0}; host={1}; clientWorldAddress={2}; port={3}; config={4}; command={5}" -f $Mode, $Host, $ClientWorldAddress, $Port, $ConfigDescription, $command)
+}
+
 function Get-TrmPublicIPAddress {
     try {
         return ((Invoke-RestMethod -Uri 'https://api.ipify.org' -TimeoutSec 4).ToString())
@@ -985,6 +999,11 @@ function Start-TrmHostedWorld {
     }
 }
 
+function HostWorld {
+    param([scriptblock]$ProgressCallback)
+    return (Start-TrmHostedWorld -ProgressCallback $ProgressCallback)
+}
+
 function Stop-TrmHostedWorld {
     $resolved = Get-TrmRuntimeConfigResolved
     $stopped = 0
@@ -1013,9 +1032,18 @@ function Test-TrmAssistedHostConnection {
     }
 }
 
-function Start-TrmOnlineClient {
-    param([string]$Host, [int]$Port = 7172, [string]$WorldName = '', [string]$ExpectedVersion = '', [scriptblock]$ProgressCallback)
+function Start-TrmClientForWorld {
+    param(
+        [ValidateSet('own-hosted','remote')][string]$Mode,
+        [string]$Host,
+        [string]$ClientWorldAddress,
+        [int]$Port = 7172,
+        [string]$WorldName = '',
+        [string]$ExpectedVersion = '',
+        [scriptblock]$ProgressCallback
+    )
     if ([string]::IsNullOrWhiteSpace($Host)) { throw 'Informe o IP ou endereco do host.' }
+    if ([string]::IsNullOrWhiteSpace($ClientWorldAddress)) { throw 'Endereco do mundo nao definido.' }
     $resolved = Get-TrmRuntimeConfigResolved
     Ensure-TrmProjectStructure
     Ensure-TrmPlayerPackage -Config $resolved.config -ServerExe $resolved.serverExe -ClientExe $resolved.clientExe -ProgressCallback $ProgressCallback
@@ -1030,17 +1058,43 @@ function Start-TrmOnlineClient {
         throw "Versao incompativel: convite=$ExpectedVersion host=$($diagnostic.version.hostVersion)."
     }
     Save-TrmOnlineState -Host $Host -Port $Port -WorldName $WorldName -Version $diagnostic.version.localVersion | Out-Null
-    $clientWorldAddress = Resolve-TrmClientWorldAddress -Host $Host
-    Ensure-TrmPortableWebEndpointMode -Config $resolved.config -ProgressCallback $ProgressCallback -BindAddress '127.0.0.1' -WorldAddress $clientWorldAddress -GamePort $Port
-    if ($ProgressCallback) { & $ProgressCallback "Abrindo cliente para $Host`:$Port..." 100 0 0 }
+    Ensure-TrmPortableWebEndpointMode -Config $resolved.config -ProgressCallback $ProgressCallback -BindAddress '127.0.0.1' -WorldAddress $ClientWorldAddress -GamePort $Port
+    if ($ProgressCallback) { & $ProgressCallback "Abrindo cliente para $ClientWorldAddress`:$Port..." 100 0 0 }
     Remove-Item Env:\QT_QUICK_BACKEND -ErrorAction SilentlyContinue
     Remove-Item Env:\QT_OPENGL -ErrorAction SilentlyContinue
     Remove-Item Env:\QSG_RHI_BACKEND -ErrorAction SilentlyContinue
     $env:QSG_RENDER_LOOP = 'basic'
-    $env:TRM_ONLINE_HOST = $Host
+    $env:TRM_ONLINE_MODE = $Mode
+    $env:TRM_ONLINE_HOST = $ClientWorldAddress
     $env:TRM_ONLINE_PORT = [string]$Port
+    Write-TrmClientLaunchLog -Mode $Mode -Host $Host -Port $Port -ClientWorldAddress $ClientWorldAddress -ConfigDescription ("portable-web-endpoint bind=127.0.0.1 world={0}:{1}" -f $ClientWorldAddress, $Port) -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory
     Start-Process -FilePath $resolved.clientExe -WorkingDirectory $resolved.clientWorkingDirectory | Out-Null
-    return [pscustomobject]@{host=$Host; clientWorldAddress=$clientWorldAddress; port=$Port; worldName=$WorldName; clientStarted=$true; statePath=(Get-TrmOnlineStatePath); diagnostic=$diagnostic}
+    return [pscustomobject]@{mode=$Mode; host=$Host; clientWorldAddress=$ClientWorldAddress; port=$Port; worldName=$WorldName; clientStarted=$true; statePath=(Get-TrmOnlineStatePath); diagnostic=$diagnostic}
+}
+
+function JoinOwnHostedWorld {
+    param([int]$Port = 7172, [string]$WorldName = '', [scriptblock]$ProgressCallback)
+    $resolved = Get-TrmRuntimeConfigResolved
+    Ensure-TrmLocalServerStarted -Resolved $resolved -ProgressCallback $ProgressCallback
+    return (Start-TrmClientForWorld -Mode 'own-hosted' -Host '127.0.0.1' -ClientWorldAddress '127.0.0.1' -Port $Port -WorldName $WorldName -ProgressCallback $ProgressCallback)
+}
+
+function JoinRemoteWorld {
+    param([string]$Host, [int]$Port = 7172, [string]$WorldName = '', [string]$ExpectedVersion = '', [scriptblock]$ProgressCallback)
+    if (Test-TrmHostIsLocalMachine -Host $Host) {
+        throw "Use Entrar no Meu Mundo para conectar ao proprio servidor local. Entrar em Mundo preserva o IP do convite e nao troca por 127.0.0.1."
+    }
+    return (Start-TrmClientForWorld -Mode 'remote' -Host $Host -ClientWorldAddress $Host -Port $Port -WorldName $WorldName -ExpectedVersion $ExpectedVersion -ProgressCallback $ProgressCallback)
+}
+
+function Start-TrmOnlineClient {
+    param([string]$Host, [int]$Port = 7172, [string]$WorldName = '', [string]$ExpectedVersion = '', [scriptblock]$ProgressCallback)
+    return (JoinRemoteWorld -Host $Host -Port $Port -WorldName $WorldName -ExpectedVersion $ExpectedVersion -ProgressCallback $ProgressCallback)
+}
+
+function StartOffline {
+    param([scriptblock]$ProgressCallback)
+    Start-TrmGame -ProgressCallback $ProgressCallback
 }
 
 function Ensure-TrmPlayerPackage {
@@ -1283,4 +1337,4 @@ function Start-TrmGame {
     Start-Process -FilePath $clientExe -WorkingDirectory $clientWorkingDirectory | Out-Null
 }
 
-Export-ModuleMember -Function *-Trm*
+Export-ModuleMember -Function *-Trm*,StartOffline,HostWorld,JoinOwnHostedWorld,JoinRemoteWorld
