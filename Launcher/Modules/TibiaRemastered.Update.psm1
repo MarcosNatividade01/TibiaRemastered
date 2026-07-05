@@ -40,6 +40,7 @@ function New-TrmUpdateBackup {
     $stamp = Get-Date -Format 'yyyy-MM-dd_HH-mm-ss'
     $dir = Join-Path $root (Join-Path 'Backup' "update_$stamp")
     New-Item -ItemType Directory -Force -Path $dir | Out-Null
+    Write-TrmLog "Update backup created: $dir"
     return $dir
 }
 
@@ -52,6 +53,7 @@ function Backup-TrmFileForUpdate {
     $destDir = Split-Path -Parent $dest
     if (-not (Test-Path $destDir)) { New-Item -ItemType Directory -Force -Path $destDir | Out-Null }
     Copy-Item -Path $source -Destination $dest -Force
+    Write-TrmLog "Update backup file: $RelativePath -> $dest"
 }
 
 function Restore-TrmBackup {
@@ -118,10 +120,12 @@ function Sync-TrmFromManifest {
             $relative = ([string]$file.path -replace '\\','/').TrimStart('/')
             if ([string]::IsNullOrWhiteSpace($relative)) { throw 'Manifest contains file without path.' }
             if ($ProgressCallback) { & $ProgressCallback "Verificando $relative" (($checked / [Math]::Max(1, $files.Count)) * 100) 0 0 }
+            Write-TrmLog "Update checking file: $relative"
 
             if (Test-TrmProtectedPath $relative) {
                 $protected++
                 $actions += [pscustomobject]@{path=$relative; action='protected'; reason='protected path'}
+                Write-TrmLog "Update skipped protected file: $relative"
                 continue
             }
 
@@ -131,11 +135,13 @@ function Sync-TrmFromManifest {
             if ($localHash -eq $remoteHash -and -not $ForceRepair) {
                 $skipped++
                 $actions += [pscustomobject]@{path=$relative; action='current'; reason='hash match'}
+                Write-TrmLog "Update skipped current file: $relative"
                 continue
             }
             if ($localHash -eq $remoteHash -and $ForceRepair) {
                 $skipped++
                 $actions += [pscustomobject]@{path=$relative; action='verified'; reason='repair hash match'}
+                Write-TrmLog "Update verified current file during repair: $relative"
                 continue
             }
 
@@ -151,16 +157,19 @@ function Sync-TrmFromManifest {
                 $remaining = (@($files | Select-Object -Skip $checked | ForEach-Object { [int64]$_.size }) | Measure-Object -Sum).Sum
             }
             if ($ProgressCallback) { & $ProgressCallback "Baixando $relative" (($checked / [Math]::Max(1, $files.Count)) * 100) 0 $remaining }
+            Write-TrmLog "Update downloading file: $relative from $($file.url)"
             Copy-TrmRemoteFile -Url ([string]$file.url) -Destination $tmp
             $hash = Get-TrmSha256 $tmp
             if ($hash -ne $remoteHash) {
                 Remove-Item -Path $tmp -Force -ErrorAction SilentlyContinue
+                Write-TrmLog "Update hash mismatch for $relative expected=$remoteHash actual=$hash" 'ERROR'
                 throw "Hash mismatch for $relative. expected=$remoteHash actual=$hash"
             }
             Move-Item -Path $tmp -Destination $target -Force
             $downloaded++
             $bytesDownloaded += [int64]$file.size
             $actions += [pscustomobject]@{path=$relative; action='downloaded'; reason='hash mismatch or missing'}
+            Write-TrmLog "Update downloaded file: $relative"
         }
 
         $manifestVersion = '0.0.0'
@@ -186,6 +195,7 @@ function Sync-TrmFromManifest {
             actions = $actions
         }
         Save-TrmUpdateReport $report
+        Write-TrmLog "Update finished successfully. checked=$checked downloaded=$downloaded skipped=$skipped protected=$protected backup=$backup"
         return $report
     } catch {
         Write-TrmLog "Update failed, restoring backup $backup : $($_.Exception.Message)" 'ERROR'

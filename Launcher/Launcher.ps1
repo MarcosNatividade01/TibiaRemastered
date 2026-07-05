@@ -42,6 +42,36 @@ function Get-LauncherRemoteVersionText {
     }
 }
 
+function ConvertTo-LauncherComparableVersion {
+    param([string]$Version)
+    if ([string]::IsNullOrWhiteSpace($Version)) { return [version]'0.0.0' }
+    $core = ($Version -replace '-.*$','')
+    try { return [version]$core } catch { return [version]'0.0.0' }
+}
+
+function Test-LauncherRemoteVersionNewer {
+    param([string]$LocalVersion, [string]$RemoteVersion)
+    return ((ConvertTo-LauncherComparableVersion $RemoteVersion) -gt (ConvertTo-LauncherComparableVersion $LocalVersion))
+}
+
+function Get-LauncherRemoteChangelogText {
+    $config = Get-TrmConfig
+    if ([string]::IsNullOrWhiteSpace([string]$config.remoteVersionUrl)) { throw 'URL de versao remota nao configurada.' }
+    $changelogUrl = ([string]$config.remoteVersionUrl) -replace 'version\.json(\?.*)?$', 'CHANGELOG.md'
+    if ($changelogUrl -eq [string]$config.remoteVersionUrl) { throw 'Nao foi possivel inferir a URL do changelog remoto.' }
+    return Get-TrmRemoteText $changelogUrl
+}
+
+function Get-LauncherChangelogSection {
+    param([string]$Changelog, [string]$Version)
+    if ([string]::IsNullOrWhiteSpace($Changelog)) { return 'Changelog remoto vazio.' }
+    if ([string]::IsNullOrWhiteSpace($Version)) { return $Changelog }
+    $pattern = "(?ms)^## \[$([regex]::Escape($Version))\].*?(?=^## \[|\z)"
+    $match = [regex]::Match($Changelog, $pattern)
+    if ($match.Success) { return $match.Value.Trim() }
+    return $Changelog
+}
+
 function Show-LauncherGui {
     Add-Type -AssemblyName System.Windows.Forms
     Add-Type -AssemblyName System.Drawing
@@ -72,10 +102,14 @@ function Show-LauncherGui {
         $Control.Font = $fontMain
     }
 
+    $script:BtnUpdate = $null
+    $script:BtnUpdatePlay = $null
+    $script:BtnNews = $null
+
     $form = New-Object System.Windows.Forms.Form
     $form.Text = 'Tibia Remastered Launcher'
-    $form.Size = New-Object System.Drawing.Size(840, 590)
-    $form.MinimumSize = New-Object System.Drawing.Size(800, 550)
+    $form.Size = New-Object System.Drawing.Size(840, 660)
+    $form.MinimumSize = New-Object System.Drawing.Size(800, 620)
     $form.StartPosition = 'CenterScreen'
     $form.BackColor = $colorBackground
     $form.ForeColor = $colorText
@@ -118,29 +152,36 @@ function Show-LauncherGui {
     $form.Controls.Add($speed)
 
     $remaining = New-Object System.Windows.Forms.Label
-    $remaining.Location = New-Object System.Drawing.Point(22, 116)
+    $remaining.Location = New-Object System.Drawing.Point(22, 140)
     $remaining.Size = New-Object System.Drawing.Size(700, 22)
     $remaining.Text = 'Restante: 0 B'
     $remaining.ForeColor = $colorText
     $form.Controls.Add($remaining)
 
+    $updateStatus = New-Object System.Windows.Forms.Label
+    $updateStatus.Location = New-Object System.Drawing.Point(22, 116)
+    $updateStatus.Size = New-Object System.Drawing.Size(740, 22)
+    $updateStatus.Text = 'Status de atualizacao: verificando...'
+    $updateStatus.ForeColor = [System.Drawing.Color]::FromArgb(232, 184, 85)
+    $form.Controls.Add($updateStatus)
+
     $rootLabel = New-Object System.Windows.Forms.Label
-    $rootLabel.Location = New-Object System.Drawing.Point(22, 140)
+    $rootLabel.Location = New-Object System.Drawing.Point(22, 164)
     $rootLabel.Size = New-Object System.Drawing.Size(740, 20)
     $rootLabel.Text = 'Launcher atual: ' + (Get-TrmRoot)
     $rootLabel.ForeColor = [System.Drawing.Color]::FromArgb(176, 154, 112)
     $form.Controls.Add($rootLabel)
 
     $progress = New-Object System.Windows.Forms.ProgressBar
-    $progress.Location = New-Object System.Drawing.Point(22, 166)
+    $progress.Location = New-Object System.Drawing.Point(22, 190)
     $progress.Size = New-Object System.Drawing.Size(740, 22)
     $progress.Minimum = 0
     $progress.Maximum = 100
     $form.Controls.Add($progress)
 
     $logBox = New-Object System.Windows.Forms.TextBox
-    $logBox.Location = New-Object System.Drawing.Point(22, 202)
-    $logBox.Size = New-Object System.Drawing.Size(740, 165)
+    $logBox.Location = New-Object System.Drawing.Point(22, 226)
+    $logBox.Size = New-Object System.Drawing.Size(740, 145)
     $logBox.Multiline = $true
     $logBox.ReadOnly = $true
     $logBox.ScrollBars = 'Vertical'
@@ -162,8 +203,21 @@ function Show-LauncherGui {
     }
 
     function Refresh-VersionLabels {
-        $localVersion.Text = 'Versao local: ' + (Get-LauncherLocalVersionText)
-        $remoteVersion.Text = 'Versao disponivel: ' + (Get-LauncherRemoteVersionText)
+        $localText = Get-LauncherLocalVersionText
+        $remoteText = Get-LauncherRemoteVersionText
+        $localVersion.Text = 'Versao instalada: ' + $localText
+        $remoteVersion.Text = 'Versao disponivel: ' + $remoteText
+        $hasUpdate = Test-LauncherRemoteVersionNewer -LocalVersion $localText -RemoteVersion $remoteText
+        if ($remoteText -eq 'indisponivel' -or $remoteText -eq 'nao configurada' -or $remoteText -eq 'desconhecida') {
+            $updateStatus.Text = 'Status de atualizacao: nao foi possivel verificar agora.'
+        } elseif ($hasUpdate) {
+            $updateStatus.Text = "Atualizacao disponivel: $localText -> $remoteText"
+        } else {
+            $updateStatus.Text = 'Voce esta usando a versao mais recente.'
+        }
+        if ($script:BtnUpdate) { $script:BtnUpdate.Enabled = $hasUpdate }
+        if ($script:BtnUpdatePlay) { $script:BtnUpdatePlay.Enabled = $hasUpdate }
+        if ($script:BtnNews) { $script:BtnNews.Enabled = ($remoteText -ne 'indisponivel' -and $remoteText -ne 'nao configurada' -and $remoteText -ne 'desconhecida') }
     }
 
     function Refresh-LastUpdate {
@@ -808,10 +862,71 @@ function Show-LauncherGui {
         [void]$helpForm.ShowDialog($form)
     }
 
+    function Invoke-LauncherUpdateFromUi([bool]$PlayAfterUpdate) {
+        try {
+            Set-UiStatus 'Atualizacao iniciada...' 0 0 0
+            $result = Invoke-TrmUpdateOrRepair -ProgressCallback ${function:Set-UiStatus}
+            Refresh-VersionLabels
+            Set-UiStatus ("Atualizacao concluida. Baixados: $($result.downloaded), verificados: $($result.checked), protegidos: $($result.protected)") 100 $result.averageBytesPerSecond 0
+            $launcherUpdated = $false
+            foreach ($action in @($result.actions)) {
+                $path = ''
+                if ($action.PSObject.Properties.Name -contains 'path') { $path = ([string]$action.path -replace '\\','/') }
+                $actionName = ''
+                if ($action.PSObject.Properties.Name -contains 'action') { $actionName = [string]$action.action }
+                if ($actionName -eq 'downloaded' -and ($path -eq 'Launcher/Launcher.ps1' -or $path.StartsWith('Launcher/Modules/', [System.StringComparison]::OrdinalIgnoreCase))) {
+                    $launcherUpdated = $true
+                    break
+                }
+            }
+            if ($launcherUpdated) {
+                $launcherPath = Join-Path (Get-TrmRoot) 'Launcher\Launcher.ps1'
+                $args = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$launcherPath)
+                if ($PlayAfterUpdate) { $args += '-Play' }
+                Start-Process -FilePath 'powershell.exe' -ArgumentList $args -WorkingDirectory (Get-TrmRoot) | Out-Null
+                $form.Close()
+                return
+            }
+            if ($PlayAfterUpdate) {
+                Start-TrmGame -ProgressCallback ${function:Set-UiStatus}
+                Set-UiStatus 'Atualizacao concluida. Cliente iniciado.' 100 0 0
+            }
+        } catch {
+            Set-UiStatus ("Erro na atualizacao: $($_.Exception.Message)") 0 0 0
+        }
+    }
+
+    function Show-LauncherNewsPanel {
+        $newsForm = New-Object System.Windows.Forms.Form
+        $newsForm.Text = 'Novidades'
+        $newsForm.Size = New-Object System.Drawing.Size(720, 520)
+        $newsForm.MinimumSize = New-Object System.Drawing.Size(640, 460)
+        $newsForm.StartPosition = 'CenterParent'
+        $newsForm.BackColor = $colorBackground
+        $newsForm.ForeColor = $colorText
+
+        $newsText = New-Object System.Windows.Forms.TextBox
+        $newsText.Location = New-Object System.Drawing.Point(16, 16)
+        $newsText.Size = New-Object System.Drawing.Size(670, 420)
+        $newsText.Multiline = $true
+        $newsText.ReadOnly = $true
+        $newsText.ScrollBars = 'Vertical'
+        Set-LauncherTextStyle $newsText
+        $newsForm.Controls.Add($newsText)
+
+        try {
+            $remoteText = Get-LauncherRemoteVersionText
+            $newsText.Text = Get-LauncherChangelogSection -Changelog (Get-LauncherRemoteChangelogText) -Version $remoteText
+        } catch {
+            $newsText.Text = "Nao foi possivel obter as novidades remotas.`r`nDetalhes: $($_.Exception.Message)"
+        }
+        [void]$newsForm.ShowDialog($form)
+    }
+
     $btnPlay = New-Object System.Windows.Forms.Button
     $btnPlay.Text = 'Jogar Offline'
-    $btnPlay.Location = New-Object System.Drawing.Point(22, 388)
-    $btnPlay.Size = New-Object System.Drawing.Size(115, 38)
+    $btnPlay.Location = New-Object System.Drawing.Point(22, 440)
+    $btnPlay.Size = New-Object System.Drawing.Size(125, 38)
     $btnPlay.Add_Click({
         try {
             Start-TrmGame -ProgressCallback ${function:Set-UiStatus}
@@ -824,31 +939,55 @@ function Show-LauncherGui {
 
     $btnHostWorld = New-Object System.Windows.Forms.Button
     $btnHostWorld.Text = 'Hospedar Mundo'
-    $btnHostWorld.Location = New-Object System.Drawing.Point(147, 388)
-    $btnHostWorld.Size = New-Object System.Drawing.Size(125, 38)
+    $btnHostWorld.Location = New-Object System.Drawing.Point(157, 440)
+    $btnHostWorld.Size = New-Object System.Drawing.Size(135, 38)
     $btnHostWorld.Add_Click({ Show-HostAssistPanel 'host' })
     Set-LauncherButtonStyle $btnHostWorld
     $form.Controls.Add($btnHostWorld)
 
     $btnJoinWorld = New-Object System.Windows.Forms.Button
     $btnJoinWorld.Text = 'Entrar em Mundo'
-    $btnJoinWorld.Location = New-Object System.Drawing.Point(282, 388)
-    $btnJoinWorld.Size = New-Object System.Drawing.Size(125, 38)
+    $btnJoinWorld.Location = New-Object System.Drawing.Point(302, 440)
+    $btnJoinWorld.Size = New-Object System.Drawing.Size(135, 38)
     $btnJoinWorld.Add_Click({ Show-HostAssistPanel 'join' })
     Set-LauncherButtonStyle $btnJoinWorld
     $form.Controls.Add($btnJoinWorld)
 
     $btnDiagnostics = New-Object System.Windows.Forms.Button
     $btnDiagnostics.Text = 'Diagnostico'
-    $btnDiagnostics.Location = New-Object System.Drawing.Point(417, 388)
+    $btnDiagnostics.Location = New-Object System.Drawing.Point(447, 440)
     $btnDiagnostics.Size = New-Object System.Drawing.Size(105, 38)
     $btnDiagnostics.Add_Click({ Show-LauncherDiagnosticsPanel })
     Set-LauncherButtonStyle $btnDiagnostics
     $form.Controls.Add($btnDiagnostics)
 
+    $script:BtnUpdate = New-Object System.Windows.Forms.Button
+    $script:BtnUpdate.Text = 'Atualizar'
+    $script:BtnUpdate.Location = New-Object System.Drawing.Point(22, 388)
+    $script:BtnUpdate.Size = New-Object System.Drawing.Size(110, 38)
+    $script:BtnUpdate.Add_Click({ Invoke-LauncherUpdateFromUi $false })
+    Set-LauncherButtonStyle $script:BtnUpdate
+    $form.Controls.Add($script:BtnUpdate)
+
+    $script:BtnUpdatePlay = New-Object System.Windows.Forms.Button
+    $script:BtnUpdatePlay.Text = 'Atualizar e Jogar'
+    $script:BtnUpdatePlay.Location = New-Object System.Drawing.Point(142, 388)
+    $script:BtnUpdatePlay.Size = New-Object System.Drawing.Size(145, 38)
+    $script:BtnUpdatePlay.Add_Click({ Invoke-LauncherUpdateFromUi $true })
+    Set-LauncherButtonStyle $script:BtnUpdatePlay
+    $form.Controls.Add($script:BtnUpdatePlay)
+
+    $script:BtnNews = New-Object System.Windows.Forms.Button
+    $script:BtnNews.Text = 'Ver Novidades'
+    $script:BtnNews.Location = New-Object System.Drawing.Point(297, 388)
+    $script:BtnNews.Size = New-Object System.Drawing.Size(125, 38)
+    $script:BtnNews.Add_Click({ Show-LauncherNewsPanel })
+    Set-LauncherButtonStyle $script:BtnNews
+    $form.Controls.Add($script:BtnNews)
+
     $btnRepairMain = New-Object System.Windows.Forms.Button
     $btnRepairMain.Text = 'Reparar Arquivos'
-    $btnRepairMain.Location = New-Object System.Drawing.Point(532, 388)
+    $btnRepairMain.Location = New-Object System.Drawing.Point(432, 388)
     $btnRepairMain.Size = New-Object System.Drawing.Size(130, 38)
     $btnRepairMain.Add_Click({
         try {
@@ -862,7 +1001,7 @@ function Show-LauncherGui {
 
     $btnConfig = New-Object System.Windows.Forms.Button
     $btnConfig.Text = 'Configuracoes'
-    $btnConfig.Location = New-Object System.Drawing.Point(22, 440)
+    $btnConfig.Location = New-Object System.Drawing.Point(562, 440)
     $btnConfig.Size = New-Object System.Drawing.Size(125, 38)
     $btnConfig.Add_Click({ Show-LauncherSettingsPanel })
     Set-LauncherButtonStyle $btnConfig
@@ -870,7 +1009,7 @@ function Show-LauncherGui {
 
     $btnHelp = New-Object System.Windows.Forms.Button
     $btnHelp.Text = 'Ajuda'
-    $btnHelp.Location = New-Object System.Drawing.Point(157, 440)
+    $btnHelp.Location = New-Object System.Drawing.Point(697, 440)
     $btnHelp.Size = New-Object System.Drawing.Size(90, 38)
     $btnHelp.Add_Click({ Show-LauncherHelpPanel })
     Set-LauncherButtonStyle $btnHelp

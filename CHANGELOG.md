@@ -2,6 +2,20 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.6] - Publicacao GitHub
+
+- Publicada versao 0.1.6 para testes online/LAN.
+- Atualizados `version.json` e `manifest.json` para o Launcher baixar arquivos pelo GitHub.
+- Mantidas protecoes para `UserData`, logs, backups, saves, banco local e arquivos pessoais.
+## [0.1.6] - Launcher Update UX
+
+- Adicionada area de status de atualizacao na tela inicial do Launcher, com versao instalada, versao disponivel e mensagem quando a versao local ja esta atualizada.
+- Adicionados botoes `Atualizar`, `Atualizar e Jogar` e `Ver Novidades`.
+- O botao `Atualizar` executa o fluxo incremental por manifest, validando SHA256, preservando arquivos protegidos e registrando acoes por arquivo nos logs.
+- O botao `Atualizar e Jogar` so inicia o modo Offline quando a atualizacao termina com sucesso.
+- `Ver Novidades` busca o `CHANGELOG.md` remoto e mostra a secao da versao disponivel quando encontrada.
+- Adicionado teste local de update UX cobrindo versao local menor, versao local igual, arquivo protegido, hash invalido e manifest indisponivel.
+
 ## [0.1.5] - Publicacao GitHub
 
 - Publicada versao 0.1.5 para testes online/LAN.
@@ -87,6 +101,7 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Criada a estrutura inicial do repositorio.
 - Adicionados arquivos base para README, roadmap, ideias, versao e manifest.
 - Adicionado `.gitignore` para proteger dados reais e arquivos sensiveis.
+
 
 
 

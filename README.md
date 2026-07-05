@@ -43,9 +43,17 @@ Nao devem ser versionados:
 
 ## Auto-update
 
-O arquivo `version.json` guarda a versao atual do projeto. O arquivo `manifest.json` sera usado pelo launcher para comparar arquivos locais com os arquivos publicados no GitHub.
+O arquivo `version.json` guarda a versao atual do projeto. O arquivo `manifest.json` e usado pelo launcher para comparar arquivos locais com os arquivos publicados no GitHub.
 
-O comando Play usa o runtime local por padrao. Atualizacao automatica antes do Play fica controlada por `autoUpdateBeforePlay` em `Config/launcher-config.json`; nesta base ela permanece `false` para preservar o modo offline com um clique. Atualizacao/reparo continuam disponiveis pelo fluxo de repair/update do Launcher.
+O Launcher mostra versao instalada, versao disponivel e status de atualizacao. Quando existe uma versao nova, a tela inicial libera:
+
+- `Atualizar`;
+- `Atualizar e Jogar`;
+- `Ver Novidades`.
+
+`Atualizar` baixa apenas arquivos ausentes ou desatualizados, valida SHA256, cria backup antes de sobrescrever arquivos e preserva caminhos protegidos. `Atualizar e Jogar` executa a atualizacao e so abre o modo Offline se a atualizacao terminar com sucesso.
+
+O comando Play usa o runtime local por padrao. Atualizacao automatica antes do Play fica controlada por `autoUpdateBeforePlay` em `Config/launcher-config.json`; nesta base ela permanece `false` para preservar o modo offline com um clique.
 
 Use `Database_Template/` para o banco modelo limpo e MariaDB portatil. Dados locais de execucao devem ficar em `UserData/` ou em pastas protegidas pelo `.gitignore`.
 
@@ -66,8 +74,11 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Publish-Releas
 
 ## Host Assistido
 
-O Launcher possui cinco opcoes principais:
+O Launcher possui opcoes principais claras:
 
+- `Atualizar`;
+- `Atualizar e Jogar`;
+- `Ver Novidades`;
 - `Jogar Offline`;
 - `Hospedar Mundo`;
 - `Entrar em Mundo`;
