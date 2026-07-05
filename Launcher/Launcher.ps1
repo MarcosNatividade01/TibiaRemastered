@@ -431,7 +431,7 @@ function Show-LauncherGui {
                 $currentInvite = [string]$result.invite
                 $currentHostPort = [int]$result.port
                 $currentHostWorld = [string]$result.worldName
-                $hostInfo.Text = "Servidor online`r`nMundo: $($result.worldName)`r`nJogadores conectados: $($result.playersOnline)`r`nIP local: $($result.localIp)`r`nIP publico: $($result.publicIp)`r`nPorta: $($result.port)`r`nVersao: $($result.version)`r`n`r`nConvite:`r`n$currentInvite`r`n`r`n$(Format-OnlineDiagnosticText $result.diagnostic)"
+                $hostInfo.Text = "Servidor online`r`nMundo: $($result.worldName)`r`nJogadores conectados: $($result.playersOnline)`r`nIP local: $($result.localIp)`r`nIP publico: $($result.publicIp)`r`nPorta: $($result.port)`r`nVersao: $($result.version)`r`n`r`nConvite para amigos:`r`n$currentInvite`r`n`r`n$(Format-OnlineDiagnosticText $result.diagnostic)"
                 $statusLabel.Text = 'Status: servidor online'
             } catch {
                 $hostInfo.Text = Format-FriendlyError $_.Exception.Message
@@ -442,16 +442,15 @@ function Show-LauncherGui {
         $hostGroup.Controls.Add($btnStartHost)
 
         $btnCopyHost = New-Object System.Windows.Forms.Button
-        $btnCopyHost.Text = 'Copiar Convite'
+        $btnCopyHost.Text = 'Copiar Convite para Amigos'
         $btnCopyHost.Location = New-Object System.Drawing.Point(144, 172)
-        $btnCopyHost.Size = New-Object System.Drawing.Size(110, 32)
+        $btnCopyHost.Size = New-Object System.Drawing.Size(170, 32)
         $btnCopyHost.Add_Click({
             if (-not [string]::IsNullOrWhiteSpace($currentInvite)) {
                 [System.Windows.Forms.Clipboard]::SetText($currentInvite)
                 $statusLabel.Text = 'Status: convite copiado'
-            } elseif (-not [string]::IsNullOrWhiteSpace($hostInfo.Text)) {
-                [System.Windows.Forms.Clipboard]::SetText($hostInfo.Text)
-                $statusLabel.Text = 'Status: dados copiados'
+            } else {
+                $statusLabel.Text = 'Status: hospede o mundo antes de copiar convite'
             }
         })
         Set-LauncherButtonStyle $btnCopyHost
@@ -459,7 +458,7 @@ function Show-LauncherGui {
 
         $btnJoinOwnHost = New-Object System.Windows.Forms.Button
         $btnJoinOwnHost.Text = 'Entrar no Meu Mundo'
-        $btnJoinOwnHost.Location = New-Object System.Drawing.Point(264, 172)
+        $btnJoinOwnHost.Location = New-Object System.Drawing.Point(324, 172)
         $btnJoinOwnHost.Size = New-Object System.Drawing.Size(150, 32)
         $btnJoinOwnHost.Add_Click({
             try {
@@ -582,7 +581,8 @@ function Show-LauncherGui {
         $btnUseInvite.Add_Click({
             $parsed = ConvertFrom-TrmWorldInvite -InviteText $inviteInput.Text
             if (-not $parsed.valid) {
-                $joinOutput.Text = "Convite nao reconhecido.`r`nCole o convite completo ou informe IP e porta manualmente."
+                $reason = if (-not [string]::IsNullOrWhiteSpace([string]$parsed.error)) { [string]$parsed.error } else { 'Cole um convite remoto valido ou informe IP e porta manualmente.' }
+                $joinOutput.Text = "Convite nao reconhecido.`r`n$reason`r`n`r`nHost extraido: $($parsed.host)`r`nPorta extraida: $($parsed.port)`r`nVersao extraida: $($parsed.version)`r`nModo extraido: $($parsed.mode)"
                 $statusLabel.Text = 'Status: convite invalido'
                 return
             }
@@ -590,7 +590,7 @@ function Show-LauncherGui {
             $portInput.Text = [string]$parsed.port
             $script:TrmInviteWorld = [string]$parsed.worldName
             $script:TrmInviteVersion = [string]$parsed.version
-            $joinOutput.Text = "Convite carregado.`r`nMundo: $script:TrmInviteWorld`r`nHost: $($parsed.host)`r`nPorta: $($parsed.port)`r`nVersao: $script:TrmInviteVersion"
+            $joinOutput.Text = "Convite carregado.`r`nMundo: $script:TrmInviteWorld`r`nHost: $($parsed.host)`r`nPorta: $($parsed.port)`r`nVersao: $script:TrmInviteVersion`r`nModo: $($parsed.mode)"
             $statusLabel.Text = 'Status: convite carregado'
         })
         Set-LauncherButtonStyle $btnUseInvite

@@ -2,6 +2,15 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.12] - Convite oficial do Host Assistido
+
+- Criado formato oficial de convite com `TIBIA_REMASTERED_INVITE`, `world`, `host`, `port`, `version` e `mode`.
+- O parser passa a ler campos por chave e nao por posicao ou por qualquer linha `Versao:` da tela.
+- Convites remotos sempre usam `mode=remote` e versao real do projeto.
+- Convites `mode=host-local` sao rejeitados em `Entrar em Mundo` com mensagem clara.
+- O botao de copia agora copia somente o convite para amigos, nunca o texto completo da tela de diagnostico.
+- Adicionado teste automatizado para convite remoto, host-local, legado com diagnostico e convite malformado.
+
 ## [0.1.11] - Manifest sem URLs 404
 
 - Corrigido o gerador de manifest para incluir apenas arquivos publicaveis pelo Git.

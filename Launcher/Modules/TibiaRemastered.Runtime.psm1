@@ -911,17 +911,18 @@ function New-TrmWorldInvite {
         [string]$WorldName,
         [string]$Host,
         [int]$Port,
-        [string]$Version
+        [string]$Version,
+        [ValidateSet('remote','host-local')][string]$Mode = 'remote'
     )
     if ([string]::IsNullOrWhiteSpace($WorldName)) { $WorldName = Get-TrmWorldName }
     if ([string]::IsNullOrWhiteSpace($Version)) { $Version = Get-TrmLocalVersion }
     $invite = @"
-Tibia Remastered Convite
-Mundo: $WorldName
-IP: $Host
-Porta: $Port
-Versao: $Version
-Instrucao: no outro computador, abra o Launcher, clique em Entrar em Mundo, cole este convite e clique em Usar Convite.
+TIBIA_REMASTERED_INVITE
+world=$WorldName
+host=$Host
+port=$Port
+version=$Version
+mode=$Mode
 "@
     return $invite.Trim()
 }
@@ -933,18 +934,42 @@ function ConvertFrom-TrmWorldInvite {
         host = ''
         port = 7172
         version = ''
+        mode = ''
         valid = $false
+        error = ''
     }
     if ([string]::IsNullOrWhiteSpace($InviteText)) { return [pscustomobject]$result }
-    foreach ($line in (($InviteText -replace "`r`n","`n") -split "`n")) {
+    $lines = @(($InviteText -replace "`r`n","`n") -split "`n")
+    $hasOfficialHeader = @($lines | Where-Object { $_.Trim() -eq 'TIBIA_REMASTERED_INVITE' }).Count -gt 0
+    foreach ($line in $lines) {
         $trimmed = $line.Trim()
-        if ($trimmed -match '^(Mundo|World)\s*:\s*(.+)$') { $result.worldName = $Matches[2].Trim(); continue }
-        if ($trimmed -match '^(IP|Host|Endereco|Address)\s*:\s*(.+)$') { $result.host = $Matches[2].Trim(); continue }
-        if ($trimmed -match '^(Porta|Port)\s*:\s*(\d+)$') { $result.port = [int]$Matches[2]; continue }
-        if ($trimmed -match '^(Versao|Version)\s*:\s*(.+)$') { $result.version = $Matches[2].Trim(); continue }
+        if ($hasOfficialHeader -and $trimmed -match '^([A-Za-z][A-Za-z0-9_-]*)\s*=\s*(.*)$') {
+            $key = $Matches[1].Trim().ToLowerInvariant()
+            $value = $Matches[2].Trim()
+            if ($key -eq 'world') { $result.worldName = $value; continue }
+            if ($key -eq 'host') { $result.host = $value; continue }
+            if ($key -eq 'port' -and $value -match '^\d+$') { $result.port = [int]$value; continue }
+            if ($key -eq 'version') { $result.version = $value; continue }
+            if ($key -eq 'mode') { $result.mode = $value.ToLowerInvariant(); continue }
+            continue
+        }
+        if (-not $hasOfficialHeader -and $trimmed -match '^(Mundo|World)\s*:\s*(.+)$') { $result.worldName = $Matches[2].Trim(); continue }
+        if (-not $hasOfficialHeader -and $trimmed -match '^(IP|Host|Endereco|Address)\s*:\s*(.+)$') { $result.host = $Matches[2].Trim(); continue }
+        if (-not $hasOfficialHeader -and $trimmed -match '^(Porta|Port)\s*:\s*(\d+)$') { $result.port = [int]$Matches[2]; continue }
+        if (-not $hasOfficialHeader -and $trimmed -match '^(Versao|Version)\s*:\s*(.+)$' -and [string]::IsNullOrWhiteSpace([string]$result.version)) { $result.version = $Matches[2].Trim(); continue }
         if ($trimmed -match '^([a-zA-Z0-9\.\-]+):(\d+)$') { $result.host = $Matches[1].Trim(); $result.port = [int]$Matches[2]; continue }
     }
-    $result.valid = (-not [string]::IsNullOrWhiteSpace([string]$result.host) -and [int]$result.port -gt 0)
+    if ([string]::IsNullOrWhiteSpace([string]$result.mode)) {
+        $result.mode = if ($hasOfficialHeader) { '' } else { 'remote' }
+    }
+    if ($hasOfficialHeader -and [string]::IsNullOrWhiteSpace([string]$result.host)) { $result.error = 'Convite invalido: campo host ausente.' }
+    elseif ($hasOfficialHeader -and [int]$result.port -le 0) { $result.error = 'Convite invalido: campo port ausente ou invalido.' }
+    elseif ($hasOfficialHeader -and [string]::IsNullOrWhiteSpace([string]$result.version)) { $result.error = 'Convite invalido: campo version ausente.' }
+    elseif ($hasOfficialHeader -and [string]::IsNullOrWhiteSpace([string]$result.mode)) { $result.error = 'Convite invalido: campo mode ausente.' }
+    elseif ($result.mode -eq 'host-local') { $result.error = 'Este convite e local do host e nao deve ser usado por convidados.' }
+    elseif ($hasOfficialHeader -and $result.mode -ne 'remote') { $result.error = "Convite invalido: mode=$($result.mode) nao e aceito em Entrar em Mundo." }
+    elseif (-not [string]::IsNullOrWhiteSpace([string]$result.version) -and $result.version -notmatch '^\d+\.\d+\.\d+([-.][A-Za-z0-9.-]+)?$') { $result.error = "Convite invalido: version=$($result.version) nao parece uma versao do projeto." }
+    $result.valid = ([string]::IsNullOrWhiteSpace([string]$result.error) -and -not [string]::IsNullOrWhiteSpace([string]$result.host) -and [int]$result.port -gt 0)
     return [pscustomobject]$result
 }
 
