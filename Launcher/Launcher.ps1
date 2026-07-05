@@ -25,9 +25,7 @@ function Format-LauncherBytes {
 }
 
 function Get-LauncherLocalVersionText {
-    $version = Read-TrmJsonFile -Path (Join-Path (Get-TrmRoot) 'version.json') -Default ([pscustomobject]@{version='0.0.0'})
-    if ($version -and ($version.PSObject.Properties.Name -contains 'version')) { return [string]$version.version }
-    return '0.0.0'
+    return Get-TrmLocalVersion
 }
 
 function Get-LauncherRemoteVersionText {
@@ -389,12 +387,12 @@ function Show-LauncherGui {
             if ($null -eq $Diagnostic) { return 'Diagnostico indisponivel.' }
             $warnings = @($Diagnostic.warnings)
             $warningText = if ($warnings.Count -gt 0) { ($warnings -join "`r`n- ") } else { 'nenhum aviso critico' }
-            return "Diagnostico: $($Diagnostic.status)`r`nHost alvo acessivel: $($Diagnostic.targetReachable)`r`nIP local: $($Diagnostic.localIp)`r`nIP publico: $($Diagnostic.publicIp)`r`nPorta servidor em uso: $($Diagnostic.serverPort.inUse)`r`nVersao: $($Diagnostic.version.message)`r`nAvisos: $warningText`r`nRelatorio: $($Diagnostic.reportPath)"
+            return "Diagnostico: $($Diagnostic.status)`r`nmode=$($Diagnostic.connectionMode)`r`nversion=$($Diagnostic.currentVersion)`r`nHost alvo acessivel: $($Diagnostic.targetReachable)`r`nIP local: $($Diagnostic.localIp)`r`nIP publico: $($Diagnostic.publicIp)`r`nPorta servidor em uso: $($Diagnostic.serverPort.inUse)`r`nCompatibilidade: $($Diagnostic.version.message)`r`nAvisos: $warningText`r`nRelatorio: $($Diagnostic.reportPath)"
         }
 
         function Format-ConnectionReportText($Report) {
             if ($null -eq $Report) { return 'Relatorio de conexao indisponivel.' }
-            return "Relatorio de conexao: $($Report.status)`r`nModo: $($Report.mode)`r`nFase: $($Report.phase)`r`nIP final: $($Report.finalHost)`r`nPorta final: $($Report.finalPort)`r`nHost e localhost: $($Report.isLoopbackHost)`r`nTCP direto: $($Report.tcpTest.succeeded) $($Report.tcpTest.error)`r`nLogin server: $($Report.loginServer.responded) $($Report.loginServer.error)`r`nVersao: $($Report.version.message)`r`nClient usa: $($Report.clientWorldAddress):$($Report.finalPort)`r`nConfig client: $($Report.clientConfigDescription)`r`nComando: $($Report.clientCommand)`r`nFalha: $($Report.failureReason)`r`nArquivo: $($Report.reportPath)"
+            return "Relatorio de conexao: $($Report.status)`r`nmode=$($Report.mode)`r`nFase: $($Report.phase)`r`nIP final: $($Report.finalHost)`r`nPorta final: $($Report.finalPort)`r`nHost e localhost: $($Report.isLoopbackHost)`r`nTCP direto: $($Report.tcpTest.succeeded) $($Report.tcpTest.error)`r`nLogin server: $($Report.loginServer.responded) $($Report.loginServer.error)`r`nversion=$($Report.version.localVersion)`r`nCompatibilidade: $($Report.version.message)`r`nClient usa: $($Report.clientWorldAddress):$($Report.finalPort)`r`nConfig client: $($Report.clientConfigDescription)`r`nComando: $($Report.clientCommand)`r`nFalha: $($Report.failureReason)`r`nArquivo: $($Report.reportPath)"
         }
 
         $statusLabel = New-Object System.Windows.Forms.Label
@@ -789,7 +787,7 @@ function Show-LauncherGui {
         function Format-DiagnosticForUser($Diagnostic) {
             $warnings = @($Diagnostic.warnings)
             $warningText = if ($warnings.Count -gt 0) { ($warnings -join "`r`n- ") } else { 'Nenhum problema critico encontrado.' }
-            return "Resultado: $($Diagnostic.status)`r`nHost acessivel: $($Diagnostic.targetReachable)`r`nIP local: $($Diagnostic.localIp)`r`nIP publico: $($Diagnostic.publicIp)`r`nPorta: $($Diagnostic.port)`r`nVersao: $($Diagnostic.version.message)`r`n`r`nAvisos:`r`n- $warningText`r`n`r`nRelatorio salvo em:`r`n$($Diagnostic.reportPath)"
+            return "Resultado: $($Diagnostic.status)`r`nmode=$($Diagnostic.connectionMode)`r`nversion=$($Diagnostic.currentVersion)`r`nHost acessivel: $($Diagnostic.targetReachable)`r`nIP local: $($Diagnostic.localIp)`r`nIP publico: $($Diagnostic.publicIp)`r`nPorta: $($Diagnostic.port)`r`nCompatibilidade: $($Diagnostic.version.message)`r`n`r`nAvisos:`r`n- $warningText`r`n`r`nRelatorio salvo em:`r`n$($Diagnostic.reportPath)"
         }
 
         $btnHostDiag = New-Object System.Windows.Forms.Button

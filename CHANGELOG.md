@@ -2,6 +2,15 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.13] - Separacao definitiva entre version e mode
+
+- Centralizado o uso de `Get-TrmLocalVersion` como fonte oficial de versao baseada em `version.json`.
+- O convite oficial passa a incluir `publicHost` e mantem `version` e `mode` como campos separados.
+- O diagnostico online passa a registrar `currentVersion` e `connectionMode` separadamente.
+- Removido o texto de modo local do campo/mensagem de versao do diagnostico.
+- A tela do Launcher passa a exibir `version=` e `mode=` separadamente nos relatorios.
+- Ampliado o teste de convites para cobrir ordem livre de campos, `publicHost`, diagnostico host-local e convite malformado.
+
 ## [0.1.12] - Convite oficial do Host Assistido
 
 - Criado formato oficial de convite com `TIBIA_REMASTERED_INVITE`, `world`, `host`, `port`, `version` e `mode`.

@@ -910,16 +910,19 @@ function New-TrmWorldInvite {
     param(
         [string]$WorldName,
         [string]$Host,
+        [string]$PublicHost = '',
         [int]$Port,
         [string]$Version,
         [ValidateSet('remote','host-local')][string]$Mode = 'remote'
     )
     if ([string]::IsNullOrWhiteSpace($WorldName)) { $WorldName = Get-TrmWorldName }
     if ([string]::IsNullOrWhiteSpace($Version)) { $Version = Get-TrmLocalVersion }
+    if ([string]::IsNullOrWhiteSpace($PublicHost)) { $PublicHost = $Host }
     $invite = @"
 TIBIA_REMASTERED_INVITE
 world=$WorldName
 host=$Host
+publicHost=$PublicHost
 port=$Port
 version=$Version
 mode=$Mode
@@ -932,6 +935,7 @@ function ConvertFrom-TrmWorldInvite {
     $result = [ordered]@{
         worldName = ''
         host = ''
+        publicHost = ''
         port = 7172
         version = ''
         mode = ''
@@ -948,6 +952,7 @@ function ConvertFrom-TrmWorldInvite {
             $value = $Matches[2].Trim()
             if ($key -eq 'world') { $result.worldName = $value; continue }
             if ($key -eq 'host') { $result.host = $value; continue }
+            if ($key -eq 'publichost') { $result.publicHost = $value; continue }
             if ($key -eq 'port' -and $value -match '^\d+$') { $result.port = [int]$value; continue }
             if ($key -eq 'version') { $result.version = $value; continue }
             if ($key -eq 'mode') { $result.mode = $value.ToLowerInvariant(); continue }
@@ -962,6 +967,7 @@ function ConvertFrom-TrmWorldInvite {
     if ([string]::IsNullOrWhiteSpace([string]$result.mode)) {
         $result.mode = if ($hasOfficialHeader) { '' } else { 'remote' }
     }
+    if ([string]::IsNullOrWhiteSpace([string]$result.publicHost)) { $result.publicHost = $result.host }
     if ($hasOfficialHeader -and [string]::IsNullOrWhiteSpace([string]$result.host)) { $result.error = 'Convite invalido: campo host ausente.' }
     elseif ($hasOfficialHeader -and [int]$result.port -le 0) { $result.error = 'Convite invalido: campo port ausente ou invalido.' }
     elseif ($hasOfficialHeader -and [string]::IsNullOrWhiteSpace([string]$result.version)) { $result.error = 'Convite invalido: campo version ausente.' }
@@ -1024,7 +1030,20 @@ function New-TrmNetworkDiagnosticReport {
     } elseif ($Mode -eq 'host') {
         $targetReachable = Test-TrmAssistedHostConnection -Host '127.0.0.1' -Port $Port
     }
-    $version = if (-not [string]::IsNullOrWhiteSpace($Host)) { Test-TrmVersionCompatibility -Host $Host -WebPort $WebPort } else { [pscustomobject]@{compatible=$true; localVersion=(Get-TrmLocalVersion); hostVersion='self'; hostVersionAvailable=$true; message='Local host mode.'} }
+    $currentVersion = Get-TrmLocalVersion
+    $connectionMode = if ($Mode -eq 'host') { 'host-local' } elseif ($Mode -eq 'join') { 'remote' } else { $Mode }
+    $version = if (-not [string]::IsNullOrWhiteSpace($Host)) {
+        Test-TrmVersionCompatibility -Host $Host -WebPort $WebPort
+    } else {
+        [pscustomobject]@{
+            compatible = $true
+            localVersion = $currentVersion
+            hostVersion = $currentVersion
+            hostVersionAvailable = $true
+            message = "version=$currentVersion"
+            source = 'version.json'
+        }
+    }
 
     $warnings = @()
     if (-not $serverPort.inUse) { $warnings += "Porta do servidor $Port nao esta aberta localmente." }
@@ -1038,6 +1057,8 @@ function New-TrmNetworkDiagnosticReport {
     $report = [pscustomobject]@{
         generatedAt = (Get-Date).ToString('s')
         mode = $Mode
+        connectionMode = $connectionMode
+        currentVersion = $currentVersion
         host = $Host
         port = $Port
         webPort = $WebPort
@@ -1157,7 +1178,7 @@ function Start-TrmHostedWorld {
     Ensure-TrmPortableWebEndpointMode -Config $resolved.config -ProgressCallback $ProgressCallback -BindAddress '0.0.0.0' -WorldAddress $localIp -GamePort $port
     $diagnostic = New-TrmNetworkDiagnosticReport -Mode 'host' -Port $port -WebPort ([int]$resolved.config.webServerPort)
     $players = Get-TrmConnectedPlayerCount -Port $port
-    $invite = New-TrmWorldInvite -WorldName $worldName -Host $localIp -Port $port -Version $version
+    $invite = New-TrmWorldInvite -WorldName $worldName -Host $localIp -PublicHost $publicIp -Port $port -Version $version -Mode remote
     return [pscustomobject]@{
         status = 'online'
         worldName = $worldName
