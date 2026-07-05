@@ -75,8 +75,9 @@ function Copy-TrmRemoteFile {
         Copy-Item -Path $Url -Destination $Destination -Force
         return
     }
+    $requestUrl = Resolve-TrmRequestUrl $Url
     $headers = Get-TrmRequestHeaders $Url
-    Invoke-WebRequest -Uri $Url -Headers $headers -OutFile $Destination -UseBasicParsing -TimeoutSec 120
+    Invoke-WebRequest -Uri $requestUrl -Headers $headers -OutFile $Destination -UseBasicParsing -TimeoutSec 120
 }
 
 function Save-TrmUpdateReport {

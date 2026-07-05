@@ -167,7 +167,7 @@ function Update-Changelog {
     $path = Join-Path (Get-ProjectRoot) 'CHANGELOG.md'
     $content = Get-Content $path -Raw -Encoding UTF8
     $header = "## [$ReleaseVersion] - Publicacao GitHub"
-    if ($content -match [regex]::Escape($header)) {
+    if ($content -match "(?m)^## \[$([regex]::Escape($ReleaseVersion))\]") {
         Write-Ok "CHANGELOG.md ja contem entrada para $ReleaseVersion."
         return
     }
@@ -226,6 +226,43 @@ function Assert-GeneratedReleaseValidation {
         throw 'Validacao pre-publish falhou depois de gerar version.json/manifest.json. Publicacao cancelada antes do commit/push.'
     }
     Write-Ok 'Arquivos de release gerados foram validados.'
+}
+
+function Assert-ManifestHashesMatch {
+    Write-Step 'Validando hashes finais do manifest'
+    $root = Get-ProjectRoot
+    $manifestPath = Join-Path $root 'manifest.json'
+    if (-not (Test-Path $manifestPath)) {
+        throw "manifest.json nao encontrado para validacao final: $manifestPath"
+    }
+    $manifest = Get-Content -Path $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if (-not ($manifest.PSObject.Properties.Name -contains 'files')) {
+        throw 'manifest.json invalido: propriedade files ausente.'
+    }
+
+    $failures = @()
+    foreach ($file in @($manifest.files)) {
+        $relative = ([string]$file.path -replace '\\','/').TrimStart('/')
+        if ([string]::IsNullOrWhiteSpace($relative)) {
+            $failures += 'Manifest contem arquivo sem path.'
+            continue
+        }
+        $path = Join-Path $root $relative
+        if (-not (Test-Path $path)) {
+            $failures += ("{0}: arquivo ausente" -f $relative)
+            continue
+        }
+        $expected = ([string]$file.sha256).ToLowerInvariant()
+        $actual = (Get-FileHash -Path $path -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($actual -ne $expected) {
+            $failures += ("{0}: expected={1} actual={2}" -f $relative, $expected, $actual)
+        }
+    }
+
+    if ($failures.Count -gt 0) {
+        throw "Hash final diferente do manifest. Publicacao cancelada antes do commit/push:`n$($failures -join [Environment]::NewLine)"
+    }
+    Write-Ok "Hashes finais conferidos: $(@($manifest.files).Count) arquivos."
 }
 
 function Remove-ForbiddenTrackedFiles {
@@ -309,6 +346,7 @@ try {
     Assert-OfficialReleaseChecklist -ReleaseVersion $Version
     Update-ReleaseFiles -ReleaseVersion $Version
     Assert-GeneratedReleaseValidation
+    Assert-ManifestHashesMatch
 
     Write-Step 'Adicionando arquivos ao Git'
     Invoke-Git -Arguments @('add','-A') | Out-Null

@@ -2,6 +2,14 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.9] - Correcao de hash do manifest
+
+- Corrigido o fluxo de publicacao para validar todos os SHA256 do `manifest.json` antes de `git add`, commit e push.
+- O `version.json` passa a ser atualizado antes da varredura dos arquivos do manifest.
+- As URLs de arquivos no `manifest.json` passam a incluir versao e SHA esperado para evitar cache antigo do GitHub Raw.
+- O atualizador passa a resolver URL com cache buster tambem no download dos arquivos finais.
+- A publicacao agora e cancelada imediatamente se qualquer arquivo final divergir do hash gravado no manifest.
+
 ## [0.1.8] - Publicacao GitHub
 
 - Publicada versao 0.1.8 para testes online/LAN.

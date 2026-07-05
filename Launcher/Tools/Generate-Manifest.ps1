@@ -47,11 +47,28 @@ function Test-Ignored([string]$Relative) {
     return $false
 }
 
-function Get-FileUrl([string]$Relative) {
+function Add-UrlQuery([string]$Url, [string]$Query) {
+    if ([string]::IsNullOrWhiteSpace($Url)) { return '' }
+    $separator = '?'
+    if ($Url.Contains('?')) { $separator = '&' }
+    return $Url + $separator + $Query
+}
+
+function Get-FileUrl([string]$Relative, [string]$Hash) {
     if ([string]::IsNullOrWhiteSpace($RawBaseUrl)) { return '' }
     $encoded = [System.Uri]::EscapeDataString($Relative).Replace('%2F','/')
-    return $RawBaseUrl.TrimEnd('/') + '/' + $encoded
+    $url = $RawBaseUrl.TrimEnd('/') + '/' + $encoded
+    return Add-UrlQuery -Url $url -Query ('v={0}&sha={1}' -f ([System.Uri]::EscapeDataString($Version)), $Hash)
 }
+
+$versionJson = [pscustomobject]@{
+    name = 'TibiaRemastered'
+    version = $Version
+    channel = 'dev'
+    releaseDate = (Get-Date -Format 'yyyy-MM-dd')
+    minimumLauncherVersion = '0.1.0'
+}
+$versionJson | ConvertTo-Json -Depth 8 | Set-Content -Path $VersionOutput -Encoding UTF8
 
 $files = @()
 Get-ChildItem -Path $Root -File -Recurse | ForEach-Object {
@@ -65,7 +82,7 @@ Get-ChildItem -Path $Root -File -Recurse | ForEach-Object {
         path = $rel
         sha256 = $hash
         size = $_.Length
-        url = Get-FileUrl $rel
+        url = Get-FileUrl -Relative $rel -Hash $hash
         overwrite = $overwrite
         category = $category
     }
@@ -77,13 +94,5 @@ $manifest = [pscustomobject]@{
     hashAlgorithm = 'SHA256'
     files = @($files | Sort-Object path)
 }
-$versionJson = [pscustomobject]@{
-    name = 'TibiaRemastered'
-    version = $Version
-    channel = 'dev'
-    releaseDate = (Get-Date -Format 'yyyy-MM-dd')
-    minimumLauncherVersion = '0.1.0'
-}
 $manifest | ConvertTo-Json -Depth 8 | Set-Content -Path $Output -Encoding UTF8
-$versionJson | ConvertTo-Json -Depth 8 | Set-Content -Path $VersionOutput -Encoding UTF8
 [pscustomobject]@{Output=$Output; VersionOutput=$VersionOutput; Version=$Version; Files=$files.Count}
