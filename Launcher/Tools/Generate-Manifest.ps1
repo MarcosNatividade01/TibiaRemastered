@@ -15,7 +15,8 @@ if ([string]::IsNullOrWhiteSpace($VersionOutput)) { $VersionOutput = Join-Path $
 
 $excludeRoots = @(
     'UserData','Logs','Backup','Backups','Saves','Save','.git','.github','.vs','.vscode','.idea',
-    'Reports','release','Release','dist','build','tmp','temp','cache','Cache'
+    'Reports','release','Release','dist','build','tmp','temp','cache','Cache',
+    'Client/characterdata','Client/minimap'
 )
 $excludePatterns = @(
     '.gitignore','.gitattributes','manifest.json','version.json','*.tmp','*.temp','*.log','*.bak*',

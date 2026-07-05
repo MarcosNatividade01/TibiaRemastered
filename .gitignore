@@ -24,6 +24,8 @@ PrivateDatabase/
 # Contas, personagens e dados reais
 Client/conf/clientoptions.json
 Client/cache/
+Client/characterdata/
+Client/minimap/
 accounts/
 Accounts/
 players/

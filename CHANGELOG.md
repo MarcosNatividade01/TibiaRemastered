@@ -2,6 +2,12 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.4] - Publicacao GitHub
+
+- Removidos dados locais do client do indice Git (`Client/characterdata/` e `Client/minimap/`) sem apagar os arquivos da maquina do usuario.
+- Reforcadas as protecoes do `.gitignore` e do publicador oficial para impedir publicacao de dados locais do client.
+- Mantida a correcao do host entrando no proprio mundo publicada na versao anterior.
+
 ## [0.1.3] - Publicacao GitHub
 
 - Corrigido o fluxo em que o host nao conseguia entrar no proprio mundo usando o convite com IP local.
