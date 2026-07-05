@@ -158,8 +158,18 @@ function Sync-TrmFromManifest {
                 $remaining = (@($files | Select-Object -Skip $checked | ForEach-Object { [int64]$_.size }) | Measure-Object -Sum).Sum
             }
             if ($ProgressCallback) { & $ProgressCallback "Baixando $relative" (($checked / [Math]::Max(1, $files.Count)) * 100) 0 $remaining }
-            Write-TrmLog "Update downloading file: $relative from $($file.url)"
-            Copy-TrmRemoteFile -Url ([string]$file.url) -Destination $tmp
+            $downloadUrl = [string]$file.url
+            Write-TrmLog "Update downloading file: $relative from $downloadUrl"
+            try {
+                Copy-TrmRemoteFile -Url $downloadUrl -Destination $tmp
+            } catch {
+                $statusCode = ''
+                if ($_.Exception.Response -and $_.Exception.Response.StatusCode) { $statusCode = [int]$_.Exception.Response.StatusCode }
+                $statusText = if ([string]::IsNullOrWhiteSpace($statusCode)) { $_.Exception.Message } else { "HTTP $statusCode" }
+                $message = "Falha no download da atualizacao.`nArquivo: $relative`nURL: $downloadUrl`nEtapa: download do arquivo`nErro: $statusText`nPossivel causa: o arquivo esta no manifest, mas nao existe no GitHub Raw, foi ignorado pelo .gitignore, foi removido da branch main ou deveria ser distribuido pelo Player Package/Release.`nAcao: depois da correcao publicada, execute Atualizar ou Reparar novamente."
+                Write-TrmLog (($message -replace "`r?`n", ' | ')) 'ERROR'
+                throw $message
+            }
             $hash = Get-TrmSha256 $tmp
             if ($hash -ne $remoteHash) {
                 Remove-Item -Path $tmp -Force -ErrorAction SilentlyContinue

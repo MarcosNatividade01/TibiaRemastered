@@ -310,6 +310,100 @@ function Assert-ManifestHashesMatch {
     Write-Ok "Hashes finais conferidos: $(@($manifest.files).Count) arquivos."
 }
 
+function Get-GitPublishablePathSet {
+    $set = New-Object System.Collections.Generic.HashSet[string] ([System.StringComparer]::OrdinalIgnoreCase)
+    $paths = Invoke-Git -Arguments @('ls-files','--cached','--others','--exclude-standard')
+    foreach ($path in @($paths.Output -split "`r?`n")) {
+        if (-not [string]::IsNullOrWhiteSpace($path)) {
+            [void]$set.Add(([string]$path -replace '\\','/'))
+        }
+    }
+    return $set
+}
+
+function Assert-ManifestEntriesPublishable {
+    Write-Step 'Validando arquivos publicaveis no manifest'
+    $root = Get-ProjectRoot
+    $manifestPath = Join-Path $root 'manifest.json'
+    $manifest = Get-Content -Path $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $publishable = Get-GitPublishablePathSet
+    $failures = @()
+
+    foreach ($file in @($manifest.files)) {
+        $relative = ([string]$file.path -replace '\\','/').TrimStart('/')
+        if (Test-TrmProtectedPathForPublish $relative) {
+            $failures += ("{0}: arquivo protegido nao pode entrar no manifest" -f $relative)
+            continue
+        }
+        if (-not $publishable.Contains($relative)) {
+            $ignore = Invoke-Git -Arguments @('check-ignore','-v','--',$relative) -AllowFailure
+            $reason = if ($ignore.ExitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($ignore.Output)) { $ignore.Output.Trim() } else { 'nao rastreado e nao publicavel pelo Git' }
+            $failures += ("{0}: {1}" -f $relative, $reason)
+        }
+    }
+
+    if ($failures.Count -gt 0) {
+        throw "Manifest contem arquivos que nao serao publicados no GitHub. Publicacao cancelada:`n$($failures -join [Environment]::NewLine)"
+    }
+    Write-Ok "Manifest contem apenas arquivos publicaveis: $(@($manifest.files).Count) entradas."
+}
+
+function Test-TrmProtectedPathForPublish {
+    param([string]$RelativePath)
+    $norm = ($RelativePath -replace '\\','/').TrimStart('/')
+    $protectedFiles = @('.gitignore','.gitattributes','manifest.json','version.json','Config/launcher-config.json')
+    foreach ($fileName in $protectedFiles) {
+        if ($norm -ieq $fileName) { return $true }
+    }
+    $protectedRoots = @('UserData','Logs','Backup','Backups','Saves','Save','Database','Databases','PrivateDatabase','Reports','tmp','temp')
+    foreach ($root in $protectedRoots) {
+        if ($norm -ieq $root -or $norm.StartsWith($root + '/', [System.StringComparison]::OrdinalIgnoreCase)) { return $true }
+    }
+    return $false
+}
+
+function Assert-RemoteManifestUrlsAfterPush {
+    param([string]$ReleaseVersion)
+    Write-Step 'Validando URLs raw publicadas'
+    Invoke-Git -Arguments @('fetch','origin','main') | Out-Null
+    $tree = Invoke-Git -Arguments @('ls-tree','-r','--name-only','origin/main')
+    $remotePaths = New-Object System.Collections.Generic.HashSet[string] ([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($path in @($tree.Output -split "`r?`n")) {
+        if (-not [string]::IsNullOrWhiteSpace($path)) {
+            [void]$remotePaths.Add(([string]$path -replace '\\','/'))
+        }
+    }
+
+    $manifest = Get-Content -Path (Join-Path (Get-ProjectRoot) 'manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    $expectedUrlPrefix = $RawBaseUrl.TrimEnd('/') + '/'
+
+    $failures = @()
+    foreach ($file in @($manifest.files)) {
+        $relative = [string]$file.path
+        $url = [string]$file.url
+        if ([string]::IsNullOrWhiteSpace($url)) {
+            $failures += ("{0}: URL vazia" -f $relative)
+            continue
+        }
+        if (-not $remotePaths.Contains(($relative -replace '\\','/'))) {
+            $failures += ("{0}: ausente em origin/main; URL daria 404: {1}" -f $relative, $url)
+            continue
+        }
+        if (-not $url.StartsWith($expectedUrlPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+            $failures += ("{0}: URL raw fora do repositorio/branch esperados: {1}" -f $relative, $url)
+            continue
+        }
+        if ($url -notmatch '/main/') {
+            $failures += ("{0}: URL raw nao aponta para branch main: {1}" -f $relative, $url)
+        }
+    }
+
+    if ($failures.Count -gt 0) {
+        throw "Validacao pos-push encontrou URLs invalidas no manifest publicado:`n$($failures -join [Environment]::NewLine)"
+    }
+    Write-Ok "URLs raw publicadas validadas contra origin/main: $(@($manifest.files).Count) arquivos."
+}
+
 function Remove-ForbiddenTrackedFiles {
     Write-Step 'Removendo arquivos proibidos do indice Git, se existirem'
     $paths = @(
@@ -392,6 +486,7 @@ try {
     Update-ReleaseFiles -ReleaseVersion $Version
     Assert-GeneratedReleaseValidation
     Assert-ManifestHashesMatch
+    Assert-ManifestEntriesPublishable
 
     Write-Step 'Adicionando arquivos ao Git'
     Invoke-Git -Arguments @('add','-A') | Out-Null
@@ -419,6 +514,7 @@ try {
     Write-Step 'Enviando para GitHub'
     $push = Invoke-Git -Arguments @('push','-u','origin','main')
     Write-Host $push.Output
+    Assert-RemoteManifestUrlsAfterPush -ReleaseVersion $Version
     Write-Ok "Publicacao concluida: versao $Version enviada para $RepositoryUrl"
 } catch {
     Write-Fail $_.Exception.Message

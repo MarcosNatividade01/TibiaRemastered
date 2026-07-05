@@ -47,6 +47,28 @@ function Test-Ignored([string]$Relative) {
     return $false
 }
 
+function Get-GitPublishablePathSet([string]$Base) {
+    $set = New-Object System.Collections.Generic.HashSet[string] ([System.StringComparer]::OrdinalIgnoreCase)
+    $git = Get-Command git -ErrorAction SilentlyContinue
+    if (-not $git) { return $set }
+
+    $previous = Get-Location
+    try {
+        Set-Location $Base
+        $inside = & git rev-parse --is-inside-work-tree 2>$null
+        if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($inside)) { return $set }
+        $paths = & git ls-files --cached --others --exclude-standard
+        foreach ($path in @($paths)) {
+            if (-not [string]::IsNullOrWhiteSpace($path)) {
+                [void]$set.Add(([string]$path -replace '\\','/'))
+            }
+        }
+    } finally {
+        Set-Location $previous
+    }
+    return $set
+}
+
 function Add-UrlQuery([string]$Url, [string]$Query) {
     if ([string]::IsNullOrWhiteSpace($Url)) { return '' }
     $separator = '?'
@@ -113,10 +135,14 @@ $versionJson = [pscustomobject]@{
 }
 $versionJson | ConvertTo-Json -Depth 8 | Set-Content -Path $VersionOutput -Encoding UTF8
 
+$publishablePaths = Get-GitPublishablePathSet $Root
+$filterByGit = ($publishablePaths.Count -gt 0)
+
 $files = @()
 Get-ChildItem -Path $Root -File -Recurse | ForEach-Object {
     $rel = Convert-ToRelativePath -Base $Root -Path $_.FullName
     if (Test-Ignored $rel) { return }
+    if ($filterByGit -and -not $publishablePaths.Contains($rel)) { return }
     if ($_.Length -gt $MaxFileBytes) { return }
     $fileInfo = Get-GitPublishedFileInfo $_.FullName
     $overwrite = -not ($rel.StartsWith('Config/', [System.StringComparison]::OrdinalIgnoreCase))

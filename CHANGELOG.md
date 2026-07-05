@@ -2,6 +2,14 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.11] - Manifest sem URLs 404
+
+- Corrigido o gerador de manifest para incluir apenas arquivos publicaveis pelo Git.
+- Arquivos ignorados por `.gitignore` ou `.gitignore` internos, como binarios locais do servidor e mapas nao rastreados, nao entram mais no manifest.
+- O Publish agora valida que cada entrada do manifest e publicavel antes do commit.
+- Apos o push, o Publish baixa o manifest publicado e valida todas as URLs Raw.
+- O Launcher agora mostra arquivo, URL, etapa e causa provavel quando um download falha com 404 ou outro erro HTTP.
+
 ## [0.1.10] - Hash do GitHub Raw
 
 - Corrigido o calculo de SHA256 do manifest para usar os bytes normalizados que o Git publica no GitHub Raw.
