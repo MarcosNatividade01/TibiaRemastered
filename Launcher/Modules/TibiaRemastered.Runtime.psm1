@@ -793,7 +793,7 @@ function New-TrmConnectionTestReport {
     $isLoopback = Test-TrmLoopbackHost -Host $Host
     $tcp = if (-not [string]::IsNullOrWhiteSpace($Host)) { Test-TrmTcpConnectionDirect -Host $Host -Port $Port } else { [pscustomobject]@{host=$Host; port=$Port; succeeded=$false; error='host vazio'; direct=$true} }
     $login = if (-not [string]::IsNullOrWhiteSpace($Host)) { Test-TrmLoginHttpEndpoint -Host $Host -WebPort $WebPort } else { [pscustomobject]@{url=''; responded=$false; error='host vazio'; recommendedWorld=''} }
-    $version = if (-not [string]::IsNullOrWhiteSpace($Host)) { Test-TrmVersionCompatibility -Host $Host -WebPort $WebPort } else { [pscustomobject]@{compatible=$false; localVersion=(Get-TrmLocalVersion); hostVersion='unknown'; hostVersionAvailable=$false; message='host vazio'} }
+    $version = if (-not [string]::IsNullOrWhiteSpace($Host)) { Test-TrmVersionCompatibility -Host $Host -WebPort $WebPort } else { [pscustomobject]@{compatible=$false; localVersion=(GetCurrentVersion); hostVersion='unknown'; hostVersionAvailable=$false; message='host vazio'} }
     $localPortUsage = Get-TrmPortUsage -Port $Port
     $endpointState = Get-TrmPortableWebEndpointState
     $clientCommand = if (-not [string]::IsNullOrWhiteSpace($ClientExe)) { '"{0}" (WorkingDirectory="{1}")' -f $ClientExe, $ClientWorkingDirectory } else { '' }
@@ -801,7 +801,6 @@ function New-TrmConnectionTestReport {
     $failure = ''
     if ($Mode -eq 'remote' -and $isLoopback) { $failure = 'convite usa localhost; convidado remoto nunca deve conectar em 127.0.0.1/localhost' }
     elseif (-not $tcp.succeeded) { $failure = "porta fechada ou bloqueada em ${Host}:$Port" }
-    elseif (-not $login.responded) { $failure = "login server nao respondeu em $($login.url)" }
     elseif (-not $version.compatible) { $failure = $version.message }
     elseif (-not [string]::IsNullOrWhiteSpace($ErrorMessage)) { $failure = $ErrorMessage }
 
@@ -888,6 +887,10 @@ function Get-TrmLocalVersion {
     return 'unknown'
 }
 
+function GetCurrentVersion {
+    return Get-TrmLocalVersion
+}
+
 function Get-TrmWorldName {
     $config = Get-TrmConfig
     if ($config.PSObject.Properties.Name -contains 'worldName' -and -not [string]::IsNullOrWhiteSpace([string]$config.worldName)) {
@@ -916,7 +919,7 @@ function New-TrmWorldInvite {
         [ValidateSet('remote','host-local')][string]$Mode = 'remote'
     )
     if ([string]::IsNullOrWhiteSpace($WorldName)) { $WorldName = Get-TrmWorldName }
-    if ([string]::IsNullOrWhiteSpace($Version)) { $Version = Get-TrmLocalVersion }
+    if ([string]::IsNullOrWhiteSpace($Version)) { $Version = GetCurrentVersion }
     if ([string]::IsNullOrWhiteSpace($PublicHost)) { $PublicHost = $Host }
     $invite = @"
 TIBIA_REMASTERED_INVITE
@@ -995,7 +998,7 @@ function Get-TrmHostVersion {
 
 function Test-TrmVersionCompatibility {
     param([string]$Host, [int]$WebPort = 80)
-    $localVersion = Get-TrmLocalVersion
+    $localVersion = GetCurrentVersion
     $hostVersion = Get-TrmHostVersion -Host $Host -WebPort $WebPort
     $compatible = $true
     $message = 'Host version unavailable; continuing with local compatibility assumption.'
@@ -1030,7 +1033,7 @@ function New-TrmNetworkDiagnosticReport {
     } elseif ($Mode -eq 'host') {
         $targetReachable = Test-TrmAssistedHostConnection -Host '127.0.0.1' -Port $Port
     }
-    $currentVersion = Get-TrmLocalVersion
+    $currentVersion = GetCurrentVersion
     $connectionMode = if ($Mode -eq 'host') { 'host-local' } elseif ($Mode -eq 'join') { 'remote' } else { $Mode }
     $version = if (-not [string]::IsNullOrWhiteSpace($Host)) {
         Test-TrmVersionCompatibility -Host $Host -WebPort $WebPort
@@ -1103,7 +1106,7 @@ function Save-TrmOnlineState {
     $history = @($entry) + @($history | Where-Object { $_ -ne $entry })
     $history = @($history | Select-Object -First 5)
     if ([string]::IsNullOrWhiteSpace($WorldName)) { $WorldName = $Host }
-    if ([string]::IsNullOrWhiteSpace($Version)) { $Version = Get-TrmLocalVersion }
+    if ([string]::IsNullOrWhiteSpace($Version)) { $Version = GetCurrentVersion }
     $recentWorlds = @()
     if ($state.PSObject.Properties.Name -contains 'recentWorlds') { $recentWorlds = @($state.recentWorlds) }
     $recentWorlds = @([pscustomobject]@{
@@ -1174,7 +1177,7 @@ function Start-TrmHostedWorld {
     $publicIp = Get-TrmPublicIPAddress
     $port = [int](@($resolved.config.serverPorts)[1])
     $worldName = Get-TrmWorldName
-    $version = Get-TrmLocalVersion
+    $version = GetCurrentVersion
     Ensure-TrmPortableWebEndpointMode -Config $resolved.config -ProgressCallback $ProgressCallback -BindAddress '0.0.0.0' -WorldAddress $localIp -GamePort $port
     $diagnostic = New-TrmNetworkDiagnosticReport -Mode 'host' -Port $port -WebPort ([int]$resolved.config.webServerPort)
     $players = Get-TrmConnectedPlayerCount -Port $port
@@ -1553,4 +1556,4 @@ function Start-TrmGame {
     Start-Process -FilePath $clientExe -WorkingDirectory $clientWorkingDirectory | Out-Null
 }
 
-Export-ModuleMember -Function *-Trm*,StartOffline,HostWorld,JoinOwnHostedWorld,JoinRemoteWorld
+Export-ModuleMember -Function *-Trm*,GetCurrentVersion,StartOffline,HostWorld,JoinOwnHostedWorld,JoinRemoteWorld

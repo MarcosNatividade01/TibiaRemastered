@@ -2,6 +2,15 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.14] - Teste TCP do Host Assistido
+
+- Criada `GetCurrentVersion` como funcao oficial de versao baseada em `version.json`.
+- O Host Assistido passa a usar `GetCurrentVersion` no status, convite, diagnostico e validacao.
+- O teste de conexao deixa de bloquear por `clientcreateaccount.php` na porta 80.
+- A porta 80 passa a ser mostrada apenas como diagnostico web/login opcional.
+- O bloqueio principal de `Testar Conexao` e `Entrar em Mundo` passa a ser o TCP direto no host e porta Tibia do convite.
+- Adicionado teste para garantir que TCP acessivel passa mesmo com web/login indisponivel.
+
 ## [0.1.13] - Separacao definitiva entre version e mode
 
 - Centralizado o uso de `Get-TrmLocalVersion` como fonte oficial de versao baseada em `version.json`.

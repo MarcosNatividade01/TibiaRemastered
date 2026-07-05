@@ -33,12 +33,13 @@ Ao clicar em `Hospedar Mundo`, o Launcher:
 Formato oficial atual:
 
 ```text
-Tibia Remastered Convite
-Mundo: FazendoTibia
-IP: 192.168.0.10
-Porta: 7172
-Versao: 0.1.0
-Instrucao: no outro computador, abra o Launcher, clique em Entrar em Mundo, cole este convite e clique em Usar Convite.
+TIBIA_REMASTERED_INVITE
+world=FazendoTibia
+host=192.168.0.10
+publicHost=177.192.12.76
+port=7172
+version=0.1.14
+mode=remote
 ```
 
 O endpoint local do Launcher registra seu modo atual em:
@@ -63,9 +64,9 @@ O ultimo host, porta, mundo, versao e data de conexao ficam salvos em:
 UserData/Online/host-assisted.json
 ```
 
-Antes de abrir o client, o Launcher testa o host informado. Se o host nao responder, o client nao e aberto e o diagnostico informa o motivo provavel.
+Antes de abrir o client, o Launcher testa o TCP direto no host e porta Tibia informados. Se essa porta nao responder, o client nao e aberto e o diagnostico informa o motivo provavel.
 
-Quando o host disponibiliza `version.json`, a versao local e comparada antes da conexao.
+Quando o host disponibiliza `version.json`, a versao local e comparada antes da conexao. O endpoint web na porta 80 e apenas diagnostico secundario.
 
 ## Diagnostico
 
@@ -75,7 +76,7 @@ O Launcher possui botao `Diagnostico` na tela principal. Ele gera relatorios em:
 Logs/OnlineDiagnostics/
 ```
 
-Use essa tela para testar host, porta, versao e mensagens de erro antes de abrir o client.
+Use essa tela para testar host, porta Tibia, versao, modo e mensagens de erro antes de abrir o client.
 
 ## Separacao de dados
 

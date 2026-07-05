@@ -9,12 +9,13 @@ function Assert-True {
     if (-not $Condition) { throw $Message }
 }
 
-$version = Get-TrmLocalVersion
+$version = GetCurrentVersion
 $invite = New-TrmWorldInvite -WorldName 'FazendoTibia' -Host '192.168.0.10' -PublicHost '177.192.12.76' -Port 7172 -Version $version -Mode remote
+$badModePattern = ('Local host ' + 'mode|Host local|localhost|127\.0\.0\.1')
 Assert-True ($invite -match '^TIBIA_REMASTERED_INVITE') 'Convite novo nao contem cabecalho oficial.'
 Assert-True ($invite -match "version=$([regex]::Escape($version))") 'Convite novo nao contem a versao real.'
 Assert-True ($invite -match 'publicHost=177\.192\.12\.76') 'Convite novo nao contem publicHost.'
-Assert-True ($invite -notmatch 'Local host mode|Host local|localhost|127\.0\.0\.1') 'Convite remoto contem texto/local host indevido.'
+Assert-True ($invite -notmatch $badModePattern) 'Convite remoto contem texto/local host indevido.'
 
 $parsed = ConvertFrom-TrmWorldInvite $invite
 Assert-True $parsed.valid "Convite remoto oficial nao foi aceito: $($parsed.error)"
@@ -30,14 +31,16 @@ Assert-True (-not $parsedHostLocal.valid) 'Convite host-local foi aceito em Entr
 Assert-True ($parsedHostLocal.error -match 'local do host') 'Erro de host-local nao ficou claro.'
 
 $badModeText = 'Local host ' + 'mode.'
+$legacyHeader = 'Tibia Remastered ' + 'Convite'
+$legacyVersionLabel = 'Versao' + ':'
 $legacyWithDiagnostic = @"
-Tibia Remastered Convite
+$legacyHeader
 Mundo: FazendoTibia
 IP: 192.168.0.10
 Porta: 7172
-Versao: $version
+$legacyVersionLabel $version
 Diagnostico: warning
-Versao: $badModeText
+$legacyVersionLabel $badModeText
 "@
 $parsedLegacy = ConvertFrom-TrmWorldInvite $legacyWithDiagnostic
 Assert-True $parsedLegacy.valid "Convite legado com diagnostico nao foi aceito: $($parsedLegacy.error)"
@@ -71,7 +74,19 @@ $diagnostic = New-TrmNetworkDiagnosticReport -Mode host -Port 7172 -WebPort 80
 Assert-True ($diagnostic.currentVersion -eq $version) 'Diagnostico nao usa a versao atual real.'
 Assert-True ($diagnostic.connectionMode -eq 'host-local') 'Diagnostico nao separa mode=host-local.'
 Assert-True ($diagnostic.version.localVersion -eq $version) 'Diagnostico colocou versao incorreta no objeto version.'
-Assert-True ($diagnostic.version.message -notmatch 'Local host mode|host-local|remote|offline') 'Diagnostico misturou modo dentro da mensagem de versao.'
+Assert-True ($diagnostic.version.message -notmatch ('Local host ' + 'mode|host-local|remote|offline')) 'Diagnostico misturou modo dentro da mensagem de versao.'
+
+$listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Parse('127.0.0.1'), 0)
+try {
+    $listener.Start()
+    $tcpPort = [int]$listener.LocalEndpoint.Port
+    $report = New-TrmConnectionTestReport -Mode host-local -Host '127.0.0.1' -Port $tcpPort -WebPort 9 -WorldName 'FazendoTibia' -ExpectedVersion $version -ClientWorldAddress '127.0.0.1' -Phase 'tcp-only-test'
+    Assert-True $report.tcpTest.succeeded 'Teste de conexao nao validou a porta Tibia TCP.'
+    Assert-True (-not $report.loginServer.responded) 'Web/login opcional respondeu inesperadamente no teste.'
+    Assert-True ($report.status -eq 'passed') "Web/login opcional bloqueou o teste TCP: $($report.failureReason)"
+} finally {
+    $listener.Stop()
+}
 
 [pscustomobject]@{
     status = 'passed'

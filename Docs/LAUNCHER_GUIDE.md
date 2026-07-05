@@ -34,7 +34,7 @@ Botoes:
 
 - `Iniciar Mundo`
 - `Parar Mundo`
-- `Copiar Convite`
+- `Copiar Convite para Amigos`
 - `Abrir Logs`
 
 ## Convite oficial
@@ -42,14 +42,16 @@ Botoes:
 Formato atual:
 
 ```text
-Tibia Remastered Convite
-Mundo: FazendoTibia
-IP: 192.168.0.10
-Porta: 7172
-Versao: 0.1.0
+TIBIA_REMASTERED_INVITE
+world=FazendoTibia
+host=192.168.0.10
+publicHost=177.192.12.76
+port=7172
+version=0.1.14
+mode=remote
 ```
 
-O botao `Copiar Convite` copia apenas esse bloco.
+O botao `Copiar Convite para Amigos` copia apenas esse bloco.
 
 ## Entrar em Mundo
 
@@ -58,7 +60,7 @@ O jogador pode:
 - colar o convite completo e clicar em `Usar Convite`;
 - ou preencher IP e porta manualmente.
 
-Antes de abrir o client, o Launcher testa a conexao e mostra uma mensagem clara caso o servidor nao responda.
+Antes de abrir o client, o Launcher testa o TCP direto no host e porta Tibia do convite. O diagnostico web/login e secundario e nao deve bloquear a entrada quando a porta Tibia esta acessivel.
 
 ## Diagnostico
 

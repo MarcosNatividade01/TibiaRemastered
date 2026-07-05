@@ -11,7 +11,7 @@ Validar o fluxo LAN basico do Host Assistido usando apenas o Launcher.
 3. Clique em `Iniciar Mundo`.
 4. Aguarde o status `Servidor online`.
 5. Confira IP local, porta e versao.
-6. Clique em `Copiar Convite`.
+6. Clique em `Copiar Convite para Amigos`.
 7. Envie o convite para o outro computador.
 
 ## Computador Convidado
@@ -28,12 +28,13 @@ Validar o fluxo LAN basico do Host Assistido usando apenas o Launcher.
 ## Convite esperado
 
 ```text
-Tibia Remastered Convite
-Mundo: FazendoTibia
-IP: 192.168.0.10
-Porta: 7172
-Versao: 0.1.0
-Instrucao: no outro computador, abra o Launcher, clique em Entrar em Mundo, cole este convite e clique em Usar Convite.
+TIBIA_REMASTERED_INVITE
+world=FazendoTibia
+host=192.168.0.10
+publicHost=177.192.12.76
+port=7172
+version=0.1.14
+mode=remote
 ```
 
 ## Se falhar
@@ -54,4 +55,3 @@ Instrucao: no outro computador, abra o Launcher, clique em Entrar em Mundo, cole
 - Teste de conexao encontra o servidor.
 - Client do convidado abre.
 - `Jogar Offline` continua funcionando depois do teste.
-

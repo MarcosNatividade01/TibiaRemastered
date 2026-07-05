@@ -25,7 +25,7 @@ function Format-LauncherBytes {
 }
 
 function Get-LauncherLocalVersionText {
-    return Get-TrmLocalVersion
+    return GetCurrentVersion
 }
 
 function Get-LauncherRemoteVersionText {
@@ -392,7 +392,7 @@ function Show-LauncherGui {
 
         function Format-ConnectionReportText($Report) {
             if ($null -eq $Report) { return 'Relatorio de conexao indisponivel.' }
-            return "Relatorio de conexao: $($Report.status)`r`nmode=$($Report.mode)`r`nFase: $($Report.phase)`r`nIP final: $($Report.finalHost)`r`nPorta final: $($Report.finalPort)`r`nHost e localhost: $($Report.isLoopbackHost)`r`nTCP direto: $($Report.tcpTest.succeeded) $($Report.tcpTest.error)`r`nLogin server: $($Report.loginServer.responded) $($Report.loginServer.error)`r`nversion=$($Report.version.localVersion)`r`nCompatibilidade: $($Report.version.message)`r`nClient usa: $($Report.clientWorldAddress):$($Report.finalPort)`r`nConfig client: $($Report.clientConfigDescription)`r`nComando: $($Report.clientCommand)`r`nFalha: $($Report.failureReason)`r`nArquivo: $($Report.reportPath)"
+            return "Relatorio de conexao: $($Report.status)`r`nmode=$($Report.mode)`r`nFase: $($Report.phase)`r`nIP final: $($Report.finalHost)`r`nPorta Tibia: $($Report.finalPort)`r`nHost e localhost: $($Report.isLoopbackHost)`r`nTCP Tibia direto: $($Report.tcpTest.succeeded) $($Report.tcpTest.error)`r`nWeb/login opcional: $($Report.loginServer.responded) $($Report.loginServer.error)`r`nversion=$($Report.version.localVersion)`r`nCompatibilidade: $($Report.version.message)`r`nClient usa: $($Report.clientWorldAddress):$($Report.finalPort)`r`nConfig client: $($Report.clientConfigDescription)`r`nComando: $($Report.clientCommand)`r`nFalha: $($Report.failureReason)`r`nArquivo: $($Report.reportPath)"
         }
 
         $statusLabel = New-Object System.Windows.Forms.Label
@@ -429,7 +429,7 @@ function Show-LauncherGui {
                 $currentInvite = [string]$result.invite
                 $currentHostPort = [int]$result.port
                 $currentHostWorld = [string]$result.worldName
-                $hostInfo.Text = "Servidor online`r`nMundo: $($result.worldName)`r`nJogadores conectados: $($result.playersOnline)`r`nIP local: $($result.localIp)`r`nIP publico: $($result.publicIp)`r`nPorta: $($result.port)`r`nVersao: $($result.version)`r`n`r`nConvite para amigos:`r`n$currentInvite`r`n`r`n$(Format-OnlineDiagnosticText $result.diagnostic)"
+                $hostInfo.Text = "Servidor online`r`nMundo: $($result.worldName)`r`nJogadores conectados: $($result.playersOnline)`r`nIP local: $($result.localIp)`r`nIP publico: $($result.publicIp)`r`nPorta Tibia: $($result.port)`r`nversion=$($result.version)`r`nmode=host-local`r`n`r`nConvite para amigos:`r`n$currentInvite`r`n`r`n$(Format-OnlineDiagnosticText $result.diagnostic)"
                 $statusLabel.Text = 'Status: servidor online'
             } catch {
                 $hostInfo.Text = Format-FriendlyError $_.Exception.Message
@@ -588,7 +588,7 @@ function Show-LauncherGui {
             $portInput.Text = [string]$parsed.port
             $script:TrmInviteWorld = [string]$parsed.worldName
             $script:TrmInviteVersion = [string]$parsed.version
-            $joinOutput.Text = "Convite carregado.`r`nMundo: $script:TrmInviteWorld`r`nHost: $($parsed.host)`r`nPorta: $($parsed.port)`r`nVersao: $script:TrmInviteVersion`r`nModo: $($parsed.mode)"
+            $joinOutput.Text = "Convite carregado.`r`nMundo: $script:TrmInviteWorld`r`nHost: $($parsed.host)`r`nPorta Tibia: $($parsed.port)`r`nversion=$script:TrmInviteVersion`r`nmode=$($parsed.mode)"
             $statusLabel.Text = 'Status: convite carregado'
         })
         Set-LauncherButtonStyle $btnUseInvite
