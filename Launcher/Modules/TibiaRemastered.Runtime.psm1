@@ -652,6 +652,35 @@ function Get-TrmLocalIPv4Address {
     return '127.0.0.1'
 }
 
+function Get-TrmLocalHostAliases {
+    $aliases = New-Object System.Collections.Generic.HashSet[string] ([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($value in @('localhost', '127.0.0.1', '::1', $env:COMPUTERNAME, [System.Net.Dns]::GetHostName())) {
+        if (-not [string]::IsNullOrWhiteSpace([string]$value)) { [void]$aliases.Add(([string]$value).Trim()) }
+    }
+    try {
+        $addresses = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+            Where-Object { $_.IPAddress -notlike '169.254.*' } |
+            Select-Object -ExpandProperty IPAddress)
+        foreach ($address in $addresses) {
+            if (-not [string]::IsNullOrWhiteSpace([string]$address)) { [void]$aliases.Add(([string]$address).Trim()) }
+        }
+    } catch {}
+    return @($aliases)
+}
+
+function Test-TrmHostIsLocalMachine {
+    param([string]$Host)
+    if ([string]::IsNullOrWhiteSpace($Host)) { return $false }
+    $normalized = $Host.Trim().Trim('[',']')
+    return (@(Get-TrmLocalHostAliases) -contains $normalized)
+}
+
+function Resolve-TrmClientWorldAddress {
+    param([string]$Host)
+    if (Test-TrmHostIsLocalMachine -Host $Host) { return '127.0.0.1' }
+    return $Host
+}
+
 function Get-TrmPublicIPAddress {
     try {
         return ((Invoke-RestMethod -Uri 'https://api.ipify.org' -TimeoutSec 4).ToString())
@@ -975,6 +1004,9 @@ function Test-TrmAssistedHostConnection {
         $client.EndConnect($async)
         return $true
     } catch {
+        if ((Test-TrmHostIsLocalMachine -Host $Host) -and $Host -ne '127.0.0.1') {
+            return (Test-TrmAssistedHostConnection -Host '127.0.0.1' -Port $Port)
+        }
         return $false
     } finally {
         $client.Close()
@@ -998,7 +1030,8 @@ function Start-TrmOnlineClient {
         throw "Versao incompativel: convite=$ExpectedVersion host=$($diagnostic.version.hostVersion)."
     }
     Save-TrmOnlineState -Host $Host -Port $Port -WorldName $WorldName -Version $diagnostic.version.localVersion | Out-Null
-    Ensure-TrmPortableWebEndpointMode -Config $resolved.config -ProgressCallback $ProgressCallback -BindAddress '127.0.0.1' -WorldAddress $Host -GamePort $Port
+    $clientWorldAddress = Resolve-TrmClientWorldAddress -Host $Host
+    Ensure-TrmPortableWebEndpointMode -Config $resolved.config -ProgressCallback $ProgressCallback -BindAddress '127.0.0.1' -WorldAddress $clientWorldAddress -GamePort $Port
     if ($ProgressCallback) { & $ProgressCallback "Abrindo cliente para $Host`:$Port..." 100 0 0 }
     Remove-Item Env:\QT_QUICK_BACKEND -ErrorAction SilentlyContinue
     Remove-Item Env:\QT_OPENGL -ErrorAction SilentlyContinue
@@ -1007,7 +1040,7 @@ function Start-TrmOnlineClient {
     $env:TRM_ONLINE_HOST = $Host
     $env:TRM_ONLINE_PORT = [string]$Port
     Start-Process -FilePath $resolved.clientExe -WorkingDirectory $resolved.clientWorkingDirectory | Out-Null
-    return [pscustomobject]@{host=$Host; port=$Port; worldName=$WorldName; clientStarted=$true; statePath=(Get-TrmOnlineStatePath); diagnostic=$diagnostic}
+    return [pscustomobject]@{host=$Host; clientWorldAddress=$clientWorldAddress; port=$Port; worldName=$WorldName; clientStarted=$true; statePath=(Get-TrmOnlineStatePath); diagnostic=$diagnostic}
 }
 
 function Ensure-TrmPlayerPackage {

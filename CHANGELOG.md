@@ -2,6 +2,12 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.3] - Publicacao GitHub
+
+- Corrigido o fluxo em que o host nao conseguia entrar no proprio mundo usando o convite com IP local.
+- O Launcher agora reconhece enderecos da propria maquina e usa `127.0.0.1` internamente para abrir o client local do host.
+- Mantido o convite com IP de LAN para outros computadores, sem alterar o modo Offline, saves, banco local ou dados do jogador.
+
 ## [0.1.2] - Publicacao GitHub
 
 - Publicada versao 0.1.2 para testes online/LAN.
