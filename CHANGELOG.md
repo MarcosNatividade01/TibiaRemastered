@@ -2,6 +2,20 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.7] - Publicacao GitHub
+
+- Publicada versao 0.1.7 para testes online/LAN.
+- Atualizados `version.json` e `manifest.json` para o Launcher baixar arquivos pelo GitHub.
+- Mantidas protecoes para `UserData`, logs, backups, saves, banco local e arquivos pessoais.
+## [0.1.7] - Diagnostico definitivo de conexao remota
+
+- Criado log dedicado em `Logs/ConnectionTests/` para `Testar Conexao` e `Entrar em Mundo`.
+- O log registra convite bruto, IP final, porta final, teste TCP direto, login server, versao, endpoint portatil, comando do client e motivo real da falha.
+- Convites remotos com `127.0.0.1`, `localhost` ou `::1` agora falham com mensagem explicita.
+- O preflight remoto usa TCP direto e nao troca IP de convidado por `127.0.0.1`.
+- A tela de Host Assistido agora mostra motivo real da falha em vez de apenas erro generico.
+- Adicionado teste automatizado para convite valido, IP invalido, porta errada, convite localhost, host local e Offline.
+
 ## [0.1.6] - Publicacao GitHub
 
 - Publicada versao 0.1.6 para testes online/LAN.
@@ -101,6 +115,7 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Criada a estrutura inicial do repositorio.
 - Adicionados arquivos base para README, roadmap, ideias, versao e manifest.
 - Adicionado `.gitignore` para proteger dados reais e arquivos sensiveis.
+
 
 
 

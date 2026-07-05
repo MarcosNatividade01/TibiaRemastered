@@ -731,6 +731,120 @@ function Write-TrmClientLaunchLog {
     Write-TrmLog ("Client launch: mode={0}; host={1}; clientWorldAddress={2}; port={3}; config={4}; command={5}" -f $Mode, $Host, $ClientWorldAddress, $Port, $ConfigDescription, $command)
 }
 
+function Get-TrmConnectionTestDirectory {
+    $path = Join-Path (Get-TrmRoot) 'Logs\ConnectionTests'
+    if (-not (Test-Path $path)) { New-Item -ItemType Directory -Force -Path $path | Out-Null }
+    return $path
+}
+
+function Test-TrmLoopbackHost {
+    param([string]$Host)
+    if ([string]::IsNullOrWhiteSpace($Host)) { return $false }
+    $normalized = $Host.Trim().Trim('[',']').ToLowerInvariant()
+    return ($normalized -in @('127.0.0.1','localhost','::1'))
+}
+
+function Test-TrmTcpConnectionDirect {
+    param([string]$Host, [int]$Port, [int]$TimeoutMs = 2500)
+    $client = New-Object System.Net.Sockets.TcpClient
+    try {
+        $async = $client.BeginConnect($Host, $Port, $null, $null)
+        if (-not $async.AsyncWaitHandle.WaitOne($TimeoutMs, $false)) {
+            return [pscustomobject]@{host=$Host; port=$Port; succeeded=$false; error='timeout'; direct=$true}
+        }
+        $client.EndConnect($async)
+        return [pscustomobject]@{host=$Host; port=$Port; succeeded=$true; error=''; direct=$true}
+    } catch {
+        return [pscustomobject]@{host=$Host; port=$Port; succeeded=$false; error=$_.Exception.Message; direct=$true}
+    } finally {
+        $client.Close()
+    }
+}
+
+function Test-TrmLoginHttpEndpoint {
+    param([string]$Host, [int]$WebPort = 80)
+    $statusUri = "http://${Host}:$WebPort/clientcreateaccount.php"
+    try {
+        $body = '{"type":"GetAccountCreationStatus"}'
+        $response = Invoke-RestMethod -Uri $statusUri -Method Post -ContentType 'application/json' -Body $body -TimeoutSec 4
+        $ok = ($response -and ($response.PSObject.Properties.Name -contains 'RecommendedWorld'))
+        return [pscustomobject]@{url=$statusUri; responded=$ok; error=''; recommendedWorld=$(if($ok){[string]$response.RecommendedWorld}else{''})}
+    } catch {
+        return [pscustomobject]@{url=$statusUri; responded=$false; error=$_.Exception.Message; recommendedWorld=''}
+    }
+}
+
+function New-TrmConnectionTestReport {
+    param(
+        [ValidateSet('offline','host-local','remote')][string]$Mode,
+        [string]$RawInvite = '',
+        [string]$Host = '',
+        [int]$Port = 7172,
+        [int]$WebPort = 80,
+        [string]$WorldName = '',
+        [string]$ExpectedVersion = '',
+        [string]$ClientWorldAddress = '',
+        [string]$ClientExe = '',
+        [string]$ClientWorkingDirectory = '',
+        [string]$ConfigDescription = '',
+        [string]$ErrorMessage = '',
+        [string]$Phase = 'preflight'
+    )
+    $isLoopback = Test-TrmLoopbackHost -Host $Host
+    $tcp = if (-not [string]::IsNullOrWhiteSpace($Host)) { Test-TrmTcpConnectionDirect -Host $Host -Port $Port } else { [pscustomobject]@{host=$Host; port=$Port; succeeded=$false; error='host vazio'; direct=$true} }
+    $login = if (-not [string]::IsNullOrWhiteSpace($Host)) { Test-TrmLoginHttpEndpoint -Host $Host -WebPort $WebPort } else { [pscustomobject]@{url=''; responded=$false; error='host vazio'; recommendedWorld=''} }
+    $version = if (-not [string]::IsNullOrWhiteSpace($Host)) { Test-TrmVersionCompatibility -Host $Host -WebPort $WebPort } else { [pscustomobject]@{compatible=$false; localVersion=(Get-TrmLocalVersion); hostVersion='unknown'; hostVersionAvailable=$false; message='host vazio'} }
+    $localPortUsage = Get-TrmPortUsage -Port $Port
+    $endpointState = Get-TrmPortableWebEndpointState
+    $clientCommand = if (-not [string]::IsNullOrWhiteSpace($ClientExe)) { '"{0}" (WorkingDirectory="{1}")' -f $ClientExe, $ClientWorkingDirectory } else { '' }
+
+    $failure = ''
+    if ($Mode -eq 'remote' -and $isLoopback) { $failure = 'convite usa localhost; convidado remoto nunca deve conectar em 127.0.0.1/localhost' }
+    elseif (-not $tcp.succeeded) { $failure = "porta fechada ou bloqueada em ${Host}:$Port" }
+    elseif (-not $login.responded) { $failure = "login server nao respondeu em $($login.url)" }
+    elseif (-not $version.compatible) { $failure = $version.message }
+    elseif (-not [string]::IsNullOrWhiteSpace($ErrorMessage)) { $failure = $ErrorMessage }
+
+    $path = Join-Path (Get-TrmConnectionTestDirectory) ('connection-test-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '.json')
+    $report = [pscustomobject]@{
+        generatedAt = (Get-Date).ToString('s')
+        mode = $Mode
+        phase = $Phase
+        rawInvite = $RawInvite
+        worldName = $WorldName
+        inviteVersion = $ExpectedVersion
+        finalHost = $Host
+        finalPort = $Port
+        webPort = $WebPort
+        isLoopbackHost = $isLoopback
+        tcpTest = $tcp
+        localPortUsage = $localPortUsage
+        loginServer = $login
+        version = $version
+        clientWorldAddress = $ClientWorldAddress
+        clientUsesSameHostAndPort = ($ClientWorldAddress -eq $Host -and $Port -gt 0)
+        clientConfigDescription = $ConfigDescription
+        portableEndpointState = $endpointState
+        clientCommand = $clientCommand
+        possibleFirewallOrNatBlock = (-not $tcp.succeeded -and -not $isLoopback)
+        errorMessage = $ErrorMessage
+        failureReason = $failure
+        status = if ([string]::IsNullOrWhiteSpace($failure)) { 'passed' } else { 'failed' }
+        reportPath = $path
+    }
+    Save-TrmJsonFile -Path $path -Value $report
+    return $report
+}
+
+function Format-TrmConnectionFailure {
+    param([object]$Report)
+    if ($null -eq $Report) { return 'Erro de conexao sem relatorio detalhado.' }
+    if (-not [string]::IsNullOrWhiteSpace([string]$Report.failureReason)) {
+        return "Falha de conexao: $($Report.failureReason). Relatorio: $($Report.reportPath)"
+    }
+    return "Falha de conexao. Relatorio: $($Report.reportPath)"
+}
+
 function Get-TrmPublicIPAddress {
     try {
         return ((Invoke-RestMethod -Uri 'https://api.ipify.org' -TimeoutSec 4).ToString())
@@ -1076,6 +1190,7 @@ function Start-TrmClientForWorld {
         [int]$Port = 7172,
         [string]$WorldName = '',
         [string]$ExpectedVersion = '',
+        [string]$RawInvite = '',
         [scriptblock]$ProgressCallback
     )
     if ([string]::IsNullOrWhiteSpace($Host)) { throw 'Informe o IP ou endereco do host.' }
@@ -1083,6 +1198,19 @@ function Start-TrmClientForWorld {
     $resolved = Get-TrmRuntimeConfigResolved
     Ensure-TrmProjectStructure
     Ensure-TrmPlayerPackage -Config $resolved.config -ServerExe $resolved.serverExe -ClientExe $resolved.clientExe -ProgressCallback $ProgressCallback
+    $webPort = [int]$resolved.config.webServerPort
+    $configDescription = ("portable-web-endpoint bind=127.0.0.1 world={0}:{1}" -f $ClientWorldAddress, $Port)
+    $preflightMode = if ($Mode -eq 'own-hosted') { 'host-local' } else { 'remote' }
+    $preflight = New-TrmConnectionTestReport -Mode $preflightMode -RawInvite $RawInvite -Host $Host -Port $Port -WebPort $webPort -WorldName $WorldName -ExpectedVersion $ExpectedVersion -ClientWorldAddress $ClientWorldAddress -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory -ConfigDescription $configDescription -Phase 'preflight'
+    if ($Mode -eq 'remote' -and $preflight.isLoopbackHost) {
+        throw (Format-TrmConnectionFailure $preflight)
+    }
+    if (-not $preflight.tcpTest.succeeded) {
+        throw (Format-TrmConnectionFailure $preflight)
+    }
+    if (-not $preflight.loginServer.responded) {
+        throw (Format-TrmConnectionFailure $preflight)
+    }
     $diagnostic = New-TrmNetworkDiagnosticReport -Mode 'join' -Host $Host -Port $Port -WebPort ([int]$resolved.config.webServerPort)
     if (-not $diagnostic.targetReachable) {
         throw "Host inacessivel em ${Host}:$Port. Rode Testar Conexao e confira IP, porta, firewall e NAT."
@@ -1103,9 +1231,10 @@ function Start-TrmClientForWorld {
     $env:TRM_ONLINE_MODE = $Mode
     $env:TRM_ONLINE_HOST = $ClientWorldAddress
     $env:TRM_ONLINE_PORT = [string]$Port
-    Write-TrmClientLaunchLog -Mode $Mode -Host $Host -Port $Port -ClientWorldAddress $ClientWorldAddress -ConfigDescription ("portable-web-endpoint bind=127.0.0.1 world={0}:{1}" -f $ClientWorldAddress, $Port) -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory
+    Write-TrmClientLaunchLog -Mode $Mode -Host $Host -Port $Port -ClientWorldAddress $ClientWorldAddress -ConfigDescription $configDescription -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory
+    $connectionReport = New-TrmConnectionTestReport -Mode $preflightMode -RawInvite $RawInvite -Host $Host -Port $Port -WebPort $webPort -WorldName $WorldName -ExpectedVersion $ExpectedVersion -ClientWorldAddress $ClientWorldAddress -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory -ConfigDescription $configDescription -Phase 'client-launch'
     Start-Process -FilePath $resolved.clientExe -WorkingDirectory $resolved.clientWorkingDirectory | Out-Null
-    return [pscustomobject]@{mode=$Mode; host=$Host; clientWorldAddress=$ClientWorldAddress; port=$Port; worldName=$WorldName; clientStarted=$true; statePath=(Get-TrmOnlineStatePath); diagnostic=$diagnostic}
+    return [pscustomobject]@{mode=$Mode; host=$Host; clientWorldAddress=$ClientWorldAddress; port=$Port; worldName=$WorldName; clientStarted=$true; statePath=(Get-TrmOnlineStatePath); diagnostic=$diagnostic; connectionReport=$connectionReport}
 }
 
 function JoinOwnHostedWorld {
@@ -1116,11 +1245,16 @@ function JoinOwnHostedWorld {
 }
 
 function JoinRemoteWorld {
-    param([string]$Host, [int]$Port = 7172, [string]$WorldName = '', [string]$ExpectedVersion = '', [scriptblock]$ProgressCallback)
+    param([string]$Host, [int]$Port = 7172, [string]$WorldName = '', [string]$ExpectedVersion = '', [string]$RawInvite = '', [scriptblock]$ProgressCallback)
+    if (Test-TrmLoopbackHost -Host $Host) {
+        $resolved = Get-TrmRuntimeConfigResolved
+        $report = New-TrmConnectionTestReport -Mode 'remote' -RawInvite $RawInvite -Host $Host -Port $Port -WebPort ([int]$resolved.config.webServerPort) -WorldName $WorldName -ExpectedVersion $ExpectedVersion -ClientWorldAddress $Host -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory -ConfigDescription ("blocked remote loopback world={0}:{1}" -f $Host, $Port) -Phase 'blocked-loopback'
+        throw (Format-TrmConnectionFailure $report)
+    }
     if (Test-TrmHostIsLocalMachine -Host $Host) {
         throw "Use Entrar no Meu Mundo para conectar ao proprio servidor local. Entrar em Mundo preserva o IP do convite e nao troca por 127.0.0.1."
     }
-    return (Start-TrmClientForWorld -Mode 'remote' -Host $Host -ClientWorldAddress $Host -Port $Port -WorldName $WorldName -ExpectedVersion $ExpectedVersion -ProgressCallback $ProgressCallback)
+    return (Start-TrmClientForWorld -Mode 'remote' -Host $Host -ClientWorldAddress $Host -Port $Port -WorldName $WorldName -ExpectedVersion $ExpectedVersion -RawInvite $RawInvite -ProgressCallback $ProgressCallback)
 }
 
 function Start-TrmOnlineClient {

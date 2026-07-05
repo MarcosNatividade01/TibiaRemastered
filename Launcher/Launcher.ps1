@@ -392,6 +392,11 @@ function Show-LauncherGui {
             return "Diagnostico: $($Diagnostic.status)`r`nHost alvo acessivel: $($Diagnostic.targetReachable)`r`nIP local: $($Diagnostic.localIp)`r`nIP publico: $($Diagnostic.publicIp)`r`nPorta servidor em uso: $($Diagnostic.serverPort.inUse)`r`nVersao: $($Diagnostic.version.message)`r`nAvisos: $warningText`r`nRelatorio: $($Diagnostic.reportPath)"
         }
 
+        function Format-ConnectionReportText($Report) {
+            if ($null -eq $Report) { return 'Relatorio de conexao indisponivel.' }
+            return "Relatorio de conexao: $($Report.status)`r`nModo: $($Report.mode)`r`nFase: $($Report.phase)`r`nIP final: $($Report.finalHost)`r`nPorta final: $($Report.finalPort)`r`nHost e localhost: $($Report.isLoopbackHost)`r`nTCP direto: $($Report.tcpTest.succeeded) $($Report.tcpTest.error)`r`nLogin server: $($Report.loginServer.responded) $($Report.loginServer.error)`r`nVersao: $($Report.version.message)`r`nClient usa: $($Report.clientWorldAddress):$($Report.finalPort)`r`nConfig client: $($Report.clientConfigDescription)`r`nComando: $($Report.clientCommand)`r`nFalha: $($Report.failureReason)`r`nArquivo: $($Report.reportPath)"
+        }
+
         $statusLabel = New-Object System.Windows.Forms.Label
         $statusLabel.Location = New-Object System.Drawing.Point(18, 16)
         $statusLabel.Size = New-Object System.Drawing.Size(710, 24)
@@ -613,16 +618,17 @@ function Show-LauncherGui {
             [void][int]::TryParse($portInput.Text, [ref]$port)
             try {
                 $resolved = Get-TrmRuntimeConfigResolved
+                $connectionReport = New-TrmConnectionTestReport -Mode 'remote' -RawInvite $inviteInput.Text -Host $hostInput.Text -Port $port -WebPort ([int]$resolved.config.webServerPort) -WorldName $script:TrmInviteWorld -ExpectedVersion $script:TrmInviteVersion -ClientWorldAddress $hostInput.Text -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory -ConfigDescription ("test remote world={0}:{1}" -f $hostInput.Text, $port) -Phase 'ui-test-connection'
                 $diagnostic = New-TrmNetworkDiagnosticReport -Mode 'join' -Host $hostInput.Text -Port $port -WebPort ([int]$resolved.config.webServerPort)
-                if ($diagnostic.targetReachable) {
-                    $joinOutput.Text = "Servidor encontrado.`r`nHost: $($hostInput.Text)`r`nPorta: $port`r`n$(Format-OnlineDiagnosticText $diagnostic)"
+                if ($connectionReport.status -eq 'passed' -and $diagnostic.targetReachable) {
+                    $joinOutput.Text = "Servidor encontrado.`r`nHost: $($hostInput.Text)`r`nPorta: $port`r`n`r`n$(Format-ConnectionReportText $connectionReport)`r`n`r`n$(Format-OnlineDiagnosticText $diagnostic)"
                     $statusLabel.Text = 'Status: servidor encontrado'
                 } else {
-                    $joinOutput.Text = "Servidor nao encontrado.`r`nConfira IP, porta, firewall e se o host clicou em Hospedar Mundo.`r`n`r`n$(Format-OnlineDiagnosticText $diagnostic)"
+                    $joinOutput.Text = "Servidor nao encontrado.`r`nMotivo: $($connectionReport.failureReason)`r`n`r`n$(Format-ConnectionReportText $connectionReport)`r`n`r`n$(Format-OnlineDiagnosticText $diagnostic)"
                     $statusLabel.Text = 'Status: servidor nao encontrado'
                 }
             } catch {
-                $joinOutput.Text = Format-FriendlyError $_.Exception.Message
+                $joinOutput.Text = "Erro no diagnostico.`r`n$($_.Exception.Message)"
                 $statusLabel.Text = 'Status: erro no diagnostico'
             }
         })
@@ -638,11 +644,11 @@ function Show-LauncherGui {
                 $port = 7172
                 [void][int]::TryParse($portInput.Text, [ref]$port)
                 $statusLabel.Text = 'Status: conectando'
-                $result = JoinRemoteWorld -Host $hostInput.Text -Port $port -WorldName $script:TrmInviteWorld -ExpectedVersion $script:TrmInviteVersion -ProgressCallback ${function:Set-UiStatus}
-                $joinOutput.Text = "Conectando ao mundo.`r`nModo: $($result.mode)`r`nMundo: $($result.worldName)`r`nHost do convite: $($result.host)`r`nIP usado pelo client: $($result.clientWorldAddress)`r`nPorta: $($result.port)`r`nHistorico salvo em: $($result.statePath)`r`n`r`n$(Format-OnlineDiagnosticText $result.diagnostic)"
+                $result = JoinRemoteWorld -Host $hostInput.Text -Port $port -WorldName $script:TrmInviteWorld -ExpectedVersion $script:TrmInviteVersion -RawInvite $inviteInput.Text -ProgressCallback ${function:Set-UiStatus}
+                $joinOutput.Text = "Conectando ao mundo.`r`nModo: $($result.mode)`r`nMundo: $($result.worldName)`r`nHost do convite: $($result.host)`r`nIP usado pelo client: $($result.clientWorldAddress)`r`nPorta: $($result.port)`r`nHistorico salvo em: $($result.statePath)`r`n`r`n$(Format-ConnectionReportText $result.connectionReport)`r`n`r`n$(Format-OnlineDiagnosticText $result.diagnostic)"
                 $statusLabel.Text = 'Status: cliente online iniciado'
             } catch {
-                $joinOutput.Text = Format-FriendlyError $_.Exception.Message
+                $joinOutput.Text = "Erro ao conectar.`r`n$($_.Exception.Message)"
                 $statusLabel.Text = 'Status: erro ao conectar'
             }
         })
