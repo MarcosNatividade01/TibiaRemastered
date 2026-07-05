@@ -2,6 +2,11 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.8] - Publicacao GitHub
+
+- Publicada versao 0.1.8 para testes online/LAN.
+- Atualizados `version.json` e `manifest.json` para o Launcher baixar arquivos pelo GitHub.
+- Mantidas protecoes para `UserData`, logs, backups, saves, banco local e arquivos pessoais.
 ## [0.1.7] - Publicacao GitHub
 
 - Publicada versao 0.1.7 para testes online/LAN.
@@ -115,6 +120,7 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Criada a estrutura inicial do repositorio.
 - Adicionados arquivos base para README, roadmap, ideias, versao e manifest.
 - Adicionado `.gitignore` para proteger dados reais e arquivos sensiveis.
+
 
 
 
