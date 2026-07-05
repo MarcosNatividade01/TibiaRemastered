@@ -1,0 +1,13 @@
+{
+  "id": "MissingDependencyExampleModule",
+  "name": "Missing Dependency Example Module",
+  "version": "0.1.0",
+  "author": "Tibia Remastered",
+  "description": "Module used to verify missing dependency handling",
+  "category": "features",
+  "enabled": true,
+  "featureFlag": "missingDependencyExampleModule",
+  "dependencies": ["NonExistingModule"],
+  "main": "main.lua",
+  "loadOrder": 40
+}

@@ -1,0 +1,13 @@
+{
+  "id": "RemasteredAdminBalanceTests",
+  "name": "Remastered Admin Balance Tests",
+  "version": "0.1.0",
+  "author": "Tibia Remastered",
+  "description": "Administrative read-only commands for validating Remastered XP skill and loot rates",
+  "category": "utilities",
+  "enabled": true,
+  "featureFlag": "enable_admin_balance_tests",
+  "dependencies": ["Balance"],
+  "main": "main.lua",
+  "loadOrder": 60
+}

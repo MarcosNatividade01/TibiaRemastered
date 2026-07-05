@@ -1,0 +1,16 @@
+return {
+	remasteredBalance = false,
+	enable_remastered_balance = true,
+	enable_admin_balance_tests = true,
+	remasteredEvents = false,
+	talentSystem = false,
+	challengeSystem = false,
+	newBosses = false,
+	interfaceImprovements = false,
+	networkExtensions = false,
+	debugCommands = false,
+	exampleModule = true,
+	disabledExampleModule = false,
+	invalidExampleModule = false,
+	missingDependencyExampleModule = true,
+}

@@ -1,0 +1,13 @@
+{
+  "id": "ExampleModule",
+  "name": "Example Module",
+  "version": "0.1.0",
+  "author": "Tibia Remastered",
+  "description": "Infrastructure module for loader validation",
+  "category": "features",
+  "enabled": true,
+  "featureFlag": "exampleModule",
+  "dependencies": [],
+  "main": "main.lua",
+  "loadOrder": 10
+}

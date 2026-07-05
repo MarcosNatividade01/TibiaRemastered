@@ -1,0 +1,84 @@
+# Dados locais e sensiveis
+UserData/
+Logs/
+Backup/
+Backups/
+Saves/
+Save/
+
+# Banco de dados real e dumps privados
+*.db
+*.sqlite
+*.sqlite3
+*.mdb
+*.sql
+*.dump
+*.bak
+*.backup
+Database/
+Databases/
+PrivateDatabase/
+!Database_Template/
+!Database_Template/**
+
+# Contas, personagens e dados reais
+Client/conf/clientoptions.json
+Client/cache/
+accounts/
+Accounts/
+players/
+Players/
+characters/
+Characters/
+world/
+World/
+
+# Segredos, tokens e configuracoes privadas
+Config/launcher-config.json
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.token
+*token*
+*secret*
+*password*
+secrets/
+Secrets/
+credentials/
+Credentials/
+
+# Cache e temporarios
+cache/
+Cache/
+tmp/
+temp/
+Temp/
+*.tmp
+*.temp
+*.log
+Reports/
+
+# Build e pacotes gerados
+build/
+dist/
+release/
+Release/
+*.zip
+*.rar
+*.7z
+
+# Arquivos grandes distribuidos pelo Player Package/Release, nao pelo Git raw
+Client/bin/Qt6WebEngineCore.dll
+Client/bin/Qt6WebEngineCore.dll.part*
+Server/data-global/world/world.otbm
+
+# Sistema operacional e editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

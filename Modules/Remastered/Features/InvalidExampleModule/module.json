@@ -1,0 +1,13 @@
+{
+  "id": "InvalidExampleModule",
+  "name": "Invalid Example Module",
+  "version": "0.1.0",
+  "author": "Tibia Remastered",
+  "description": "Module used to verify load error handling",
+  "category": "features",
+  "enabled": true,
+  "featureFlag": "invalidExampleModule",
+  "dependencies": [],
+  "main": "main.lua",
+  "loadOrder": 30
+}

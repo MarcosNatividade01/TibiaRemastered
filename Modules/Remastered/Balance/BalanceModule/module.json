@@ -1,0 +1,13 @@
+{
+  "id": "RemasteredBalanceModule",
+  "name": "Remastered Balance Module",
+  "version": "0.1.0",
+  "author": "Tibia Remastered",
+  "description": "Applies Remastered experience skill and loot rates",
+  "category": "balance",
+  "enabled": true,
+  "featureFlag": "enable_remastered_balance",
+  "dependencies": [],
+  "main": "main.lua",
+  "loadOrder": 50
+}

@@ -1,0 +1,28 @@
+TIBIAFRIENDS - FLUXO LOCAL SIMPLES
+
+BOTAO PRINCIPAL:
+1. Abra "JOGAR".
+2. Ele prepara o cliente, liga MySQL, liga o endpoint de criacao, liga o Crystal Server e abre o cliente local.
+3. Crie conta/personagem pelo proprio cliente ou entre com uma conta existente.
+
+BOTAO SOMENTE SERVIDOR:
+1. Abra "LIGAR SERVIDOR".
+2. Use quando quiser deixar o servidor online sem abrir o cliente.
+
+BOTAO CRIAR PERSONAGEM:
+1. Abre o cliente local com o servidor ligado.
+2. A criacao deve ser feita dentro do proprio cliente.
+
+Nao precisa abrir o painel do XAMPP.
+O launcher usa diretamente:
+- C:\xampp\mysql\bin\mysqld.exe
+- C:\xampp\apache\bin\httpd.exe
+- C:\otserv\crystalserver.exe
+
+Portas locais:
+- MySQL: 3306
+- Endpoint do cliente: 80
+- Login: 7171
+- Jogo: 7172
+
+Servidor configurado para uso local: 127.0.0.1
