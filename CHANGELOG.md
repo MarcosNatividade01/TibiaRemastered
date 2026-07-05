@@ -2,6 +2,13 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.10] - Hash do GitHub Raw
+
+- Corrigido o calculo de SHA256 do manifest para usar os bytes normalizados que o Git publica no GitHub Raw.
+- Corrigido o tamanho registrado no manifest para refletir o conteudo publicado, nao apenas o arquivo local do Windows.
+- A validacao final do Publish passa a usar a mesma regra de normalizacao antes de permitir commit e push.
+- Confirmada a causa do mismatch: `CHANGELOG.md` local tinha finais de linha diferentes dos bytes servidos pelo GitHub Raw.
+
 ## [0.1.9] - Correcao de hash do manifest
 
 - Corrigido o fluxo de publicacao para validar todos os SHA256 do `manifest.json` antes de `git add`, commit e push.

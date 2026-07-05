@@ -61,6 +61,49 @@ function Get-FileUrl([string]$Relative, [string]$Hash) {
     return Add-UrlQuery -Url $url -Query ('v={0}&sha={1}' -f ([System.Uri]::EscapeDataString($Version)), $Hash)
 }
 
+function Test-BinaryBytes([byte[]]$Bytes) {
+    $limit = [Math]::Min($Bytes.Length, 8192)
+    for ($i = 0; $i -lt $limit; $i++) {
+        if ($Bytes[$i] -eq 0) { return $true }
+    }
+    return $false
+}
+
+function Convert-ToGitPublishedBytes([string]$Path) {
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    if (Test-BinaryBytes $bytes) {
+        Write-Output -NoEnumerate $bytes
+        return
+    }
+
+    $stream = New-Object System.IO.MemoryStream
+    try {
+        for ($i = 0; $i -lt $bytes.Length; $i++) {
+            if ($bytes[$i] -eq 13 -and ($i + 1) -lt $bytes.Length -and $bytes[$i + 1] -eq 10) {
+                $stream.WriteByte(10)
+                $i++
+            } else {
+                $stream.WriteByte($bytes[$i])
+            }
+        }
+        Write-Output -NoEnumerate $stream.ToArray()
+        return
+    } finally {
+        $stream.Dispose()
+    }
+}
+
+function Get-GitPublishedFileInfo([string]$Path) {
+    $bytes = Convert-ToGitPublishedBytes $Path
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $hash = ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-','').ToLowerInvariant()
+    } finally {
+        $sha.Dispose()
+    }
+    return [pscustomobject]@{Sha256=$hash; Size=$bytes.Length}
+}
+
 $versionJson = [pscustomobject]@{
     name = 'TibiaRemastered'
     version = $Version
@@ -75,14 +118,14 @@ Get-ChildItem -Path $Root -File -Recurse | ForEach-Object {
     $rel = Convert-ToRelativePath -Base $Root -Path $_.FullName
     if (Test-Ignored $rel) { return }
     if ($_.Length -gt $MaxFileBytes) { return }
-    $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+    $fileInfo = Get-GitPublishedFileInfo $_.FullName
     $overwrite = -not ($rel.StartsWith('Config/', [System.StringComparison]::OrdinalIgnoreCase))
     $category = ($rel.Split('/')[0])
     $files += [pscustomobject]@{
         path = $rel
-        sha256 = $hash
-        size = $_.Length
-        url = Get-FileUrl -Relative $rel -Hash $hash
+        sha256 = $fileInfo.Sha256
+        size = $fileInfo.Size
+        url = Get-FileUrl -Relative $rel -Hash $fileInfo.Sha256
         overwrite = $overwrite
         category = $category
     }

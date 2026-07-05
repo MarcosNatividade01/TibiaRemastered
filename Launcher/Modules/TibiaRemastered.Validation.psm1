@@ -7,6 +7,51 @@ function New-TrmValidationIssue {
     return [pscustomobject]@{severity=$Severity; code=$Code; message=$Message; path=$Path}
 }
 
+function Test-TrmValidationBinaryBytes {
+    param([byte[]]$Bytes)
+    $limit = [Math]::Min($Bytes.Length, 8192)
+    for ($i = 0; $i -lt $limit; $i++) {
+        if ($Bytes[$i] -eq 0) { return $true }
+    }
+    return $false
+}
+
+function ConvertTo-TrmPublishedBytes {
+    param([string]$Path)
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    if (Test-TrmValidationBinaryBytes $bytes) {
+        Write-Output -NoEnumerate $bytes
+        return
+    }
+
+    $stream = New-Object System.IO.MemoryStream
+    try {
+        for ($i = 0; $i -lt $bytes.Length; $i++) {
+            if ($bytes[$i] -eq 13 -and ($i + 1) -lt $bytes.Length -and $bytes[$i + 1] -eq 10) {
+                $stream.WriteByte(10)
+                $i++
+            } else {
+                $stream.WriteByte($bytes[$i])
+            }
+        }
+        Write-Output -NoEnumerate $stream.ToArray()
+        return
+    } finally {
+        $stream.Dispose()
+    }
+}
+
+function Get-TrmPublishedSha256 {
+    param([string]$Path)
+    $bytes = ConvertTo-TrmPublishedBytes $Path
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        return ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-','').ToLowerInvariant()
+    } finally {
+        $sha.Dispose()
+    }
+}
+
 function Test-TrmValidationIgnoredPath {
     param([string]$Path)
     $normalized = ($Path -replace '\\','/')
@@ -103,7 +148,7 @@ function Test-TrmProjectIntegrity {
                 $issues += New-TrmValidationIssue 'error' 'manifest.missing' "Manifest file is absent locally: $path" $path
                 continue
             }
-            $hash = Get-TrmSha256 $full
+            $hash = Get-TrmPublishedSha256 $full
             if ($hash -ne ([string]$entry.sha256).ToLowerInvariant()) {
                 $issues += New-TrmValidationIssue 'error' 'manifest.hash' "Manifest hash mismatch for $path" $path
             }

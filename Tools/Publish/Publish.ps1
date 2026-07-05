@@ -228,6 +228,51 @@ function Assert-GeneratedReleaseValidation {
     Write-Ok 'Arquivos de release gerados foram validados.'
 }
 
+function Test-PublishBinaryBytes {
+    param([byte[]]$Bytes)
+    $limit = [Math]::Min($Bytes.Length, 8192)
+    for ($i = 0; $i -lt $limit; $i++) {
+        if ($Bytes[$i] -eq 0) { return $true }
+    }
+    return $false
+}
+
+function ConvertTo-PublishedBytes {
+    param([string]$Path)
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    if (Test-PublishBinaryBytes $bytes) {
+        Write-Output -NoEnumerate $bytes
+        return
+    }
+
+    $stream = New-Object System.IO.MemoryStream
+    try {
+        for ($i = 0; $i -lt $bytes.Length; $i++) {
+            if ($bytes[$i] -eq 13 -and ($i + 1) -lt $bytes.Length -and $bytes[$i + 1] -eq 10) {
+                $stream.WriteByte(10)
+                $i++
+            } else {
+                $stream.WriteByte($bytes[$i])
+            }
+        }
+        Write-Output -NoEnumerate $stream.ToArray()
+        return
+    } finally {
+        $stream.Dispose()
+    }
+}
+
+function Get-PublishedSha256 {
+    param([string]$Path)
+    $bytes = ConvertTo-PublishedBytes $Path
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        return ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-','').ToLowerInvariant()
+    } finally {
+        $sha.Dispose()
+    }
+}
+
 function Assert-ManifestHashesMatch {
     Write-Step 'Validando hashes finais do manifest'
     $root = Get-ProjectRoot
@@ -253,7 +298,7 @@ function Assert-ManifestHashesMatch {
             continue
         }
         $expected = ([string]$file.sha256).ToLowerInvariant()
-        $actual = (Get-FileHash -Path $path -Algorithm SHA256).Hash.ToLowerInvariant()
+        $actual = Get-PublishedSha256 $path
         if ($actual -ne $expected) {
             $failures += ("{0}: expected={1} actual={2}" -f $relative, $expected, $actual)
         }
