@@ -200,6 +200,34 @@ function Update-ReleaseFiles {
     }
 }
 
+function Assert-OfficialReleaseChecklist {
+    param([string]$ReleaseVersion)
+    Write-Step 'Executando Checklist Oficial de Release'
+    $checklist = Join-Path (Get-ProjectRoot) 'Scripts\Test-OfficialReleaseChecklist.ps1'
+    if (-not (Test-Path $checklist)) {
+        throw "Checklist oficial nao encontrado: $checklist"
+    }
+    $args = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$checklist)
+    if (-not [string]::IsNullOrWhiteSpace($ReleaseVersion)) {
+        $args += @('-Version',$ReleaseVersion)
+    }
+    & powershell.exe @args
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Checklist Oficial de Release falhou. Publicacao cancelada antes de alterar version.json, manifest.json ou enviar push.'
+    }
+    Write-Ok 'Checklist Oficial de Release aprovado.'
+}
+
+function Assert-GeneratedReleaseValidation {
+    Write-Step 'Validando arquivos de release gerados'
+    $testScript = Join-Path (Get-ProjectRoot) 'Scripts\Test-Project.ps1'
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $testScript -StrictRuntime
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Validacao pre-publish falhou depois de gerar version.json/manifest.json. Publicacao cancelada antes do commit/push.'
+    }
+    Write-Ok 'Arquivos de release gerados foram validados.'
+}
+
 function Remove-ForbiddenTrackedFiles {
     Write-Step 'Removendo arquivos proibidos do indice Git, se existirem'
     $paths = @(
@@ -278,7 +306,9 @@ try {
     if ([string]::IsNullOrWhiteSpace($Version)) {
         $Version = Get-NextPatchVersion
     }
+    Assert-OfficialReleaseChecklist -ReleaseVersion $Version
     Update-ReleaseFiles -ReleaseVersion $Version
+    Assert-GeneratedReleaseValidation
 
     Write-Step 'Adicionando arquivos ao Git'
     Invoke-Git -Arguments @('add','-A') | Out-Null

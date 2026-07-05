@@ -10,26 +10,39 @@ Tools/Publish/Publish.bat
 
 O script prepara a versao, mostra os arquivos que serao enviados e pede confirmacao antes de `git commit` e `git push`.
 
+Antes de qualquer alteracao de release, o publicador executa a Checklist Oficial de Release. Se algum item falhar, a publicacao e cancelada antes de atualizar `version.json`, `manifest.json`, commit ou push.
+
 ## Etapas executadas
 
-1. Verifica se Git esta instalado.
-2. Inicializa o repositorio se `.git/` nao existir.
-3. Garante que `origin` aponta para:
+1. Executa `Scripts/Test-OfficialReleaseChecklist.ps1`.
+2. Verifica se Git esta instalado.
+3. Inicializa o repositorio se `.git/` nao existir.
+4. Garante que `origin` aponta para:
 
 ```text
 https://github.com/MarcosNatividade01/TibiaRemastered.git
 ```
 
-4. Valida `.gitignore`.
-5. Atualiza `CHANGELOG.md`.
-6. Gera `version.json`.
-7. Gera `manifest.json` com URLs do GitHub.
-8. Executa `git add -A`.
-9. Remove do indice arquivos proibidos conhecidos.
-10. Mostra `git status`.
-11. Pede confirmacao.
-12. Executa `git commit`.
-13. Executa `git push`.
+5. Valida `.gitignore`.
+6. Atualiza `CHANGELOG.md`.
+7. Gera `version.json`.
+8. Gera `manifest.json` com URLs do GitHub.
+9. Executa `git add -A`.
+10. Remove do indice arquivos proibidos conhecidos.
+11. Mostra `git status`.
+12. Pede confirmacao.
+13. Executa `git commit`.
+14. Executa `git push`.
+
+## Checklist obrigatoria
+
+O publicador exige aprovacao local em:
+
+```text
+Logs/QAReports/official-release-approval.json
+```
+
+Esse arquivo deve registrar todos os testes manuais descritos em `Docs/RELEASE_POLICY.md`. Sem essa aprovacao, `Publish.bat` falha e nao envia nada ao GitHub.
 
 ## Arquivos protegidos
 

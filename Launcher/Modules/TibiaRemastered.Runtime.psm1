@@ -428,11 +428,11 @@ function Start-TrmPortableWebEndpoint {
     if (-not (Test-Path $mysqlExe)) { throw "mysql.exe not found: $mysqlExe" }
     $scriptPath = Join-Path $root 'UserData\Runtime\portable-web-endpoint.ps1'
     Write-TrmPortableWebEndpointScript -Path $scriptPath
-    Save-TrmPortableWebEndpointState -BindAddress $BindAddress -WorldAddress $WorldAddress -GamePort $GamePort -HttpPort $port
     if ($ProgressCallback) { & $ProgressCallback 'Iniciando webservice local portatil...' 0 0 0 }
     $databaseName = 'otserv'
     if ($Config.PSObject.Properties.Name -contains 'databaseName' -and -not [string]::IsNullOrWhiteSpace([string]$Config.databaseName)) { $databaseName = [string]$Config.databaseName }
-    Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scriptPath,'-Root',$root,'-MysqlExe',$mysqlExe,'-DbPort',[string]$Config.databasePort,'-HttpPort',[string]$port,'-Database',$databaseName,'-BindAddress',$BindAddress,'-WorldAddress',$WorldAddress,'-GamePort',[string]$GamePort) -WorkingDirectory $root -WindowStyle Hidden | Out-Null
+    $process = Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scriptPath,'-Root',$root,'-MysqlExe',$mysqlExe,'-DbPort',[string]$Config.databasePort,'-HttpPort',[string]$port,'-Database',$databaseName,'-BindAddress',$BindAddress,'-WorldAddress',$WorldAddress,'-GamePort',[string]$GamePort) -WorkingDirectory $root -WindowStyle Hidden -PassThru
+    Save-TrmPortableWebEndpointState -BindAddress $BindAddress -WorldAddress $WorldAddress -GamePort $GamePort -HttpPort $port -ProcessId $process.Id
 }
 
 function Get-TrmPortableWebEndpointStatePath {
@@ -450,13 +450,15 @@ function Save-TrmPortableWebEndpointState {
         [string]$BindAddress,
         [string]$WorldAddress,
         [int]$GamePort,
-        [int]$HttpPort
+        [int]$HttpPort,
+        [int]$ProcessId = 0
     )
     Save-TrmJsonFile -Path (Get-TrmPortableWebEndpointStatePath) -Value ([pscustomobject]@{
         bindAddress = $BindAddress
         worldAddress = $WorldAddress
         gamePort = $GamePort
         httpPort = $HttpPort
+        processId = $ProcessId
         startedAt = (Get-Date).ToString('s')
     })
 }
@@ -482,14 +484,48 @@ function Test-TrmPortableWebEndpointMode {
 function Stop-TrmPortableWebEndpoint {
     $root = Get-TrmRoot
     $scriptPath = Join-Path $root 'UserData\Runtime\portable-web-endpoint.ps1'
+    $state = Get-TrmPortableWebEndpointState
     $stopped = 0
+    if (($state.PSObject.Properties.Match('processId').Count -gt 0) -and ([int]$state.processId -gt 0)) {
+        $tracked = Get-Process -Id ([int]$state.processId) -ErrorAction SilentlyContinue
+        if ($tracked -and ($tracked.ProcessName -in @('powershell','pwsh'))) {
+            Stop-Process -Id $tracked.Id -Force -ErrorAction SilentlyContinue
+            $stopped++
+        }
+    }
     try {
         $processes = @(Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' OR Name = 'pwsh.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -and $_.CommandLine.Contains($scriptPath) })
         foreach ($process in $processes) {
-            Stop-Process -Id $process.ProcessId -Force -ErrorAction SilentlyContinue
-            $stopped++
+            if (-not (($state.PSObject.Properties.Match('processId').Count -gt 0) -and ([int]$state.processId -eq [int]$process.ProcessId))) {
+                Stop-Process -Id $process.ProcessId -Force -ErrorAction SilentlyContinue
+                $stopped++
+            }
         }
     } catch {}
+    if (($state.PSObject.Properties.Match('httpPort').Count -gt 0) -and ([int]$state.httpPort -gt 0)) {
+        $port = [int]$state.httpPort
+        $listeners = @(Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue)
+        foreach ($listener in $listeners) {
+            $owner = Get-Process -Id $listener.OwningProcess -ErrorAction SilentlyContinue
+            if ($owner -and ($owner.ProcessName -in @('powershell','pwsh'))) {
+                Stop-Process -Id $owner.Id -Force -ErrorAction SilentlyContinue
+                $stopped++
+            }
+        }
+        try {
+            $lines = @(& netstat.exe -ano 2>$null | Where-Object { $_ -match "^\s*TCP\s+\S+:$port\s+\S+\s+LISTENING\s+(\d+)\s*$" })
+            foreach ($line in $lines) {
+                if ($line -match "^\s*TCP\s+\S+:$port\s+\S+\s+LISTENING\s+(\d+)\s*$") {
+                    $pid = [int]$Matches[1]
+                    $owner = Get-Process -Id $pid -ErrorAction SilentlyContinue
+                    if ($owner -and ($owner.ProcessName -in @('powershell','pwsh'))) {
+                        Stop-Process -Id $owner.Id -Force -ErrorAction SilentlyContinue
+                        $stopped++
+                    }
+                }
+            }
+        } catch {}
+    }
     return $stopped
 }
 

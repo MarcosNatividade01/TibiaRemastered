@@ -60,13 +60,35 @@ O launcher deve tratar os caminhos abaixo como protegidos e nunca sobrescreve-lo
 
 Qualquer arquivo novo que contenha dado pessoal deve ficar dentro de uma dessas areas protegidas ou ser adicionado explicitamente a regra de protecao antes de uma release.
 
-## Criterio de release
+## Politica oficial de release
+
+O GitHub deve armazenar apenas versoes aprovadas.
+
+O desenvolvimento diario acontece fora de `main`, preferencialmente em `develop`. A branch `main` deve conter somente versoes estaveis publicadas pelo fluxo oficial.
+
+Durante desenvolvimento local, nao atualizar:
+
+- `version.json`;
+- `manifest.json`;
+- `CHANGELOG.md` de release;
+- GitHub.
+
+O Host Assistido precisa estar completamente funcional antes de qualquer release oficial.
+
+Documentos oficiais:
+
+- `Docs/RELEASE_POLICY.md`
+- `Docs/WORKFLOW.md`
+- `Docs/VERSIONING.md`
+
+## Criterio tecnico de release
 
 Antes de publicar uma versao:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Test-Project.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Test-UpdateSimulation.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Test-OfficialReleaseChecklist.ps1
 ```
 
 Para declarar uma versao estavel com runtime completo:
@@ -76,3 +98,5 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Test-Project.p
 ```
 
 O modo estrito exige os executaveis reais de servidor e cliente.
+
+`Tools/Publish/Publish.bat` executa a checklist oficial automaticamente e cancela a publicacao se qualquer item falhar.
