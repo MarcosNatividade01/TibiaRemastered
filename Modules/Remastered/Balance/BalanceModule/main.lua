@@ -5,11 +5,13 @@ local BalanceModule = {
 
 function BalanceModule.initialize(self, remastered)
 	remastered.Utilities.log(string.format(
-		"%s initialized: exp x%s skill x%s loot x%s",
+		"%s initialized: exp x%s skill x%s loot x%s spell x%s rune x%s",
 		self.id,
 		tostring(remastered.Balance.getExperienceRate()),
 		tostring(remastered.Balance.getSkillRate()),
-		tostring(remastered.Balance.getLootRate())
+		tostring(remastered.Balance.getLootRate()),
+		tostring(remastered.Balance.getSpellDamageMultiplier()),
+		tostring(remastered.Balance.getOffensiveRuneDamageMultiplier())
 	))
 	return true
 end

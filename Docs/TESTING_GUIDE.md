@@ -30,8 +30,11 @@ Resultados esperados:
 - XP Rate efetiva `x8`;
 - Skill Rate efetiva `x3`;
 - Magic Level Rate efetiva `x3`;
-- intervalo base de ataque dos jogadores `1000 ms` (`2x`);
+- intervalo base de ataque dos jogadores `1538 ms` (aproximadamente `1,3x`);
 - a camada Remastered permanece em `1x`, evitando multiplicacao duplicada.
+- spells ofensivas de jogadores usam `spellDamageMultiplier = 1.15`;
+- runas ofensivas de jogadores usam `offensiveRuneDamageMultiplier = 1.30`;
+- cura, potions, monstros e ataques basicos nao recebem esses multiplicadores.
 
 Validacao automatizada:
 

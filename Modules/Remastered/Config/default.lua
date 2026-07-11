@@ -10,6 +10,8 @@ return {
 		lootRate = 2.0,
 		magicRate = 1.0,
 		spawnRate = 1.0,
+		spellDamageMultiplier = 1.15,
+		offensiveRuneDamageMultiplier = 1.30,
 	},
 
 	gameplay = {},

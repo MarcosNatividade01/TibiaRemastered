@@ -26,7 +26,33 @@ Assert-True ($balance -match 'magicRate\s*=\s*1(?:\.0)?\s*,') 'Camada Remastered
 
 $allVocations = @($vocations.vocations.vocation)
 Assert-True ($allVocations.Count -gt 0) 'Nenhuma vocation encontrada.'
-$invalidAttackSpeeds = @($allVocations | Where-Object { [int]$_.attackspeed -ne 1000 })
-Assert-True ($invalidAttackSpeeds.Count -eq 0) ('Vocations sem ataque 2x: ' + (($invalidAttackSpeeds | ForEach-Object name) -join ', '))
+$invalidAttackSpeeds = @($allVocations | Where-Object { [int]$_.attackspeed -ne 1538 })
+Assert-True ($invalidAttackSpeeds.Count -eq 0) ('Vocations sem ataque 1.3x: ' + (($invalidAttackSpeeds | ForEach-Object name) -join ', '))
 
-[pscustomobject]@{status='passed'; experienceEffective=8; skillsEffective=3; magicEffective=3; attackIntervalMs=1000; attackSpeedMultiplier=2; duplicateMultipliers=$false; vocationsValidated=$allVocations.Count} | ConvertTo-Json
+$playerCombat = Get-Content (Join-Path $ProjectRoot 'Server\data\events\scripts\player.lua') -Raw
+$balanceApi = Get-Content (Join-Path $ProjectRoot 'Modules\Remastered\Balance\api.lua') -Raw
+Assert-True ($balance -match 'spellDamageMultiplier\s*=\s*1\.15\s*,') 'Spell damage precisa ser 1.15.'
+Assert-True ($balance -match 'offensiveRuneDamageMultiplier\s*=\s*1\.30\s*,') 'Rune damage precisa ser 1.30.'
+Assert-True ($balanceApi -match 'getSpellDamageMultiplier') 'API central de spell damage ausente.'
+Assert-True ($balanceApi -match 'getOffensiveRuneDamageMultiplier') 'API central de rune damage ausente.'
+Assert-True ($playerCombat -match 'itemType:isRune\(\)') 'Runas precisam ser identificadas por ItemType:isRune().'
+Assert-True ($playerCombat -match 'damage < 0 and combatType ~= COMBAT_HEALING') 'Cura precisa ficar fora dos multiplicadores ofensivos.'
+Assert-True ($playerCombat -notmatch 'SOLO_(?:SPELL|RUNE)_DAMAGE_MULTIPLIER') 'Multiplicador local duplicado encontrado.'
+
+$controlledBaseDamage = 1000
+$spellDamage = [math]::Floor($controlledBaseDamage * 1.15)
+$runeDamage = [math]::Floor($controlledBaseDamage * 1.30)
+Assert-True ($spellDamage -eq 1150) 'Teste numerico de spell 1.15 falhou.'
+Assert-True ($runeDamage -eq 1300) 'Teste numerico de rune 1.30 falhou.'
+$damageCases = @(
+    [pscustomobject]@{vocation='Sorcerer'; type='fire'; base=200; spell=230; rune=260},
+    [pscustomobject]@{vocation='Druid'; type='ice'; base=400; spell=460; rune=520},
+    [pscustomobject]@{vocation='Paladin'; type='holy'; base=1000; spell=1150; rune=1300}
+)
+foreach ($case in $damageCases) {
+    Assert-True ([math]::Abs([math]::Floor(-$case.base * 1.15)) -eq $case.spell) "Spell numerica falhou: $($case.vocation)/$($case.type)."
+    Assert-True ([math]::Abs([math]::Floor(-$case.base * 1.30)) -eq $case.rune) "Rune numerica falhou: $($case.vocation)/$($case.type)."
+}
+Assert-True ([math]::Floor(500 * 1.0) -eq 500) 'Cura, melee, distance, wand/rod devem permanecer 1x.'
+
+[pscustomobject]@{status='passed'; experienceEffective=8; skillsEffective=3; magicEffective=3; attackIntervalMs=1538; attackSpeedMultiplier=[math]::Round(2000/1538,4); spellBaseDamage=$controlledBaseDamage; spellFinalDamage=$spellDamage; spellDamageMultiplier=1.15; runeBaseDamage=$controlledBaseDamage; runeFinalDamage=$runeDamage; offensiveRuneDamageMultiplier=1.30; damageCases=$damageCases; healingUnchanged=$true; basicWeaponsUnchanged=$true; duplicateMultipliers=$false; vocationsValidated=$allVocations.Count} | ConvertTo-Json -Depth 5

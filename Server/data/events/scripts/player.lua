@@ -1,6 +1,3 @@
-﻿local SOLO_SPELL_DAMAGE_MULTIPLIER = 1.50
-local SOLO_RUNE_DAMAGE_MULTIPLIER = 1.35
-
 local storeItemID = {
 	-- registered item ids here are not tradable with players
 	-- these items can be set to movable at items.xml
@@ -638,11 +635,11 @@ function Player:onCombat(target, item, primaryDamage, primaryType, secondaryDama
 				return primaryDamage, primaryType, secondaryDamage, secondaryType
 			end
 			item = self:getSlotItem(CONST_SLOT_LEFT)
-		elseif weaponType == WEAPON_NONE then
-			damageMultiplier = SOLO_RUNE_DAMAGE_MULTIPLIER
+		elseif itemType:isRune() and Remastered and Remastered.Balance then
+			damageMultiplier = Remastered.Balance.getOffensiveRuneDamageMultiplier()
 		end
-	else
-		damageMultiplier = SOLO_SPELL_DAMAGE_MULTIPLIER
+	elseif Remastered and Remastered.Balance then
+		damageMultiplier = Remastered.Balance.getSpellDamageMultiplier()
 	end
 
 	if damageMultiplier then

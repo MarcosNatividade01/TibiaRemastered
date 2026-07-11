@@ -39,6 +39,14 @@ function Balance.getSpawnRate()
 	return sanitizeRate(Remastered.Config.get("balance.spawnRate", 1.0))
 end
 
+function Balance.getSpellDamageMultiplier()
+	return sanitizeRate(Remastered.Config.get("balance.spellDamageMultiplier", 1.0))
+end
+
+function Balance.getOffensiveRuneDamageMultiplier()
+	return sanitizeRate(Remastered.Config.get("balance.offensiveRuneDamageMultiplier", 1.0))
+end
+
 function Balance.applyExperienceRate(exp)
 	if not isEnabled() then
 		return exp

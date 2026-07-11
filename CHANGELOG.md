@@ -2,6 +2,15 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.16-test] - Dano centralizado de spells e runas
+
+- Centralizados no Remastered Balance Module os multiplicadores `spellDamageMultiplier = 1.15` e `offensiveRuneDamageMultiplier = 1.30`.
+- Corrigidos os valores anteriores efetivos de spells 1.50 e runas 1.35.
+- Runas agora sao identificadas explicitamente por `ItemType:isRune()`, evitando aplicar bonus a outros itens sem arma.
+- Mantidas curas, potions, monstros, melee, distance, wands/rods, cooldowns e regeneracao sem alteracao.
+- Ajustado o intervalo base de ataque dos jogadores para 1538 ms, equivalente a aproximadamente 1,3x.
+- Ampliados os testes numericos para spells e runas em diferentes vocacoes e tipos de dano.
+
 ## [0.1.15-test] - Correcao Offline e rates de teste
 
 - Removida a consulta remota sincrona da abertura do Launcher, que bloqueava o acesso ao modo Offline quando GitHub ou autenticacao estavam indisponiveis.
