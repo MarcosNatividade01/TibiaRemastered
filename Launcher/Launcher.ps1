@@ -1019,7 +1019,13 @@ function Show-LauncherGui {
     Set-LauncherButtonStyle $btnHelp
     $form.Controls.Add($btnHelp)
 
-    Refresh-VersionLabels
+    # Abertura nao depende da rede: Offline fica disponivel imediatamente.
+    $localVersion.Text = 'Versao instalada: ' + (Get-LauncherLocalVersionText)
+    $remoteVersion.Text = 'Versao disponivel: clique em Verificar atualizacoes'
+    $updateStatus.Text = 'Status de atualizacao: verificacao pendente.'
+    if ($script:BtnUpdate) { $script:BtnUpdate.Enabled = $false }
+    if ($script:BtnUpdatePlay) { $script:BtnUpdatePlay.Enabled = $false }
+    if ($script:BtnNews) { $script:BtnNews.Enabled = $false }
     Refresh-LastUpdate
     [void]$form.ShowDialog()
 }

@@ -150,7 +150,9 @@ function Get-TrmRequestHeaders {
     param([string]$Url)
     if ($Url -notmatch '(^https://raw\.githubusercontent\.com/|^https://api\.github\.com/)') { return @{} }
     try {
-        $token = (& gh auth token 2>$null)
+        $gh = Get-Command gh -ErrorAction SilentlyContinue
+        if ($null -eq $gh) { return @{'User-Agent' = 'TibiaRemasteredLauncher'} }
+        $token = (& $gh.Source auth token 2>$null)
         if (-not [string]::IsNullOrWhiteSpace($token)) {
             return @{
                 Authorization = "Bearer $token"

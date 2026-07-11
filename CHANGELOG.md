@@ -2,6 +2,16 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.15-test] - Correcao Offline e rates de teste
+
+- Removida a consulta remota sincrona da abertura do Launcher, que bloqueava o acesso ao modo Offline quando GitHub ou autenticacao estavam indisponiveis.
+- Mantidos os fluxos Hospedar Mundo, Entrar no Meu Mundo, convites e Entrar em Mundo sem alteracao de arquitetura.
+- Centralizados os rates efetivos em `Server/data/stages.lua`: XP 8x, Skills 3x e Magic Level 3x.
+- Neutralizada a segunda camada de XP/Skills do modulo Remastered para impedir multiplicadores duplicados.
+- Configurado intervalo base de ataque das vocacoes em 1000 ms, equivalente a velocidade 2x.
+- Adicionado teste automatizado dos rates efetivos, duplicacao e velocidade de ataque.
+- Publicada como teste porque a validacao final Host + Convidado ainda depende de duas maquinas fisicas.
+
 ## [0.1.14] - Teste TCP do Host Assistido
 
 - Criada `GetCurrentVersion` como funcao oficial de versao baseada em `version.json`.

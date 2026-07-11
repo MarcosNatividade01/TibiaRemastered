@@ -4,8 +4,9 @@ return {
 	debug = false,
 
 	balance = {
-		experienceRate = 10.0,
-		skillRate = 3.0,
+		-- Rates efetivos em Server/data/stages.lua; camada neutra evita duplicacao.
+		experienceRate = 1.0,
+		skillRate = 1.0,
 		lootRate = 2.0,
 		magicRate = 1.0,
 		spawnRate = 1.0,

@@ -78,7 +78,7 @@ if ($versionJson -and ($versionJson.PSObject.Properties.Name -contains 'version'
 }
 
 if (-not [string]::IsNullOrWhiteSpace($Version)) {
-    Add-ReleaseCheck 'Versao solicitada e estavel' ($Version -match '^\d+\.\d+\.\d+$') "Version solicitada: $Version" 'Publicacao oficial em main aceita apenas versoes estaveis, como 0.1.3.'
+    Add-ReleaseCheck 'Versao solicitada valida' ($Version -match '^\d+\.\d+\.\d+(?:-(?:test|rc)(?:\.\d+)?)?$') "Version solicitada: $Version" 'Use versao estavel ou identificador de teste/RC, como 0.1.15-test.'
 }
 
 if ($manifestJson -and ($manifestJson.PSObject.Properties.Name -contains 'files')) {

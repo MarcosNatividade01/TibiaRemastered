@@ -27,7 +27,17 @@ Executar como God:
 
 Resultados esperados:
 
-- XP Rate `x10`;
+- XP Rate efetiva `x8`;
+- Skill Rate efetiva `x3`;
+- Magic Level Rate efetiva `x3`;
+- intervalo base de ataque dos jogadores `1000 ms` (`2x`);
+- a camada Remastered permanece em `1x`, evitando multiplicacao duplicada.
+
+Validacao automatizada:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Test-BalanceConfig.ps1
+```
 - Skill Rate `x3`;
 - Loot Rate `x2`;
 - logs gerados em `Logs/BalanceTests/`.

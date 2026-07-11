@@ -16,6 +16,10 @@ Nenhuma opcao tecnica e obrigatoria para jogar.
 
 ## Jogar Offline
 
+O Launcher nao consulta a rede durante a abertura. A verificacao remota acontece
+somente quando o usuario solicita verificar/atualizar, mantendo o botao Offline
+disponivel mesmo sem GitHub, internet ou GitHub CLI.
+
 Inicia o banco local, o servidor local e o client local. Esse fluxo nao depende da internet.
 
 ## Hospedar Mundo
