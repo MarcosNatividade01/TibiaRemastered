@@ -20,19 +20,146 @@ function Get-TrmRemoteText {
     param([string]$Url)
     if ([string]::IsNullOrWhiteSpace($Url)) { throw 'Remote URL is not configured.' }
     if (Test-Path $Url) { return (Get-Content -Path $Url -Raw -Encoding UTF8) }
-    $requestUrl = Resolve-TrmRequestUrl $Url
-    $headers = Get-TrmRequestHeaders $Url
-    $response = Invoke-WebRequest -Uri $requestUrl -Headers $headers -UseBasicParsing -TimeoutSec 30
-    return [string]$response.Content
+    if ($Url -notmatch '^https?://') {
+        throw "Arquivo remoto/local nao encontrado.`nEtapa: download JSON remoto`nURL: $Url`nErro completo: caminho local inexistente.`nAcao recomendada: confira Config/launcher-config.json e tente novamente."
+    }
+    try {
+        $requestUrl = Resolve-TrmRequestUrl $Url
+        $headers = Get-TrmRequestHeaders $Url
+        $response = Invoke-WebRequest -Uri $requestUrl -Headers $headers -UseBasicParsing -TimeoutSec 30
+        return [string]$response.Content
+    } catch {
+        throw "Falha ao baixar JSON remoto.`nEtapa: download JSON remoto`nURL: $Url`nErro completo: $($_.Exception.Message)`nAcao recomendada: verifique internet, GitHub Raw e tente Atualizar/Reparar novamente."
+    }
 }
 
 function Get-TrmRemoteJson {
-    param([string]$Url)
+    param([string]$Url, [string]$Description = 'JSON remoto')
     Write-TrmLog "Downloading json: $Url"
-    $raw = (Get-TrmRemoteText $Url).TrimStart([char]0xFEFF)
-    if ($raw.StartsWith('ï»¿')) { $raw = $raw.Substring(3) }
-    if ([string]::IsNullOrWhiteSpace($raw)) { throw "Remote JSON is empty: $Url" }
-    return ($raw | ConvertFrom-Json)
+    try {
+        $raw = (Get-TrmRemoteText $Url).TrimStart([char]0xFEFF)
+        if ($raw.StartsWith('ï»¿')) { $raw = $raw.Substring(3) }
+        if ([string]::IsNullOrWhiteSpace($raw)) { throw "$Description vazio." }
+        return ($raw | ConvertFrom-Json)
+    } catch {
+        throw "Falha ao validar $Description.`nEtapa: parse JSON remoto`nURL: $Url`nErro completo: $($_.Exception.Message)`nAcao recomendada: publique novamente version.json/manifest.json em UTF-8 JSON valido."
+    }
+}
+
+function Get-TrmRequiredJsonString {
+    param([object]$Json, [string]$Property, [string]$Description, [string]$Url)
+    if ($null -eq $Json -or -not ($Json.PSObject.Properties.Name -contains $Property)) {
+        throw "$Description invalido.`nEtapa: validacao de campo`nURL: $Url`nErro completo: campo obrigatorio '$Property' ausente.`nAcao recomendada: gere e publique novamente os arquivos de release."
+    }
+    $value = [string]$Json.$Property
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        throw "$Description invalido.`nEtapa: validacao de campo`nURL: $Url`nErro completo: campo obrigatorio '$Property' vazio.`nAcao recomendada: gere e publique novamente os arquivos de release."
+    }
+    return $value
+}
+
+function ConvertTo-TrmVersionInfo {
+    param([string]$Version, [string]$Channel = '')
+    $raw = ([string]$Version).Trim().TrimStart([char]0xFEFF)
+    $result = [ordered]@{
+        raw = $raw
+        valid = $false
+        major = 0
+        minor = 0
+        patch = 0
+        label = ''
+        labelNumber = 0
+        channel = ([string]$Channel).Trim().ToLowerInvariant()
+        channelRank = -1
+        normalized = ''
+    }
+    if ($raw -match '^(\d+)\.(\d+)\.(\d+)(?:-([A-Za-z]+)(\d*))?$') {
+        $result.valid = $true
+        $result.major = [int]$Matches[1]
+        $result.minor = [int]$Matches[2]
+        $result.patch = [int]$Matches[3]
+        $result.label = ([string]$Matches[4]).ToLowerInvariant()
+        if (-not [string]::IsNullOrWhiteSpace([string]$Matches[5])) { $result.labelNumber = [int]$Matches[5] }
+    } elseif ($raw -match '^(\d+)\.(\d+)\.(\d+)$') {
+        $result.valid = $true
+        $result.major = [int]$Matches[1]
+        $result.minor = [int]$Matches[2]
+        $result.patch = [int]$Matches[3]
+    }
+    if ($result.valid) {
+        $effective = $result.label
+        if ([string]::IsNullOrWhiteSpace($effective)) {
+            if (-not [string]::IsNullOrWhiteSpace($result.channel)) { $effective = $result.channel } else { $effective = 'stable' }
+        }
+        switch -Regex ($effective) {
+            '^dev$' { $result.channelRank = 0; break }
+            '^test$' { $result.channelRank = 1; break }
+            '^rc$' { $result.channelRank = 2; break }
+            '^stable$' { $result.channelRank = 3; break }
+            default { $result.channelRank = -1; break }
+        }
+        $suffix = if ([string]::IsNullOrWhiteSpace($result.label)) { '' } else { '-' + $result.label + $(if ($result.labelNumber -gt 0) { [string]$result.labelNumber } else { '' }) }
+        $result.normalized = '{0}.{1}.{2}{3}|{4}' -f $result.major,$result.minor,$result.patch,$suffix,$result.channel
+    }
+    return [pscustomobject]$result
+}
+
+function Compare-TrmVersionString {
+    param([string]$LeftVersion, [string]$RightVersion, [string]$LeftChannel = '', [string]$RightChannel = '')
+    $left = ConvertTo-TrmVersionInfo -Version $LeftVersion -Channel $LeftChannel
+    $right = ConvertTo-TrmVersionInfo -Version $RightVersion -Channel $RightChannel
+    if (-not $left.valid -and -not $right.valid) { return 0 }
+    if (-not $left.valid) { return -1 }
+    if (-not $right.valid) { return 1 }
+    foreach ($property in @('major','minor','patch','channelRank','labelNumber')) {
+        if ($left.$property -lt $right.$property) { return -1 }
+        if ($left.$property -gt $right.$property) { return 1 }
+    }
+    return [string]::Compare($left.normalized, $right.normalized, $true)
+}
+
+function Test-TrmVersionNeedsUpdate {
+    param([string]$LocalVersion, [string]$RemoteVersion, [string]$LocalChannel = '', [string]$RemoteChannel = '')
+    $remote = ConvertTo-TrmVersionInfo -Version $RemoteVersion -Channel $RemoteChannel
+    if (-not $remote.valid) { return $false }
+    $local = ConvertTo-TrmVersionInfo -Version $LocalVersion -Channel $LocalChannel
+    if (-not $local.valid) { return $true }
+    return ((Compare-TrmVersionString -LeftVersion $LocalVersion -LeftChannel $LocalChannel -RightVersion $RemoteVersion -RightChannel $RemoteChannel) -ne 0)
+}
+
+function Assert-TrmRemoteVersionJson {
+    param([object]$VersionJson, [string]$Url)
+    $version = Get-TrmRequiredJsonString -Json $VersionJson -Property 'version' -Description 'version.json remoto' -Url $Url
+    [void](Get-TrmRequiredJsonString -Json $VersionJson -Property 'channel' -Description 'version.json remoto' -Url $Url)
+    [void](Get-TrmRequiredJsonString -Json $VersionJson -Property 'minimumLauncherVersion' -Description 'version.json remoto' -Url $Url)
+    $parsed = ConvertTo-TrmVersionInfo -Version $version -Channel ([string]$VersionJson.channel)
+    if (-not $parsed.valid) {
+        throw "version.json remoto invalido.`nEtapa: validacao de version`nURL: $Url`nErro completo: version '$version' nao segue major.minor.patch[-dev|-test|-rcN].`nAcao recomendada: corrija version.json e publique novamente."
+    }
+    return $true
+}
+
+function Assert-TrmRemoteManifestJson {
+    param([object]$Manifest, [string]$Url, [string]$ExpectedVersion = '')
+    $manifestVersion = Get-TrmRequiredJsonString -Json $Manifest -Property 'version' -Description 'manifest.json remoto' -Url $Url
+    if (-not ($Manifest.PSObject.Properties.Name -contains 'files')) {
+        throw "manifest.json remoto invalido.`nEtapa: validacao de manifest`nURL: $Url`nErro completo: propriedade files ausente.`nAcao recomendada: gere manifest.json por ultimo e publique novamente."
+    }
+    if (@($Manifest.files).Count -le 0) {
+        throw "manifest.json remoto invalido.`nEtapa: validacao de manifest`nURL: $Url`nErro completo: lista files vazia.`nAcao recomendada: gere manifest.json por ultimo e publique novamente."
+    }
+    if (-not [string]::IsNullOrWhiteSpace($ExpectedVersion) -and $manifestVersion -ne $ExpectedVersion) {
+        throw "manifest.json remoto incompativel.`nEtapa: validacao de versao do manifest`nURL: $Url`nErro completo: manifest=$manifestVersion version.json=$ExpectedVersion.`nAcao recomendada: gere manifest.json por ultimo para a mesma versao e publique novamente."
+    }
+    foreach ($file in @($Manifest.files)) {
+        [void](Get-TrmRequiredJsonString -Json $file -Property 'path' -Description 'entrada do manifest remoto' -Url $Url)
+        $hash = Get-TrmRequiredJsonString -Json $file -Property 'sha256' -Description 'entrada do manifest remoto' -Url $Url
+        if ($hash -notmatch '^[a-fA-F0-9]{64}$') {
+            throw "manifest.json remoto invalido.`nEtapa: validacao de SHA256`nArquivo: $($file.path)`nURL: $Url`nErro completo: sha256 invalido '$hash'.`nAcao recomendada: gere manifest.json novamente."
+        }
+        [void](Get-TrmRequiredJsonString -Json $file -Property 'url' -Description 'entrada do manifest remoto' -Url $Url)
+    }
+    return $true
 }
 
 function New-TrmUpdateBackup {
@@ -102,6 +229,7 @@ function Get-TrmLastUpdateReport {
 function Sync-TrmFromManifest {
     param(
         [object]$Manifest,
+        [object]$RemoteVersion,
         [switch]$ForceRepair,
         [scriptblock]$ProgressCallback
     )
@@ -185,12 +313,16 @@ function Sync-TrmFromManifest {
 
         $manifestVersion = '0.0.0'
         if ($Manifest.PSObject.Properties.Name -contains 'version') { $manifestVersion = [string]$Manifest.version }
-        Save-TrmJsonFile -Path (Join-Path $root 'version.json') -Value ([pscustomobject]@{
-            name = 'TibiaRemastered'
-            version = $manifestVersion
-            channel = 'dev'
-            updatedAt = (Get-Date).ToString('s')
-        })
+        if ($null -ne $RemoteVersion) {
+            Save-TrmJsonFile -Path (Join-Path $root 'version.json') -Value $RemoteVersion
+        } else {
+            Save-TrmJsonFile -Path (Join-Path $root 'version.json') -Value ([pscustomobject]@{
+                name = 'TibiaRemastered'
+                version = $manifestVersion
+                channel = 'dev'
+                updatedAt = (Get-Date).ToString('s')
+            })
+        }
         $elapsed = [Math]::Max(0.1, ((Get-Date) - $started).TotalSeconds)
         $report = [pscustomobject]@{
             status = 'success'
@@ -231,15 +363,20 @@ function Invoke-TrmUpdateOrRepair {
     param([switch]$ForceRepair, [scriptblock]$ProgressCallback)
     Ensure-TrmProjectStructure
     $config = Get-TrmConfig
-    if (-not (Test-TrmInternetConnection $config.remoteManifestUrl)) {
-        throw 'Nao foi possivel acessar o manifest remoto. Configure Config/launcher-config.json ou verifique a internet.'
+    if ([string]::IsNullOrWhiteSpace([string]$config.remoteVersionUrl)) {
+        throw 'URL de version.json remoto nao configurada em Config/launcher-config.json.'
     }
-    $remoteVersion = if ($config.remoteVersionUrl) { Get-TrmRemoteJson $config.remoteVersionUrl } else { $null }
-    $manifest = Get-TrmRemoteJson $config.remoteManifestUrl
+    if ([string]::IsNullOrWhiteSpace([string]$config.remoteManifestUrl)) {
+        throw 'URL de manifest.json remoto nao configurada em Config/launcher-config.json.'
+    }
+    $remoteVersion = Get-TrmRemoteJson $config.remoteVersionUrl 'version.json remoto'
+    [void](Assert-TrmRemoteVersionJson -VersionJson $remoteVersion -Url ([string]$config.remoteVersionUrl))
+    $manifest = Get-TrmRemoteJson $config.remoteManifestUrl 'manifest.json remoto'
+    [void](Assert-TrmRemoteManifestJson -Manifest $manifest -Url ([string]$config.remoteManifestUrl) -ExpectedVersion ([string]$remoteVersion.version))
     if ($ProgressCallback -and $remoteVersion -and ($remoteVersion.PSObject.Properties.Name -contains 'version')) {
         & $ProgressCallback ("Versao disponivel: " + $remoteVersion.version) 0 0 0
     }
-    return Sync-TrmFromManifest -Manifest $manifest -ForceRepair:$ForceRepair -ProgressCallback $ProgressCallback
+    return Sync-TrmFromManifest -Manifest $manifest -RemoteVersion $remoteVersion -ForceRepair:$ForceRepair -ProgressCallback $ProgressCallback
 }
 
 Export-ModuleMember -Function *-Trm*

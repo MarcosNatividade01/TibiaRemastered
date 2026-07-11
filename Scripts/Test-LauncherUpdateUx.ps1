@@ -25,7 +25,7 @@ Set-Content -Path (Join-Path $install 'Assets\update-test.txt') -Value 'old' -En
 Set-Content -Path (Join-Path $install 'UserData\Database\player.db') -Value 'private-local' -Encoding UTF8
 Set-Content -Path (Join-Path $remote 'Assets\update-test.txt') -Value 'new' -Encoding UTF8
 Set-Content -Path (Join-Path $remote 'UserData\Database\player.db') -Value 'remote-private' -Encoding UTF8
-Set-Content -Path (Join-Path $remote 'version.json') -Value '{"name":"TibiaRemastered","version":"1.0.1","channel":"dev"}' -Encoding UTF8
+Set-Content -Path (Join-Path $remote 'version.json') -Value '{"name":"TibiaRemastered","version":"1.0.1","channel":"dev","minimumLauncherVersion":"0.1.0"}' -Encoding UTF8
 
 $asset = Join-Path $remote 'Assets\update-test.txt'
 $protected = Join-Path $remote 'UserData\Database\player.db'
@@ -47,13 +47,32 @@ $updatedVersion = (Get-Content -Raw (Join-Path $install 'version.json') | Conver
 if ($updatedContent -ne 'new') { throw 'Arquivo normal nao foi atualizado.' }
 if ($protectedContent -ne 'private-local') { throw 'Arquivo protegido foi sobrescrito.' }
 if ($updatedVersion -ne '1.0.1') { throw 'version.json local nao foi atualizado.' }
+if (-not (Test-TrmVersionNeedsUpdate -LocalVersion '0.1.16' -RemoteVersion '0.1.17-test')) { throw 'Comparacao nao liberou 0.1.16 -> 0.1.17-test.' }
+if (-not (Test-TrmVersionNeedsUpdate -LocalVersion '0.1.17-test' -RemoteVersion '0.1.17-rc1')) { throw 'Comparacao nao liberou test -> rc1.' }
+if (-not (Test-TrmVersionNeedsUpdate -LocalVersion '0.1.17-rc1' -RemoteVersion '0.1.17')) { throw 'Comparacao nao liberou rc1 -> stable.' }
+if (Test-TrmVersionNeedsUpdate -LocalVersion '0.1.17-test' -RemoteVersion '0.1.17-test') { throw 'Comparacao liberou update com versoes iguais.' }
+
+Remove-Item -Path (Join-Path $install 'version.json') -Force
+if ($null -ne (Read-TrmJsonFile -Path (Join-Path $install 'version.json') -Default $null)) { throw 'version.json local ausente nao resultou em fallback.' }
+Set-Content -Path (Join-Path $install 'version.json') -Value '{"name":"TibiaRemastered","version":"1.0.1","channel":"dev"}' -Encoding UTF8
 $sameVersionResult = Invoke-TrmUpdateOrRepair
 if ($sameVersionResult.downloaded -ne 0) { throw 'Versao local igual a remota baixou arquivos indevidamente.' }
 
+$badVersionPath = Join-Path $remote 'bad-version.json'
+Set-Content -Path $badVersionPath -Value '{ invalid json' -Encoding UTF8
+$config.remoteVersionUrl = $badVersionPath
+Save-TrmJsonFile -Path (Join-Path $install 'Config\launcher-config.json') -Value $config
+$badVersionBlocked = $false
+try { Invoke-TrmUpdateOrRepair | Out-Null } catch { $badVersionBlocked = ($_.Exception.Message -match 'version\.json remoto') }
+if (-not $badVersionBlocked) { throw 'version.json remoto invalido nao gerou erro claro.' }
+
+$config.remoteVersionUrl = Join-Path $remote 'version.json'
+Save-TrmJsonFile -Path (Join-Path $install 'Config\launcher-config.json') -Value $config
 $badManifest = $manifest | ConvertTo-Json -Depth 8 | ConvertFrom-Json
 $badManifest.files[0].sha256 = '0000000000000000000000000000000000000000000000000000000000000000'
 $badManifest.version = '1.0.2'
 $badManifest | ConvertTo-Json -Depth 8 | Set-Content -Path (Join-Path $remote 'manifest.json') -Encoding UTF8
+Set-Content -Path (Join-Path $remote 'version.json') -Value '{"name":"TibiaRemastered","version":"1.0.2","channel":"dev","minimumLauncherVersion":"0.1.0"}' -Encoding UTF8
 Set-Content -Path $asset -Value 'bad-hash-content' -Encoding UTF8
 $hashBlocked = $false
 try { Invoke-TrmUpdateOrRepair | Out-Null } catch { $hashBlocked = ($_.Exception.Message -match 'Hash mismatch') }
@@ -62,7 +81,7 @@ if (-not $hashBlocked) { throw 'Hash invalido nao bloqueou update.' }
 $config.remoteManifestUrl = Join-Path $remote 'missing-manifest.json'
 Save-TrmJsonFile -Path (Join-Path $install 'Config\launcher-config.json') -Value $config
 $missingManifestBlocked = $false
-try { Invoke-TrmUpdateOrRepair | Out-Null } catch { $missingManifestBlocked = ($_.Exception.Message -match 'manifest remoto|internet') }
+try { Invoke-TrmUpdateOrRepair | Out-Null } catch { $missingManifestBlocked = ($_.Exception.Message -match 'manifest(\.json)? remoto|internet') }
 if (-not $missingManifestBlocked) { throw 'Manifest indisponivel nao gerou erro claro.' }
 
 [pscustomobject]@{
@@ -72,5 +91,6 @@ if (-not $missingManifestBlocked) { throw 'Manifest indisponivel nao gerou erro 
     protected = $result.protected
     version = $updatedVersion
     hashInvalidBlocked = $hashBlocked
+    badVersionBlocked = $badVersionBlocked
     missingManifestBlocked = $missingManifestBlocked
 } | ConvertTo-Json -Depth 8

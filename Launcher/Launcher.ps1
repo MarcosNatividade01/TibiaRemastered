@@ -25,7 +25,9 @@ function Format-LauncherBytes {
 }
 
 function Get-LauncherLocalVersionText {
-    return GetCurrentVersion
+    $version = GetCurrentVersion
+    if ([string]::IsNullOrWhiteSpace($version) -or $version -eq 'unknown') { return 'Versao local desconhecida' }
+    return $version
 }
 
 function Get-LauncherRemoteVersionText {
@@ -42,14 +44,12 @@ function Get-LauncherRemoteVersionText {
 
 function ConvertTo-LauncherComparableVersion {
     param([string]$Version)
-    if ([string]::IsNullOrWhiteSpace($Version)) { return [version]'0.0.0' }
-    $core = ($Version -replace '-.*$','')
-    try { return [version]$core } catch { return [version]'0.0.0' }
+    return ConvertTo-TrmVersionInfo -Version $Version
 }
 
 function Test-LauncherRemoteVersionNewer {
     param([string]$LocalVersion, [string]$RemoteVersion)
-    return ((ConvertTo-LauncherComparableVersion $RemoteVersion) -gt (ConvertTo-LauncherComparableVersion $LocalVersion))
+    return (Test-TrmVersionNeedsUpdate -LocalVersion $LocalVersion -RemoteVersion $RemoteVersion)
 }
 
 function Get-LauncherRemoteChangelogText {
@@ -207,7 +207,8 @@ function Show-LauncherGui {
         $remoteVersion.Text = 'Versao disponivel: ' + $remoteText
         $hasUpdate = Test-LauncherRemoteVersionNewer -LocalVersion $localText -RemoteVersion $remoteText
         if ($remoteText -eq 'indisponivel' -or $remoteText -eq 'nao configurada' -or $remoteText -eq 'desconhecida') {
-            $updateStatus.Text = 'Status de atualizacao: nao foi possivel verificar agora.'
+            $updateStatus.Text = 'Status de atualizacao: nao foi possivel verificar agora. Atualizar/Reparar continuam liberados para nova tentativa.'
+            $hasUpdate = $true
         } elseif ($hasUpdate) {
             $updateStatus.Text = "Atualizacao disponivel: $localText -> $remoteText"
         } else {
@@ -1038,12 +1039,19 @@ function Show-LauncherGui {
 
     # Abertura nao depende da rede: Offline fica disponivel imediatamente.
     $localVersion.Text = 'Versao instalada: ' + (Get-LauncherLocalVersionText)
-    $remoteVersion.Text = 'Versao disponivel: clique em Verificar atualizacoes'
-    $updateStatus.Text = 'Status de atualizacao: verificacao pendente.'
-    if ($script:BtnUpdate) { $script:BtnUpdate.Enabled = $false }
-    if ($script:BtnUpdatePlay) { $script:BtnUpdatePlay.Enabled = $false }
+    $remoteVersion.Text = 'Versao disponivel: verificando...'
+    $updateStatus.Text = 'Status de atualizacao: verificacao pendente. Atualizar/Reparar estao liberados.'
+    if ($script:BtnUpdate) { $script:BtnUpdate.Enabled = $true }
+    if ($script:BtnUpdatePlay) { $script:BtnUpdatePlay.Enabled = $true }
     if ($script:BtnNews) { $script:BtnNews.Enabled = $false }
     Refresh-LastUpdate
+    $refreshTimer = New-Object System.Windows.Forms.Timer
+    $refreshTimer.Interval = 250
+    $refreshTimer.Add_Tick({
+        $refreshTimer.Stop()
+        try { Refresh-VersionLabels } catch { Set-UiStatus ("Falha ao verificar versao remota: $($_.Exception.Message)") 0 0 0 }
+    })
+    $form.Add_Shown({ $refreshTimer.Start() })
     [void]$form.ShowDialog()
 }
 

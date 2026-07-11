@@ -39,9 +39,16 @@ function Ensure-TrmProjectStructure {
 function Read-TrmJsonFile {
     param([string]$Path, [object]$Default = $null)
     if (-not (Test-Path $Path)) { return $Default }
-    $raw = Get-Content -Path $Path -Raw -Encoding UTF8
-    if ([string]::IsNullOrWhiteSpace($raw)) { return $Default }
-    return ($raw.TrimStart([char]0xFEFF) | ConvertFrom-Json)
+    try {
+        $raw = Get-Content -Path $Path -Raw -Encoding UTF8
+        if ([string]::IsNullOrWhiteSpace($raw)) { return $Default }
+        $normalized = $raw.TrimStart([char]0xFEFF)
+        if ($normalized.StartsWith('ï»¿')) { $normalized = $normalized.Substring(3) }
+        return ($normalized | ConvertFrom-Json)
+    } catch {
+        Write-TrmLog "Invalid JSON file ignored: $Path | $($_.Exception.Message)" 'WARN'
+        return $Default
+    }
 }
 
 function Save-TrmJsonFile {

@@ -2,6 +2,15 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.18-test] - Correção do Launcher Update
+
+- Corrigida a leitura da versão local oficial a partir de `version.json` na raiz instalada.
+- Corrigida a validação de `version.json` e `manifest.json` remotos com mensagens claras de etapa, URL e erro.
+- Corrigida a comparação de versões com sufixos como `-test` e `-rc1`.
+- Os botões `Atualizar` e `Atualizar e Jogar` deixam de ficar permanentemente desabilitados quando a verificação automática ainda não terminou ou falha.
+- O update passa a salvar localmente o `version.json` remoto oficial após sincronização concluída.
+- Ampliados os testes do fluxo de atualização, versão local ausente, JSON remoto inválido, manifest indisponível, hashes e preservação de `UserData`.
+
 ## [0.1.17-test] - Convite remoto e auditoria completa de dano
 
 - Auditadas formulas reais de spells e runas para Sorcerer, Druid, Knight, Paladin, Monk e respectivas promocoes; os multiplicadores centrais 1.15/1.30 da versao anterior foram confirmados sem duplicidade.
@@ -10,7 +19,6 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - `Testar Conexao` e `Entrar` reaplicam os campos do convite validado, sem substituir o host remoto por localhost.
 - Logs de conexao registram host extraido, `publicHost` e modo extraido.
 - Adicionados testes numericos por vocacao/promocao, teste de isolamento Offline e cobertura ampliada do formato/clipboard de convite.
-
 ## [0.1.16-test] - Dano centralizado de spells e runas
 
 - Centralizados no Remastered Balance Module os multiplicadores `spellDamageMultiplier = 1.15` e `offensiveRuneDamageMultiplier = 1.30`.
@@ -198,6 +206,7 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Criada a estrutura inicial do repositorio.
 - Adicionados arquivos base para README, roadmap, ideias, versao e manifest.
 - Adicionado `.gitignore` para proteger dados reais e arquivos sensiveis.
+
 
 
 
