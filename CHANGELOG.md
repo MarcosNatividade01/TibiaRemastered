@@ -2,6 +2,15 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.17-test] - Convite remoto e auditoria completa de dano
+
+- Auditadas formulas reais de spells e runas para Sorcerer, Druid, Knight, Paladin, Monk e respectivas promocoes; os multiplicadores centrais 1.15/1.30 da versao anterior foram confirmados sem duplicidade.
+- O botao `Copiar Convite para Amigos` usa estado isolado da hospedagem e copia somente um convite oficial reconstruido e validado.
+- Gerador e parser rejeitam `localhost`, `127.0.0.1` e `::1` em convites `mode=remote`; `Entrar no Meu Mundo` permanece separado em `127.0.0.1`.
+- `Testar Conexao` e `Entrar` reaplicam os campos do convite validado, sem substituir o host remoto por localhost.
+- Logs de conexao registram host extraido, `publicHost` e modo extraido.
+- Adicionados testes numericos por vocacao/promocao, teste de isolamento Offline e cobertura ampliada do formato/clipboard de convite.
+
 ## [0.1.16-test] - Dano centralizado de spells e runas
 
 - Centralizados no Remastered Balance Module os multiplicadores `spellDamageMultiplier = 1.15` e `offensiveRuneDamageMultiplier = 1.30`.

@@ -25,6 +25,25 @@ Assert-True ([int]$parsed.port -eq 7172) 'Parser nao extraiu porta correta.'
 Assert-True ($parsed.version -eq $version) 'Parser nao extraiu versao correta.'
 Assert-True ($parsed.mode -eq 'remote') 'Parser nao extraiu modo remote.'
 
+$copyText = Get-TrmCopyableWorldInvite -InviteText $invite
+Assert-True ($copyText -eq $invite) 'Fonte do botao Copiar Convite alterou o convite oficial.'
+Assert-True ($copyText -notmatch 'CHANGELOG|Novidades|Atualizacoes|Diagnostico|Status:') 'Fonte do clipboard contem changelog, novidades ou diagnostico.'
+
+$remoteLoopbackRejected = $false
+try { New-TrmWorldInvite -WorldName 'FazendoTibia' -Host 'localhost' -Port 7172 -Version $version -Mode remote | Out-Null } catch { $remoteLoopbackRejected = $true }
+Assert-True $remoteLoopbackRejected 'Gerador aceitou localhost em convite remoto.'
+
+$parsedRemoteLoopback = ConvertFrom-TrmWorldInvite @"
+TIBIA_REMASTERED_INVITE
+world=FazendoTibia
+host=127.0.0.1
+publicHost=127.0.0.1
+port=7172
+version=$version
+mode=remote
+"@
+Assert-True (-not $parsedRemoteLoopback.valid) 'Parser aceitou localhost em convite remoto.'
+
 $hostLocal = New-TrmWorldInvite -WorldName 'FazendoTibia' -Host '127.0.0.1' -Port 7172 -Version $version -Mode 'host-local'
 $parsedHostLocal = ConvertFrom-TrmWorldInvite $hostLocal
 Assert-True (-not $parsedHostLocal.valid) 'Convite host-local foi aceito em Entrar em Mundo.'

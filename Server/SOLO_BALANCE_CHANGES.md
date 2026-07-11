@@ -21,4 +21,5 @@ Summary:
 - Existing imbuement-capable items now have 3 imbuement slots.
 - Imbuement material counts are ceil(original / 3).
 - New accounts created by the local client endpoint receive 999999 regular Tibia Coins.
-- Offensive player spell damage is multiplied by 1.50 and offensive player rune damage by 1.35 in Player:onCombat.
+- Offensive player spell damage is multiplied by 1.15 and offensive player rune damage by 1.30 in Player:onCombat.
+- Rune classification uses ItemType:isRune(), so other non-weapon items are not treated as runes.

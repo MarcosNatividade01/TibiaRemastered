@@ -366,9 +366,11 @@ function Show-LauncherGui {
         $hostForm.ForeColor = $colorText
 
         $state = Get-TrmOnlineState
-        $currentInvite = ''
-        $currentHostPort = 7172
-        $currentHostWorld = ''
+        $hostSession = [hashtable]::Synchronized(@{
+            Invite = ''
+            Port = 7172
+            World = ''
+        })
 
         function Format-FriendlyError([string]$Message) {
             if ($Message -match 'Host inacessivel|Connection refused|actively refused') {
@@ -426,10 +428,10 @@ function Show-LauncherGui {
             try {
                 $statusLabel.Text = 'Status: servidor iniciando'
                 $result = Start-TrmHostedWorld -ProgressCallback ${function:Set-UiStatus}
-                $currentInvite = [string]$result.invite
-                $currentHostPort = [int]$result.port
-                $currentHostWorld = [string]$result.worldName
-                $hostInfo.Text = "Servidor online`r`nMundo: $($result.worldName)`r`nJogadores conectados: $($result.playersOnline)`r`nIP local: $($result.localIp)`r`nIP publico: $($result.publicIp)`r`nPorta Tibia: $($result.port)`r`nversion=$($result.version)`r`nmode=host-local`r`n`r`nConvite para amigos:`r`n$currentInvite`r`n`r`n$(Format-OnlineDiagnosticText $result.diagnostic)"
+                $hostSession.Invite = [string]$result.invite
+                $hostSession.Port = [int]$result.port
+                $hostSession.World = [string]$result.worldName
+                $hostInfo.Text = "Servidor online`r`nMundo: $($result.worldName)`r`nJogadores conectados: $($result.playersOnline)`r`nIP local: $($result.localIp)`r`nIP publico: $($result.publicIp)`r`nPorta Tibia: $($result.port)`r`nversion=$($result.version)`r`nmode=host-local`r`n`r`nConvite para amigos:`r`n$($hostSession.Invite)`r`n`r`n$(Format-OnlineDiagnosticText $result.diagnostic)"
                 $statusLabel.Text = 'Status: servidor online'
             } catch {
                 $hostInfo.Text = Format-FriendlyError $_.Exception.Message
@@ -444,12 +446,18 @@ function Show-LauncherGui {
         $btnCopyHost.Location = New-Object System.Drawing.Point(144, 172)
         $btnCopyHost.Size = New-Object System.Drawing.Size(170, 32)
         $btnCopyHost.Add_Click({
-            if (-not [string]::IsNullOrWhiteSpace($currentInvite)) {
-                [System.Windows.Forms.Clipboard]::SetText($currentInvite)
-                $statusLabel.Text = 'Status: convite copiado'
-            } else {
+            if ([string]::IsNullOrWhiteSpace([string]$hostSession.Invite)) {
                 $statusLabel.Text = 'Status: hospede o mundo antes de copiar convite'
+                return
             }
+            try {
+                $copyText = Get-TrmCopyableWorldInvite -InviteText ([string]$hostSession.Invite)
+            } catch {
+                $statusLabel.Text = 'Status: convite remoto invalido; copie somente apos hospedar novamente'
+                return
+            }
+            [System.Windows.Forms.Clipboard]::SetText($copyText)
+            $statusLabel.Text = 'Status: convite remoto copiado'
         })
         Set-LauncherButtonStyle $btnCopyHost
         $hostGroup.Controls.Add($btnCopyHost)
@@ -461,7 +469,7 @@ function Show-LauncherGui {
         $btnJoinOwnHost.Add_Click({
             try {
                 $statusLabel.Text = 'Status: conectando localmente'
-                $result = JoinOwnHostedWorld -Port $currentHostPort -WorldName $currentHostWorld -ProgressCallback ${function:Set-UiStatus}
+                $result = JoinOwnHostedWorld -Port ([int]$hostSession.Port) -WorldName ([string]$hostSession.World) -ProgressCallback ${function:Set-UiStatus}
                 $hostInfo.Text = "Cliente local iniciado.`r`nModo: $($result.mode)`r`nHost usado: $($result.clientWorldAddress)`r`nPorta: $($result.port)`r`nHistorico salvo em: $($result.statePath)`r`n`r`n$(Format-OnlineDiagnosticText $result.diagnostic)"
                 $statusLabel.Text = 'Status: cliente local iniciado'
             } catch {
@@ -615,6 +623,15 @@ function Show-LauncherGui {
             $port = 7172
             [void][int]::TryParse($portInput.Text, [ref]$port)
             try {
+                if (-not [string]::IsNullOrWhiteSpace($inviteInput.Text)) {
+                    $parsedTestInvite = ConvertFrom-TrmWorldInvite -InviteText $inviteInput.Text
+                    if (-not $parsedTestInvite.valid) { throw "Convite remoto invalido: $($parsedTestInvite.error)" }
+                    $hostInput.Text = [string]$parsedTestInvite.host
+                    $port = [int]$parsedTestInvite.port
+                    $portInput.Text = [string]$port
+                    $script:TrmInviteWorld = [string]$parsedTestInvite.worldName
+                    $script:TrmInviteVersion = [string]$parsedTestInvite.version
+                }
                 $resolved = Get-TrmRuntimeConfigResolved
                 $connectionReport = New-TrmConnectionTestReport -Mode 'remote' -RawInvite $inviteInput.Text -Host $hostInput.Text -Port $port -WebPort ([int]$resolved.config.webServerPort) -WorldName $script:TrmInviteWorld -ExpectedVersion $script:TrmInviteVersion -ClientWorldAddress $hostInput.Text -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory -ConfigDescription ("test remote world={0}:{1}" -f $hostInput.Text, $port) -Phase 'ui-test-connection'
                 $diagnostic = New-TrmNetworkDiagnosticReport -Mode 'join' -Host $hostInput.Text -Port $port -WebPort ([int]$resolved.config.webServerPort)
