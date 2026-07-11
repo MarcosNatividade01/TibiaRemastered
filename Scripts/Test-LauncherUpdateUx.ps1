@@ -40,6 +40,25 @@ $manifest = [pscustomobject]@{
 }
 $manifest | ConvertTo-Json -Depth 8 | Set-Content -Path (Join-Path $remote 'manifest.json') -Encoding UTF8
 
+$oldState = Resolve-TrmLauncherUpdateState -LocalVersion '0.1.15-test' -RemoteVersion '0.1.16-test'
+if ($oldState.state -ne 'UPDATE_AVAILABLE') { throw "Estado incorreto para versao antiga: $($oldState.state)" }
+if (-not $oldState.canUpdate -or -not $oldState.canUpdateAndPlay -or -not $oldState.canNews) { throw 'Estado UPDATE_AVAILABLE nao habilitou botoes esperados.' }
+if ([string]::IsNullOrWhiteSpace([string]$oldState.remoteVersionDisplay) -or $oldState.remoteVersionDisplay -ne '0.1.16-test') { throw 'Versao disponivel nao ficou visivel para versao antiga.' }
+
+$equalState = Resolve-TrmLauncherUpdateState -LocalVersion '0.1.16-test' -RemoteVersion '0.1.16-test'
+if ($equalState.state -ne 'UP_TO_DATE') { throw "Estado incorreto para versoes iguais: $($equalState.state)" }
+if ($equalState.canUpdate) { throw 'Estado UP_TO_DATE deixou Atualizar habilitado.' }
+if (-not $equalState.canUpdateAndPlay -or $equalState.updatePlayText -ne 'Jogar') { throw 'Estado UP_TO_DATE nao habilitou Jogar pelo botao Atualizar e Jogar.' }
+
+$offlineState = Resolve-TrmLauncherUpdateState -LocalVersion '0.1.15-test' -ErrorMessage 'falha simulada'
+if ($offlineState.state -ne 'OFFLINE_CHECK') { throw "Estado incorreto para falha remota: $($offlineState.state)" }
+if ($offlineState.remoteVersionDisplay -ne 'Nao foi possivel verificar') { throw 'Falha remota nao exibiu mensagem de versao indisponivel.' }
+if (-not $offlineState.canUpdateAndPlay -or $offlineState.updatePlayText -ne 'Jogar') { throw 'Falha remota nao manteve Jogar disponivel.' }
+
+$checkedState = Get-TrmLauncherVersionCheckState
+if ($checkedState.state -ne 'UPDATE_AVAILABLE') { throw "Verificacao real em fixture nao detectou update: $($checkedState.state)" }
+if ($checkedState.remoteVersionDisplay -ne '1.0.1') { throw 'Verificacao real em fixture nao exibiu versao remota.' }
+
 $result = Invoke-TrmUpdateOrRepair
 $updatedContent = (Get-Content -Raw (Join-Path $install 'Assets\update-test.txt')).Trim()
 $protectedContent = (Get-Content -Raw (Join-Path $install 'UserData\Database\player.db')).Trim()
@@ -47,9 +66,15 @@ $updatedVersion = (Get-Content -Raw (Join-Path $install 'version.json') | Conver
 if ($updatedContent -ne 'new') { throw 'Arquivo normal nao foi atualizado.' }
 if ($protectedContent -ne 'private-local') { throw 'Arquivo protegido foi sobrescrito.' }
 if ($updatedVersion -ne '1.0.1') { throw 'version.json local nao foi atualizado.' }
+$postUpdateState = Get-TrmLauncherVersionCheckState
+if ($postUpdateState.state -ne 'UP_TO_DATE') { throw "Estado apos update nao ficou atualizado: $($postUpdateState.state)" }
+if ($postUpdateState.canUpdate) { throw 'Apos update, botao Atualizar continuaria habilitado.' }
+if (-not $postUpdateState.canUpdateAndPlay) { throw 'Apos update, Atualizar e Jogar/Jogar nao ficou disponivel.' }
 if (-not (Test-TrmVersionNeedsUpdate -LocalVersion '0.1.16' -RemoteVersion '0.1.17-test')) { throw 'Comparacao nao liberou 0.1.16 -> 0.1.17-test.' }
 if (-not (Test-TrmVersionNeedsUpdate -LocalVersion '0.1.17-test' -RemoteVersion '0.1.17-rc1')) { throw 'Comparacao nao liberou test -> rc1.' }
 if (-not (Test-TrmVersionNeedsUpdate -LocalVersion '0.1.17-rc1' -RemoteVersion '0.1.17')) { throw 'Comparacao nao liberou rc1 -> stable.' }
+if (-not (Test-TrmVersionNeedsUpdate -LocalVersion '0.1.15-test' -RemoteVersion '0.1.16-test')) { throw 'Comparacao nao liberou 0.1.15-test -> 0.1.16-test.' }
+if (-not (Test-TrmVersionNeedsUpdate -LocalVersion '0.1.16-test' -RemoteVersion '0.1.16')) { throw 'Comparacao nao tratou 0.1.16-test -> 0.1.16.' }
 if (Test-TrmVersionNeedsUpdate -LocalVersion '0.1.17-test' -RemoteVersion '0.1.17-test') { throw 'Comparacao liberou update com versoes iguais.' }
 
 Remove-Item -Path (Join-Path $install 'version.json') -Force
@@ -84,6 +109,11 @@ $missingManifestBlocked = $false
 try { Invoke-TrmUpdateOrRepair | Out-Null } catch { $missingManifestBlocked = ($_.Exception.Message -match 'manifest(\.json)? remoto|internet') }
 if (-not $missingManifestBlocked) { throw 'Manifest indisponivel nao gerou erro claro.' }
 
+$config.remoteVersionUrl = Join-Path $remote 'missing-version.json'
+Save-TrmJsonFile -Path (Join-Path $install 'Config\launcher-config.json') -Value $config
+$failedCheckState = Get-TrmLauncherVersionCheckState
+if ($failedCheckState.state -ne 'OFFLINE_CHECK') { throw "Falha de consulta remota nao virou OFFLINE_CHECK: $($failedCheckState.state)" }
+
 [pscustomobject]@{
     status = 'passed'
     downloaded = $result.downloaded
@@ -93,4 +123,9 @@ if (-not $missingManifestBlocked) { throw 'Manifest indisponivel nao gerou erro 
     hashInvalidBlocked = $hashBlocked
     badVersionBlocked = $badVersionBlocked
     missingManifestBlocked = $missingManifestBlocked
+    stateOldVersion = $oldState.state
+    stateEqualVersion = $equalState.state
+    stateOfflineCheck = $offlineState.state
+    stateAfterUpdate = $postUpdateState.state
+    failedRemoteCheckState = $failedCheckState.state
 } | ConvertTo-Json -Depth 8

@@ -31,15 +31,8 @@ function Get-LauncherLocalVersionText {
 }
 
 function Get-LauncherRemoteVersionText {
-    try {
-        $config = Get-TrmConfig
-        if ([string]::IsNullOrWhiteSpace([string]$config.remoteVersionUrl)) { return 'nao configurada' }
-        $remote = Get-TrmRemoteJson $config.remoteVersionUrl
-        if ($remote.PSObject.Properties.Name -contains 'version') { return [string]$remote.version }
-        return 'desconhecida'
-    } catch {
-        return 'indisponivel'
-    }
+    $state = Get-TrmLauncherVersionCheckState
+    return [string]$state.remoteVersionDisplay
 }
 
 function ConvertTo-LauncherComparableVersion {
@@ -88,10 +81,22 @@ function Show-LauncherGui {
     function Set-LauncherButtonStyle($Button) {
         $Button.BackColor = $colorButton
         $Button.ForeColor = $colorButtonText
+        $Button.UseVisualStyleBackColor = $false
         $Button.FlatStyle = 'Flat'
         $Button.FlatAppearance.BorderColor = $colorBorder
+        $Button.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(112, 79, 43)
+        $Button.FlatAppearance.MouseDownBackColor = [System.Drawing.Color]::FromArgb(132, 95, 52)
         $Button.FlatAppearance.BorderSize = 1
         $Button.Font = $fontButton
+        $Button.Add_EnabledChanged({
+            if ($this.Enabled) {
+                $this.BackColor = $colorButton
+                $this.ForeColor = $colorButtonText
+            } else {
+                $this.BackColor = [System.Drawing.Color]::FromArgb(68, 58, 46)
+                $this.ForeColor = [System.Drawing.Color]::FromArgb(210, 196, 164)
+            }
+        })
     }
 
     function Set-LauncherTextStyle($Control) {
@@ -103,6 +108,8 @@ function Show-LauncherGui {
     $script:BtnUpdate = $null
     $script:BtnUpdatePlay = $null
     $script:BtnNews = $null
+    $script:BtnCheckUpdates = $null
+    $script:LauncherUpdateState = New-TrmLauncherUpdateState -State 'CHECKING' -LocalVersion (Get-LauncherLocalVersionText)
 
     $form = New-Object System.Windows.Forms.Form
     $form.Text = 'Tibia Remastered Launcher'
@@ -137,21 +144,21 @@ function Show-LauncherGui {
 
     $remoteVersion = New-Object System.Windows.Forms.Label
     $remoteVersion.Location = New-Object System.Drawing.Point(260, 88)
-    $remoteVersion.Size = New-Object System.Drawing.Size(250, 22)
+    $remoteVersion.Size = New-Object System.Drawing.Size(470, 22)
     $remoteVersion.Text = 'Versao disponivel: verificando...'
     $remoteVersion.ForeColor = $colorText
     $form.Controls.Add($remoteVersion)
 
     $speed = New-Object System.Windows.Forms.Label
-    $speed.Location = New-Object System.Drawing.Point(540, 88)
+    $speed.Location = New-Object System.Drawing.Point(22, 140)
     $speed.Size = New-Object System.Drawing.Size(190, 22)
     $speed.Text = 'Velocidade: 0 B/s'
     $speed.ForeColor = $colorText
     $form.Controls.Add($speed)
 
     $remaining = New-Object System.Windows.Forms.Label
-    $remaining.Location = New-Object System.Drawing.Point(22, 140)
-    $remaining.Size = New-Object System.Drawing.Size(700, 22)
+    $remaining.Location = New-Object System.Drawing.Point(230, 140)
+    $remaining.Size = New-Object System.Drawing.Size(500, 22)
     $remaining.Text = 'Restante: 0 B'
     $remaining.ForeColor = $colorText
     $form.Controls.Add($remaining)
@@ -200,23 +207,25 @@ function Show-LauncherGui {
         [System.Windows.Forms.Application]::DoEvents()
     }
 
-    function Refresh-VersionLabels {
-        $localText = Get-LauncherLocalVersionText
-        $remoteText = Get-LauncherRemoteVersionText
-        $localVersion.Text = 'Versao instalada: ' + $localText
-        $remoteVersion.Text = 'Versao disponivel: ' + $remoteText
-        $hasUpdate = Test-LauncherRemoteVersionNewer -LocalVersion $localText -RemoteVersion $remoteText
-        if ($remoteText -eq 'indisponivel' -or $remoteText -eq 'nao configurada' -or $remoteText -eq 'desconhecida') {
-            $updateStatus.Text = 'Status de atualizacao: nao foi possivel verificar agora. Atualizar/Reparar continuam liberados para nova tentativa.'
-            $hasUpdate = $true
-        } elseif ($hasUpdate) {
-            $updateStatus.Text = "Atualizacao disponivel: $localText -> $remoteText"
-        } else {
-            $updateStatus.Text = 'Voce esta usando a versao mais recente.'
+    function Apply-LauncherUpdateState($State) {
+        $script:LauncherUpdateState = $State
+        $localVersion.Text = 'Versao instalada: ' + $State.localVersionDisplay
+        $remoteVersion.Text = 'Versao disponivel: ' + $State.remoteVersionDisplay
+        $updateStatus.Text = $State.statusText
+        if ($script:BtnUpdate) { $script:BtnUpdate.Enabled = [bool]$State.canUpdate }
+        if ($script:BtnUpdatePlay) {
+            $script:BtnUpdatePlay.Enabled = [bool]$State.canUpdateAndPlay
+            $script:BtnUpdatePlay.Text = [string]$State.updatePlayText
         }
-        if ($script:BtnUpdate) { $script:BtnUpdate.Enabled = $hasUpdate }
-        if ($script:BtnUpdatePlay) { $script:BtnUpdatePlay.Enabled = $hasUpdate }
-        if ($script:BtnNews) { $script:BtnNews.Enabled = ($remoteText -ne 'indisponivel' -and $remoteText -ne 'nao configurada' -and $remoteText -ne 'desconhecida') }
+        if ($script:BtnNews) { $script:BtnNews.Enabled = [bool]$State.canNews }
+        if ($script:BtnCheckUpdates) { $script:BtnCheckUpdates.Enabled = [bool]$State.canCheckAgain }
+        Add-UiLog ("Estado de atualizacao: {0} local={1} remoto={2}" -f $State.state, $State.localVersionDisplay, $State.remoteVersionDisplay)
+    }
+
+    function Refresh-VersionLabels {
+        Apply-LauncherUpdateState (New-TrmLauncherUpdateState -State 'CHECKING' -LocalVersion (Get-LauncherLocalVersionText))
+        $state = Get-TrmLauncherVersionCheckState
+        Apply-LauncherUpdateState $state
     }
 
     function Refresh-LastUpdate {
@@ -886,9 +895,15 @@ function Show-LauncherGui {
 
     function Invoke-LauncherUpdateFromUi([bool]$PlayAfterUpdate) {
         try {
+            if ($PlayAfterUpdate -and $script:LauncherUpdateState -and @('UP_TO_DATE','UPDATE_SUCCESS','OFFLINE_CHECK','UPDATE_ERROR') -contains [string]$script:LauncherUpdateState.state) {
+                Start-TrmGame -ProgressCallback ${function:Set-UiStatus}
+                Set-UiStatus 'Cliente iniciado.' 100 0 0
+                Refresh-VersionLabels
+                return
+            }
+            Apply-LauncherUpdateState (New-TrmLauncherUpdateState -State 'UPDATING' -LocalVersion (Get-LauncherLocalVersionText) -RemoteVersion ([string]$script:LauncherUpdateState.remoteVersion))
             Set-UiStatus 'Atualizacao iniciada...' 0 0 0
             $result = Invoke-TrmUpdateOrRepair -ProgressCallback ${function:Set-UiStatus}
-            Refresh-VersionLabels
             Set-UiStatus ("Atualizacao concluida. Baixados: $($result.downloaded), verificados: $($result.checked), protegidos: $($result.protected)") 100 $result.averageBytesPerSecond 0
             $launcherUpdated = $false
             foreach ($action in @($result.actions)) {
@@ -909,11 +924,14 @@ function Show-LauncherGui {
                 $form.Close()
                 return
             }
+            Apply-LauncherUpdateState (New-TrmLauncherUpdateState -State 'UPDATE_SUCCESS' -LocalVersion (Get-LauncherLocalVersionText) -RemoteVersion (Get-LauncherRemoteVersionText))
+            Refresh-VersionLabels
             if ($PlayAfterUpdate) {
                 Start-TrmGame -ProgressCallback ${function:Set-UiStatus}
                 Set-UiStatus 'Atualizacao concluida. Cliente iniciado.' 100 0 0
             }
         } catch {
+            Apply-LauncherUpdateState (New-TrmLauncherUpdateState -State 'UPDATE_ERROR' -LocalVersion (Get-LauncherLocalVersionText) -RemoteVersion ([string]$script:LauncherUpdateState.remoteVersion) -ErrorMessage $_.Exception.Message)
             Set-UiStatus ("Erro na atualizacao: $($_.Exception.Message)") 0 0 0
         }
     }
@@ -1007,6 +1025,14 @@ function Show-LauncherGui {
     Set-LauncherButtonStyle $script:BtnNews
     $form.Controls.Add($script:BtnNews)
 
+    $script:BtnCheckUpdates = New-Object System.Windows.Forms.Button
+    $script:BtnCheckUpdates.Text = 'Verificar Atualizacoes'
+    $script:BtnCheckUpdates.Location = New-Object System.Drawing.Point(572, 388)
+    $script:BtnCheckUpdates.Size = New-Object System.Drawing.Size(165, 38)
+    $script:BtnCheckUpdates.Add_Click({ Refresh-VersionLabels })
+    Set-LauncherButtonStyle $script:BtnCheckUpdates
+    $form.Controls.Add($script:BtnCheckUpdates)
+
     $btnRepairMain = New-Object System.Windows.Forms.Button
     $btnRepairMain.Text = 'Reparar Arquivos'
     $btnRepairMain.Location = New-Object System.Drawing.Point(432, 388)
@@ -1038,12 +1064,7 @@ function Show-LauncherGui {
     $form.Controls.Add($btnHelp)
 
     # Abertura nao depende da rede: Offline fica disponivel imediatamente.
-    $localVersion.Text = 'Versao instalada: ' + (Get-LauncherLocalVersionText)
-    $remoteVersion.Text = 'Versao disponivel: verificando...'
-    $updateStatus.Text = 'Status de atualizacao: verificacao pendente. Atualizar/Reparar estao liberados.'
-    if ($script:BtnUpdate) { $script:BtnUpdate.Enabled = $true }
-    if ($script:BtnUpdatePlay) { $script:BtnUpdatePlay.Enabled = $true }
-    if ($script:BtnNews) { $script:BtnNews.Enabled = $false }
+    Apply-LauncherUpdateState (New-TrmLauncherUpdateState -State 'CHECKING' -LocalVersion (Get-LauncherLocalVersionText))
     Refresh-LastUpdate
     $refreshTimer = New-Object System.Windows.Forms.Timer
     $refreshTimer.Interval = 250

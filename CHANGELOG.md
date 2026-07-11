@@ -2,6 +2,17 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.19-test] - Máquina de estados do Launcher Update
+
+- Criada máquina de estados explícita para o Launcher Update: `CHECKING`, `UPDATE_AVAILABLE`, `UP_TO_DATE`, `UPDATING`, `UPDATE_SUCCESS`, `UPDATE_ERROR` e `OFFLINE_CHECK`.
+- Removida a dependência de strings soltas da interface para decidir se `Atualizar`, `Atualizar e Jogar` e `Ver Novidades` ficam habilitados.
+- Corrigida a abertura do Launcher para sair obrigatoriamente de `verificacao pendente` após sucesso ou falha da consulta remota.
+- O botão `Atualizar e Jogar` passa a virar `Jogar` quando o Launcher está atualizado ou quando a verificação remota falha, preservando o modo Offline.
+- Adicionado botão principal `Verificar Atualizacoes` para repetir a consulta remota sem abrir configurações.
+- Ajustada a área de exibição de `Versao disponivel` para evitar texto cortado/sobreposto.
+- Ajustada a aparência dos botões desabilitados para manter texto legível.
+- Ampliados os testes automatizados de estado para versão antiga, versões iguais, falha remota, update concluído e preservação de arquivos protegidos.
+
 ## [0.1.18-test] - Correção do Launcher Update
 
 - Corrigida a leitura da versão local oficial a partir de `version.json` na raiz instalada.

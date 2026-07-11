@@ -127,6 +127,146 @@ function Test-TrmVersionNeedsUpdate {
     return ((Compare-TrmVersionString -LeftVersion $LocalVersion -LeftChannel $LocalChannel -RightVersion $RemoteVersion -RightChannel $RemoteChannel) -ne 0)
 }
 
+function New-TrmLauncherUpdateState {
+    param(
+        [ValidateSet('CHECKING','UPDATE_AVAILABLE','UP_TO_DATE','UPDATING','UPDATE_SUCCESS','UPDATE_ERROR','OFFLINE_CHECK')]
+        [string]$State,
+        [string]$LocalVersion = '',
+        [string]$RemoteVersion = '',
+        [string]$ErrorMessage = ''
+    )
+
+    $localDisplay = if ([string]::IsNullOrWhiteSpace($LocalVersion) -or $LocalVersion -eq 'unknown' -or $LocalVersion -eq 'Versao local desconhecida') { 'Versao local desconhecida' } else { $LocalVersion }
+    $remoteDisplay = if ([string]::IsNullOrWhiteSpace($RemoteVersion)) { 'verificando...' } else { $RemoteVersion }
+    $statusText = ''
+    $canUpdate = $false
+    $canUpdateAndPlay = $false
+    $canNews = $false
+    $canCheckAgain = $true
+    $updatePlayText = 'Atualizar e Jogar'
+
+    switch ($State) {
+        'CHECKING' {
+            $remoteDisplay = 'verificando...'
+            $statusText = 'Status de atualizacao: verificando...'
+            $canCheckAgain = $false
+        }
+        'UPDATE_AVAILABLE' {
+            $statusText = "Status de atualizacao: Atualizacao disponivel."
+            $canUpdate = $true
+            $canUpdateAndPlay = $true
+            $canNews = $true
+            $updatePlayText = 'Atualizar e Jogar'
+        }
+        'UP_TO_DATE' {
+            $remoteDisplay = if ([string]::IsNullOrWhiteSpace($RemoteVersion)) { 'Voce esta atualizado' } else { $RemoteVersion }
+            $statusText = 'Status de atualizacao: Voce possui a versao mais recente.'
+            $canUpdate = $false
+            $canUpdateAndPlay = $true
+            $canNews = $true
+            $updatePlayText = 'Jogar'
+        }
+        'UPDATING' {
+            $remoteDisplay = if ([string]::IsNullOrWhiteSpace($RemoteVersion)) { 'atualizando...' } else { $RemoteVersion }
+            $statusText = 'Status de atualizacao: Atualizando...'
+            $canCheckAgain = $false
+        }
+        'UPDATE_SUCCESS' {
+            $remoteDisplay = if ([string]::IsNullOrWhiteSpace($RemoteVersion)) { 'Voce esta atualizado' } else { $RemoteVersion }
+            $statusText = 'Status de atualizacao: Atualizacao concluida.'
+            $canUpdate = $false
+            $canUpdateAndPlay = $true
+            $canNews = $true
+            $updatePlayText = 'Jogar'
+        }
+        'UPDATE_ERROR' {
+            $remoteDisplay = if ([string]::IsNullOrWhiteSpace($RemoteVersion)) { 'Nao foi possivel verificar' } else { $RemoteVersion }
+            $statusText = 'Status de atualizacao: Erro na atualizacao.'
+            if (-not [string]::IsNullOrWhiteSpace($ErrorMessage)) { $statusText += " $ErrorMessage" }
+            $canUpdate = $true
+            $canUpdateAndPlay = $true
+            $updatePlayText = 'Jogar'
+        }
+        'OFFLINE_CHECK' {
+            $remoteDisplay = 'Nao foi possivel verificar'
+            $statusText = 'Status de atualizacao: Nao foi possivel verificar atualizacoes.'
+            if (-not [string]::IsNullOrWhiteSpace($ErrorMessage)) { $statusText += " $ErrorMessage" }
+            $canUpdate = $true
+            $canUpdateAndPlay = $true
+            $updatePlayText = 'Jogar'
+        }
+    }
+
+    return [pscustomobject]@{
+        state = $State
+        localVersion = $LocalVersion
+        remoteVersion = $RemoteVersion
+        localVersionDisplay = $localDisplay
+        remoteVersionDisplay = $remoteDisplay
+        statusText = $statusText
+        canUpdate = $canUpdate
+        canUpdateAndPlay = $canUpdateAndPlay
+        canNews = $canNews
+        canRepair = $true
+        canCheckAgain = $canCheckAgain
+        updatePlayText = $updatePlayText
+        error = $ErrorMessage
+    }
+}
+
+function Resolve-TrmLauncherUpdateState {
+    param(
+        [string]$LocalVersion,
+        [string]$RemoteVersion,
+        [string]$LocalChannel = '',
+        [string]$RemoteChannel = '',
+        [string]$ErrorMessage = ''
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($ErrorMessage)) {
+        return New-TrmLauncherUpdateState -State 'OFFLINE_CHECK' -LocalVersion $LocalVersion -RemoteVersion $RemoteVersion -ErrorMessage $ErrorMessage
+    }
+
+    $remote = ConvertTo-TrmVersionInfo -Version $RemoteVersion -Channel $RemoteChannel
+    if (-not $remote.valid) {
+        return New-TrmLauncherUpdateState -State 'OFFLINE_CHECK' -LocalVersion $LocalVersion -RemoteVersion $RemoteVersion -ErrorMessage 'Versao remota vazia ou invalida.'
+    }
+
+    if (Test-TrmVersionNeedsUpdate -LocalVersion $LocalVersion -RemoteVersion $RemoteVersion -LocalChannel $LocalChannel -RemoteChannel $RemoteChannel) {
+        return New-TrmLauncherUpdateState -State 'UPDATE_AVAILABLE' -LocalVersion $LocalVersion -RemoteVersion $RemoteVersion
+    }
+
+    return New-TrmLauncherUpdateState -State 'UP_TO_DATE' -LocalVersion $LocalVersion -RemoteVersion $RemoteVersion
+}
+
+function Get-TrmLauncherVersionCheckState {
+    param([string]$RemoteVersionUrl = '')
+    $root = Get-TrmRoot
+    $localJson = Read-TrmJsonFile -Path (Join-Path $root 'version.json') -Default $null
+    $localVersion = 'unknown'
+    $localChannel = ''
+    if ($null -ne $localJson) {
+        if ($localJson.PSObject.Properties.Name -contains 'version') { $localVersion = [string]$localJson.version }
+        if ($localJson.PSObject.Properties.Name -contains 'channel') { $localChannel = [string]$localJson.channel }
+    }
+
+    try {
+        $config = Get-TrmConfig
+        $url = if ([string]::IsNullOrWhiteSpace($RemoteVersionUrl)) { [string]$config.remoteVersionUrl } else { $RemoteVersionUrl }
+        if ([string]::IsNullOrWhiteSpace($url)) {
+            return New-TrmLauncherUpdateState -State 'OFFLINE_CHECK' -LocalVersion $localVersion -ErrorMessage 'URL de version.json remoto nao configurada.'
+        }
+        $remoteJson = Get-TrmRemoteJson $url 'version.json remoto'
+        [void](Assert-TrmRemoteVersionJson -VersionJson $remoteJson -Url $url)
+        $remoteChannel = ''
+        if ($remoteJson.PSObject.Properties.Name -contains 'channel') { $remoteChannel = [string]$remoteJson.channel }
+        return Resolve-TrmLauncherUpdateState -LocalVersion $localVersion -RemoteVersion ([string]$remoteJson.version) -LocalChannel $localChannel -RemoteChannel $remoteChannel
+    } catch {
+        Write-TrmLog "Launcher version check failed: $($_.Exception.Message)" 'WARN'
+        return New-TrmLauncherUpdateState -State 'OFFLINE_CHECK' -LocalVersion $localVersion -ErrorMessage $_.Exception.Message
+    }
+}
+
 function Assert-TrmRemoteVersionJson {
     param([object]$VersionJson, [string]$Url)
     $version = Get-TrmRequiredJsonString -Json $VersionJson -Property 'version' -Description 'version.json remoto' -Url $Url
