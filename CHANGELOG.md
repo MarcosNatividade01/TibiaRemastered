@@ -10,6 +10,7 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Convites remotos agora incluem `loginPort=7171` e `gamePort=7172`, mantendo `port` para compatibilidade com versões anteriores.
 - Relatórios em `Logs/ConnectionTests/` passam a registrar `failureStage`, `tcpSuccess`, `tcpElapsedMs`, `loginPort`, `gamePort`, host/porta efetivos do client e game server anunciado.
 - A interface de diagnóstico mostra conectividade TCP, web/login remoto opcional, endpoint local e etapa real da falha, em vez de uma mensagem genérica.
+- O gerador de release passa a gravar `version.json` e `manifest.json` em UTF-8 sem BOM, evitando falha de parse em validadores PowerShell 5.1.
 - Preservados Offline, Host Assistido, Entrar no Meu Mundo, Copiar/Usar Convite, auto-update, `UserData`, banco e saves.
 
 ## [0.1.21-test] - Diagnostico remoto de conexao

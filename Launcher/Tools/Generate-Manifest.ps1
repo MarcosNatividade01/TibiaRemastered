@@ -126,6 +126,15 @@ function Get-GitPublishedFileInfo([string]$Path) {
     return [pscustomobject]@{Sha256=$hash; Size=$bytes.Length}
 }
 
+function Write-Utf8NoBomFile {
+    param(
+        [Parameter(Mandatory=$true)][string]$Path,
+        [Parameter(Mandatory=$true)][string]$Content
+    )
+    $encoding = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($Path, $Content, $encoding)
+}
+
 $versionJson = [pscustomobject]@{
     name = 'TibiaRemastered'
     version = $Version
@@ -133,7 +142,7 @@ $versionJson = [pscustomobject]@{
     releaseDate = (Get-Date -Format 'yyyy-MM-dd')
     minimumLauncherVersion = '0.1.0'
 }
-$versionJson | ConvertTo-Json -Depth 8 | Set-Content -Path $VersionOutput -Encoding UTF8
+Write-Utf8NoBomFile -Path $VersionOutput -Content ($versionJson | ConvertTo-Json -Depth 8)
 
 $publishablePaths = Get-GitPublishablePathSet $Root
 $filterByGit = ($publishablePaths.Count -gt 0)
@@ -163,5 +172,5 @@ $manifest = [pscustomobject]@{
     hashAlgorithm = 'SHA256'
     files = @($files | Sort-Object path)
 }
-$manifest | ConvertTo-Json -Depth 8 | Set-Content -Path $Output -Encoding UTF8
+Write-Utf8NoBomFile -Path $Output -Content ($manifest | ConvertTo-Json -Depth 8)
 [pscustomobject]@{Output=$Output; VersionOutput=$VersionOutput; Version=$Version; Files=$files.Count}
