@@ -784,15 +784,25 @@ function Test-TrmLoopbackHost {
 function Test-TrmTcpConnectionDirect {
     param([string]$Host, [int]$Port, [int]$TimeoutMs = 2500)
     $client = New-Object System.Net.Sockets.TcpClient
+    $started = Get-Date
     try {
         $async = $client.BeginConnect($Host, $Port, $null, $null)
         if (-not $async.AsyncWaitHandle.WaitOne($TimeoutMs, $false)) {
-            return [pscustomobject]@{host=$Host; port=$Port; succeeded=$false; error='timeout'; direct=$true}
+            return [pscustomobject]@{host=$Host; port=$Port; succeeded=$false; error="timeout apos ${TimeoutMs}ms"; socketError='timeout'; timeoutMs=$TimeoutMs; elapsedMs=[int]((Get-Date) - $started).TotalMilliseconds; direct=$true}
         }
         $client.EndConnect($async)
-        return [pscustomobject]@{host=$Host; port=$Port; succeeded=$true; error=''; direct=$true}
+        return [pscustomobject]@{host=$Host; port=$Port; succeeded=$true; error=''; socketError=''; timeoutMs=$TimeoutMs; elapsedMs=[int]((Get-Date) - $started).TotalMilliseconds; direct=$true}
     } catch {
-        return [pscustomobject]@{host=$Host; port=$Port; succeeded=$false; error=$_.Exception.Message; direct=$true}
+        $socketError = ''
+        $current = $_.Exception
+        while ($current) {
+            if ($current -is [System.Net.Sockets.SocketException]) {
+                $socketError = $current.SocketErrorCode.ToString()
+                break
+            }
+            $current = $current.InnerException
+        }
+        return [pscustomobject]@{host=$Host; port=$Port; succeeded=$false; error=$_.Exception.Message; socketError=$socketError; timeoutMs=$TimeoutMs; elapsedMs=[int]((Get-Date) - $started).TotalMilliseconds; direct=$true}
     } finally {
         $client.Close()
     }
@@ -830,7 +840,7 @@ function New-TrmConnectionTestReport {
     $parsedInvite = if (-not [string]::IsNullOrWhiteSpace($RawInvite)) { ConvertFrom-TrmWorldInvite -InviteText $RawInvite } else { $null }
     $invitePublicHost = if ($parsedInvite) { [string]$parsedInvite.publicHost } else { '' }
     $isLoopback = Test-TrmLoopbackHost -Host $Host
-    $tcp = if (-not [string]::IsNullOrWhiteSpace($Host)) { Test-TrmTcpConnectionDirect -Host $Host -Port $Port } else { [pscustomobject]@{host=$Host; port=$Port; succeeded=$false; error='host vazio'; direct=$true} }
+    $tcp = if (-not [string]::IsNullOrWhiteSpace($Host)) { Test-TrmTcpConnectionDirect -Host $Host -Port $Port } else { [pscustomobject]@{host=$Host; port=$Port; succeeded=$false; error='host vazio'; socketError='host vazio'; timeoutMs=0; elapsedMs=0; direct=$true} }
     $login = if (-not [string]::IsNullOrWhiteSpace($Host)) { Test-TrmLoginHttpEndpoint -Host $Host -WebPort $WebPort } else { [pscustomobject]@{url=''; responded=$false; error='host vazio'; recommendedWorld=''} }
     $version = if (-not [string]::IsNullOrWhiteSpace($Host)) { Test-TrmVersionCompatibility -Host $Host -WebPort $WebPort } else { [pscustomobject]@{compatible=$false; localVersion=(GetCurrentVersion); hostVersion='unknown'; hostVersionAvailable=$false; message='host vazio'} }
     $localPortUsage = Get-TrmPortUsage -Port $Port
@@ -838,8 +848,17 @@ function New-TrmConnectionTestReport {
     $clientCommand = if (-not [string]::IsNullOrWhiteSpace($ClientExe)) { '"{0}" (WorkingDirectory="{1}")' -f $ClientExe, $ClientWorkingDirectory } else { '' }
 
     $failure = ''
-    if ($Mode -eq 'remote' -and $isLoopback) { $failure = 'convite usa localhost; convidado remoto nunca deve conectar em 127.0.0.1/localhost' }
-    elseif (-not $tcp.succeeded) { $failure = "porta fechada ou bloqueada em ${Host}:$Port" }
+    if ($Mode -eq 'remote' -and $isLoopback) { $failure = "convite usa localhost; convidado remoto nunca deve conectar em 127.0.0.1/localhost. Use o convite oficial mode=remote com o IP LAN do host, por exemplo 192.168.x.x, ou publicHost quando estiver fora da LAN." }
+    elseif (-not $tcp.succeeded) {
+        $tcpError = [string]$tcp.error
+        if ($tcpError -match 'timeout') {
+            $failure = "servidor nao respondeu em ${Host}:$Port dentro de $($tcp.timeoutMs)ms; possivel firewall, IP errado, computadores em redes diferentes, NAT/CGNAT ou servidor desligado"
+        } elseif ($tcpError -match 'recus|refused|actively refused') {
+            $failure = "conexao recusada em ${Host}:$Port; a porta esta fechada nesse host ou o servidor nao esta ouvindo nessa interface"
+        } else {
+            $failure = "falha TCP em ${Host}:$Port; erro de socket: $tcpError"
+        }
+    }
     elseif (-not $version.compatible) { $failure = $version.message }
     elseif (-not [string]::IsNullOrWhiteSpace($ErrorMessage)) { $failure = $ErrorMessage }
 
@@ -880,10 +899,14 @@ function New-TrmConnectionTestReport {
 function Format-TrmConnectionFailure {
     param([object]$Report)
     if ($null -eq $Report) { return 'Erro de conexao sem relatorio detalhado.' }
-    if (-not [string]::IsNullOrWhiteSpace([string]$Report.failureReason)) {
-        return "Falha de conexao: $($Report.failureReason). Relatorio: $($Report.reportPath)"
+    $tcpDetails = ''
+    if ($Report.PSObject.Properties.Name -contains 'tcpTest' -and $null -ne $Report.tcpTest) {
+        $tcpDetails = " TCP=$($Report.tcpTest.succeeded); erro=$($Report.tcpTest.error); timeoutMs=$($Report.tcpTest.timeoutMs); elapsedMs=$($Report.tcpTest.elapsedMs)."
     }
-    return "Falha de conexao. Relatorio: $($Report.reportPath)"
+    if (-not [string]::IsNullOrWhiteSpace([string]$Report.failureReason)) {
+        return "Falha de conexao: $($Report.failureReason). Host=$($Report.finalHost):$($Report.finalPort).$tcpDetails Relatorio: $($Report.reportPath)"
+    }
+    return "Falha de conexao em $($Report.finalHost):$($Report.finalPort).$tcpDetails Relatorio: $($Report.reportPath)"
 }
 
 function Get-TrmPublicIPAddress {

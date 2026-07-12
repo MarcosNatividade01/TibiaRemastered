@@ -2,6 +2,14 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.21-test] - Diagnostico remoto de conexao
+
+- O erro de conexao remota agora mostra host, porta, resultado TCP, timeout, tempo decorrido, erro de socket e caminho do relatorio.
+- Convites remotos que chegam como `127.0.0.1`/`localhost` informam que o convidado deve usar o convite oficial `mode=remote` com IP LAN ou `publicHost`.
+- Adicionados `Tools/NetworkDiagnostics/Test-RemoteHost.ps1` e `.bat` para diagnosticar no segundo computador resolucao de host, ping informativo, TCP, rota, versao local e recomendacao.
+- Relatorios de conexao passam a diferenciar timeout, conexao recusada, host local indevido, possivel firewall, NAT/CGNAT ou IP fora da LAN.
+- Preservados Offline, Host Assistido, convite remoto, auto-update, `UserData`, saves e banco local.
+
 ## [0.1.20-test] - Auto-update e convite remoto imutavel
 
 - O Launcher agora executa automaticamente `CHECKING -> UPDATE_AVAILABLE -> UPDATING -> UPDATE_SUCCESS` ao abrir, sem depender do clique em `Atualizar`.
