@@ -2,6 +2,20 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.20-test] - Auto-update e convite remoto imutavel
+
+- O Launcher agora executa automaticamente `CHECKING -> UPDATE_AVAILABLE -> UPDATING -> UPDATE_SUCCESS` ao abrir, sem depender do clique em `Atualizar`.
+- Botoes de jogo sao controlados pelo estado canonico; ficam bloqueados durante a aplicacao e voltam apos validacao, enquanto `OFFLINE_AVAILABLE` preserva o modo Offline quando o GitHub falha.
+- Qualquer update que altere arquivos reinicia o Launcher, impedindo que uma versao nova em disco continue usando handlers antigos carregados em memoria.
+- Comparacao de versoes passa a ordenar `dev < test < rc < stable` sem rebaixar uma versao estavel por causa do campo `channel`.
+- Adicionados logs estruturados em `Logs/UpdateTests/` com estado, versoes, URLs, etapa e erro completo.
+- Separados os fluxos `BuildHostLocalConnection`, `BuildRemoteInvite`, `ParseRemoteInvite`, `JoinOwnHostedWorld` e `JoinRemoteWorld`.
+- A tela de hospedagem mostra a conexao `127.0.0.1/host-local` separada do convite para amigos `mode=remote`.
+- `Copiar Convite para Amigos` valida o convite, limpa clipboard antigo em caso de falha, grava somente o convite remoto e le o clipboard de volta para confirmar.
+- Removido o fallback que podia testar um IP remoto como `127.0.0.1`; teste TCP, client e logs preservam exatamente o host/porta selecionados.
+- Adicionados seletores explicitos `Usar IP LAN` e `Usar IP Publico` e validacao estrita das chaves `world`, `host`, `port`, `version` e `mode`.
+- Ampliados os testes automatizados para auto-update, estados, hashes, clipboard real, parser, host-local, TCP remoto simulado e protecao de dados locais.
+
 ## [0.1.19-test] - Máquina de estados do Launcher Update
 
 - Criada máquina de estados explícita para o Launcher Update: `CHECKING`, `UPDATE_AVAILABLE`, `UP_TO_DATE`, `UPDATING`, `UPDATE_SUCCESS`, `UPDATE_ERROR` e `OFFLINE_CHECK`.

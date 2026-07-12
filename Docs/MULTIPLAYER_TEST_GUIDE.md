@@ -21,9 +21,10 @@ Validar o fluxo LAN basico do Host Assistido usando apenas o Launcher.
 3. Cole o convite no campo `Colar convite`.
 4. Clique em `Usar Convite`.
 5. Confira se IP, porta e versao foram preenchidos.
-6. Clique em `Testar Conexao`.
-7. Se aparecer `Servidor encontrado`, clique em `Entrar`.
-8. Confirme se o client abre apontando para o host.
+6. Na mesma LAN, clique em `Usar IP LAN`; pela internet, clique em `Usar IP Publico`.
+7. Clique em `Testar Conexao`.
+8. Se aparecer `Servidor encontrado`, clique em `Entrar`.
+9. Confirme se o client abre apontando para o mesmo host e porta mostrados no teste.
 
 ## Convite esperado
 
@@ -33,7 +34,7 @@ world=FazendoTibia
 host=192.168.0.10
 publicHost=177.192.12.76
 port=7172
-version=0.1.14
+version=0.1.20-test
 mode=remote
 ```
 
@@ -45,6 +46,7 @@ mode=remote
 - Confira se a porta e `7172`.
 - Abra `Diagnostico` no Launcher e teste o host.
 - Veja relatorios em `Logs/OnlineDiagnostics/`.
+- Confira convite bruto, host final, TCP e comando do client em `Logs/ConnectionTests/`.
 
 ## Criterio de aprovado
 

@@ -28,7 +28,8 @@ function Ensure-TrmProjectStructure {
         'Launcher','Launcher\Modules','Client','Server','Assets','Data','Config',
         'Database_Template','DatabaseTemplate','UserData\Database','UserData\Config',
         'UserData\Saves','UserData\Offline','UserData\Online','UserData\Shared',
-        'Logs','Logs\BalanceTests','Logs\QAReports','Logs\OnlineDiagnostics','Backup','Docs','Scripts','Tools','Reports'
+        'Logs','Logs\BalanceTests','Logs\QAReports','Logs\OnlineDiagnostics','Logs\ConnectionTests',
+        'Logs\UpdateTests','Backup','Docs','Scripts','Tools','Reports'
     )
     foreach ($dir in $dirs) {
         $path = Join-Path $root $dir
@@ -62,6 +63,7 @@ function Get-TrmDefaultConfig {
     return [pscustomobject]@{
         remoteVersionUrl = 'https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/version.json'
         remoteManifestUrl = 'https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/manifest.json'
+        autoUpdateOnLauncherStart = $true
         autoUpdateBeforePlay = $false
         developerMode = $false
         adminPanelEnabled = $false

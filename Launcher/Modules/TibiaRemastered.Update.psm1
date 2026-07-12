@@ -80,26 +80,22 @@ function ConvertTo-TrmVersionInfo {
         $result.patch = [int]$Matches[3]
         $result.label = ([string]$Matches[4]).ToLowerInvariant()
         if (-not [string]::IsNullOrWhiteSpace([string]$Matches[5])) { $result.labelNumber = [int]$Matches[5] }
-    } elseif ($raw -match '^(\d+)\.(\d+)\.(\d+)$') {
-        $result.valid = $true
-        $result.major = [int]$Matches[1]
-        $result.minor = [int]$Matches[2]
-        $result.patch = [int]$Matches[3]
     }
     if ($result.valid) {
-        $effective = $result.label
-        if ([string]::IsNullOrWhiteSpace($effective)) {
-            if (-not [string]::IsNullOrWhiteSpace($result.channel)) { $effective = $result.channel } else { $effective = 'stable' }
-        }
+        # A ausencia de sufixo significa release estavel. O campo channel e
+        # metadado de distribuicao e nao pode rebaixar "0.1.17" para dev.
+        $effective = if ([string]::IsNullOrWhiteSpace($result.label)) { 'stable' } else { $result.label }
         switch -Regex ($effective) {
             '^dev$' { $result.channelRank = 0; break }
             '^test$' { $result.channelRank = 1; break }
             '^rc$' { $result.channelRank = 2; break }
             '^stable$' { $result.channelRank = 3; break }
-            default { $result.channelRank = -1; break }
+            default { $result.valid = $false; $result.channelRank = -1; break }
         }
-        $suffix = if ([string]::IsNullOrWhiteSpace($result.label)) { '' } else { '-' + $result.label + $(if ($result.labelNumber -gt 0) { [string]$result.labelNumber } else { '' }) }
-        $result.normalized = '{0}.{1}.{2}{3}|{4}' -f $result.major,$result.minor,$result.patch,$suffix,$result.channel
+        if ($result.valid) {
+            $suffix = if ([string]::IsNullOrWhiteSpace($result.label)) { '' } else { '-' + $result.label + $(if ($result.labelNumber -gt 0) { [string]$result.labelNumber } else { '' }) }
+            $result.normalized = '{0}.{1}.{2}{3}|{4}' -f $result.major,$result.minor,$result.patch,$suffix,$result.channel
+        }
     }
     return [pscustomobject]$result
 }
@@ -129,7 +125,7 @@ function Test-TrmVersionNeedsUpdate {
 
 function New-TrmLauncherUpdateState {
     param(
-        [ValidateSet('CHECKING','UPDATE_AVAILABLE','UP_TO_DATE','UPDATING','UPDATE_SUCCESS','UPDATE_ERROR','OFFLINE_CHECK')]
+        [ValidateSet('CHECKING','UPDATE_AVAILABLE','UP_TO_DATE','UPDATING','UPDATE_SUCCESS','UPDATE_ERROR','OFFLINE_AVAILABLE')]
         [string]$State,
         [string]$LocalVersion = '',
         [string]$RemoteVersion = '',
@@ -144,12 +140,18 @@ function New-TrmLauncherUpdateState {
     $canNews = $false
     $canCheckAgain = $true
     $updatePlayText = 'Atualizar e Jogar'
+    $canPlayOffline = $false
+    $canHostWorld = $false
+    $canJoinWorld = $false
+    $isBusy = $false
 
     switch ($State) {
         'CHECKING' {
             $remoteDisplay = 'verificando...'
             $statusText = 'Status de atualizacao: verificando...'
             $canCheckAgain = $false
+            $canPlayOffline = $true
+            $isBusy = $true
         }
         'UPDATE_AVAILABLE' {
             $statusText = "Status de atualizacao: Atualizacao disponivel."
@@ -165,11 +167,15 @@ function New-TrmLauncherUpdateState {
             $canUpdateAndPlay = $true
             $canNews = $true
             $updatePlayText = 'Jogar'
+            $canPlayOffline = $true
+            $canHostWorld = $true
+            $canJoinWorld = $true
         }
         'UPDATING' {
             $remoteDisplay = if ([string]::IsNullOrWhiteSpace($RemoteVersion)) { 'atualizando...' } else { $RemoteVersion }
             $statusText = 'Status de atualizacao: Atualizando...'
             $canCheckAgain = $false
+            $isBusy = $true
         }
         'UPDATE_SUCCESS' {
             $remoteDisplay = if ([string]::IsNullOrWhiteSpace($RemoteVersion)) { 'Voce esta atualizado' } else { $RemoteVersion }
@@ -178,6 +184,9 @@ function New-TrmLauncherUpdateState {
             $canUpdateAndPlay = $true
             $canNews = $true
             $updatePlayText = 'Jogar'
+            $canPlayOffline = $true
+            $canHostWorld = $true
+            $canJoinWorld = $true
         }
         'UPDATE_ERROR' {
             $remoteDisplay = if ([string]::IsNullOrWhiteSpace($RemoteVersion)) { 'Nao foi possivel verificar' } else { $RemoteVersion }
@@ -185,15 +194,19 @@ function New-TrmLauncherUpdateState {
             if (-not [string]::IsNullOrWhiteSpace($ErrorMessage)) { $statusText += " $ErrorMessage" }
             $canUpdate = $true
             $canUpdateAndPlay = $true
-            $updatePlayText = 'Jogar'
+            $updatePlayText = 'Tentar Atualizar e Jogar'
+            $canPlayOffline = $true
         }
-        'OFFLINE_CHECK' {
+        'OFFLINE_AVAILABLE' {
             $remoteDisplay = 'Nao foi possivel verificar'
             $statusText = 'Status de atualizacao: Nao foi possivel verificar atualizacoes.'
             if (-not [string]::IsNullOrWhiteSpace($ErrorMessage)) { $statusText += " $ErrorMessage" }
             $canUpdate = $true
             $canUpdateAndPlay = $true
-            $updatePlayText = 'Jogar'
+            $updatePlayText = 'Jogar Offline'
+            $canPlayOffline = $true
+            $canHostWorld = $true
+            $canJoinWorld = $true
         }
     }
 
@@ -210,6 +223,10 @@ function New-TrmLauncherUpdateState {
         canRepair = $true
         canCheckAgain = $canCheckAgain
         updatePlayText = $updatePlayText
+        canPlayOffline = $canPlayOffline
+        canHostWorld = $canHostWorld
+        canJoinWorld = $canJoinWorld
+        isBusy = $isBusy
         error = $ErrorMessage
     }
 }
@@ -224,12 +241,12 @@ function Resolve-TrmLauncherUpdateState {
     )
 
     if (-not [string]::IsNullOrWhiteSpace($ErrorMessage)) {
-        return New-TrmLauncherUpdateState -State 'OFFLINE_CHECK' -LocalVersion $LocalVersion -RemoteVersion $RemoteVersion -ErrorMessage $ErrorMessage
+        return New-TrmLauncherUpdateState -State 'OFFLINE_AVAILABLE' -LocalVersion $LocalVersion -RemoteVersion $RemoteVersion -ErrorMessage $ErrorMessage
     }
 
     $remote = ConvertTo-TrmVersionInfo -Version $RemoteVersion -Channel $RemoteChannel
     if (-not $remote.valid) {
-        return New-TrmLauncherUpdateState -State 'OFFLINE_CHECK' -LocalVersion $LocalVersion -RemoteVersion $RemoteVersion -ErrorMessage 'Versao remota vazia ou invalida.'
+        return New-TrmLauncherUpdateState -State 'OFFLINE_AVAILABLE' -LocalVersion $LocalVersion -RemoteVersion $RemoteVersion -ErrorMessage 'Versao remota vazia ou invalida.'
     }
 
     if (Test-TrmVersionNeedsUpdate -LocalVersion $LocalVersion -RemoteVersion $RemoteVersion -LocalChannel $LocalChannel -RemoteChannel $RemoteChannel) {
@@ -250,31 +267,45 @@ function Get-TrmLauncherVersionCheckState {
         if ($localJson.PSObject.Properties.Name -contains 'channel') { $localChannel = [string]$localJson.channel }
     }
 
+    [void](Write-TrmUpdateStateReport -State (New-TrmLauncherUpdateState -State 'CHECKING' -LocalVersion $localVersion) -Phase 'remote-version-check')
+
     try {
         $config = Get-TrmConfig
         $url = if ([string]::IsNullOrWhiteSpace($RemoteVersionUrl)) { [string]$config.remoteVersionUrl } else { $RemoteVersionUrl }
         if ([string]::IsNullOrWhiteSpace($url)) {
-            return New-TrmLauncherUpdateState -State 'OFFLINE_CHECK' -LocalVersion $localVersion -ErrorMessage 'URL de version.json remoto nao configurada.'
+            $missingUrlState = New-TrmLauncherUpdateState -State 'OFFLINE_AVAILABLE' -LocalVersion $localVersion -ErrorMessage 'URL de version.json remoto nao configurada.'
+            [void](Write-TrmUpdateStateReport -State $missingUrlState -Phase 'remote-version-check')
+            return $missingUrlState
         }
         $remoteJson = Get-TrmRemoteJson $url 'version.json remoto'
         [void](Assert-TrmRemoteVersionJson -VersionJson $remoteJson -Url $url)
         $remoteChannel = ''
         if ($remoteJson.PSObject.Properties.Name -contains 'channel') { $remoteChannel = [string]$remoteJson.channel }
-        return Resolve-TrmLauncherUpdateState -LocalVersion $localVersion -RemoteVersion ([string]$remoteJson.version) -LocalChannel $localChannel -RemoteChannel $remoteChannel
+        $resolvedState = Resolve-TrmLauncherUpdateState -LocalVersion $localVersion -RemoteVersion ([string]$remoteJson.version) -LocalChannel $localChannel -RemoteChannel $remoteChannel
+        [void](Write-TrmUpdateStateReport -State $resolvedState -Phase 'remote-version-check')
+        return $resolvedState
     } catch {
         Write-TrmLog "Launcher version check failed: $($_.Exception.Message)" 'WARN'
-        return New-TrmLauncherUpdateState -State 'OFFLINE_CHECK' -LocalVersion $localVersion -ErrorMessage $_.Exception.Message
+        $offlineState = New-TrmLauncherUpdateState -State 'OFFLINE_AVAILABLE' -LocalVersion $localVersion -ErrorMessage $_.Exception.Message
+        [void](Write-TrmUpdateStateReport -State $offlineState -Phase 'remote-version-check' -ErrorMessage $_.Exception.ToString())
+        return $offlineState
     }
 }
 
 function Assert-TrmRemoteVersionJson {
     param([object]$VersionJson, [string]$Url)
     $version = Get-TrmRequiredJsonString -Json $VersionJson -Property 'version' -Description 'version.json remoto' -Url $Url
-    [void](Get-TrmRequiredJsonString -Json $VersionJson -Property 'channel' -Description 'version.json remoto' -Url $Url)
-    [void](Get-TrmRequiredJsonString -Json $VersionJson -Property 'minimumLauncherVersion' -Description 'version.json remoto' -Url $Url)
+    $channel = (Get-TrmRequiredJsonString -Json $VersionJson -Property 'channel' -Description 'version.json remoto' -Url $Url).ToLowerInvariant()
+    $minimumLauncherVersion = Get-TrmRequiredJsonString -Json $VersionJson -Property 'minimumLauncherVersion' -Description 'version.json remoto' -Url $Url
+    if ($channel -notin @('dev','test','rc','stable')) {
+        throw "version.json remoto invalido.`nEtapa: validacao de channel`nURL: $Url`nErro completo: channel '$channel' nao e dev/test/rc/stable.`nAcao recomendada: corrija version.json e publique novamente."
+    }
+    if (-not (ConvertTo-TrmVersionInfo -Version $minimumLauncherVersion).valid) {
+        throw "version.json remoto invalido.`nEtapa: validacao de minimumLauncherVersion`nURL: $Url`nErro completo: minimumLauncherVersion '$minimumLauncherVersion' invalida.`nAcao recomendada: corrija version.json e publique novamente."
+    }
     $parsed = ConvertTo-TrmVersionInfo -Version $version -Channel ([string]$VersionJson.channel)
     if (-not $parsed.valid) {
-        throw "version.json remoto invalido.`nEtapa: validacao de version`nURL: $Url`nErro completo: version '$version' nao segue major.minor.patch[-dev|-test|-rcN].`nAcao recomendada: corrija version.json e publique novamente."
+        throw "version.json remoto invalido.`nEtapa: validacao de version`nURL: $Url`nErro completo: version '$version' nao segue major.minor.patch[-dev|-test|-rcN|-stable].`nAcao recomendada: corrija version.json e publique novamente."
     }
     return $true
 }
@@ -366,6 +397,48 @@ function Get-TrmLastUpdateReport {
     return Read-TrmJsonFile -Path (Join-Path $root $relative) -Default $null
 }
 
+function Get-TrmUpdateTestDirectory {
+    $path = Join-Path (Get-TrmRoot) 'Logs\UpdateTests'
+    if (-not (Test-Path $path)) { New-Item -ItemType Directory -Force -Path $path | Out-Null }
+    return $path
+}
+
+function Write-TrmUpdateStateReport {
+    param(
+        [object]$State,
+        [string]$Phase = 'state-transition',
+        [string]$Trigger = '',
+        [string]$ErrorMessage = ''
+    )
+    try {
+        $config = Get-TrmConfig
+        $path = Join-Path (Get-TrmUpdateTestDirectory) ('update-test-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '.json')
+        $stateName = if ($State -and ($State.PSObject.Properties.Name -contains 'state')) { [string]$State.state } else { '' }
+        $localVersion = if ($State -and ($State.PSObject.Properties.Name -contains 'localVersion')) { [string]$State.localVersion } else { '' }
+        $remoteVersion = if ($State -and ($State.PSObject.Properties.Name -contains 'remoteVersion')) { [string]$State.remoteVersion } else { '' }
+        if ([string]::IsNullOrWhiteSpace($ErrorMessage) -and $State -and ($State.PSObject.Properties.Name -contains 'error')) {
+            $ErrorMessage = [string]$State.error
+        }
+        $report = [pscustomobject]@{
+            generatedAt = (Get-Date).ToString('s')
+            phase = $Phase
+            trigger = $Trigger
+            updaterState = $stateName
+            localVersion = $localVersion
+            remoteVersion = $remoteVersion
+            remoteVersionUrl = [string]$config.remoteVersionUrl
+            remoteManifestUrl = [string]$config.remoteManifestUrl
+            error = $ErrorMessage
+            reportPath = $path
+        }
+        Save-TrmJsonFile -Path $path -Value $report
+        return $report
+    } catch {
+        Write-TrmLog "Falha ao salvar log detalhado de update: $($_.Exception.Message)" 'WARN'
+        return $null
+    }
+}
+
 function Sync-TrmFromManifest {
     param(
         [object]$Manifest,
@@ -449,10 +522,19 @@ function Sync-TrmFromManifest {
             $bytesDownloaded += [int64]$file.size
             $actions += [pscustomobject]@{path=$relative; action='downloaded'; reason='hash mismatch or missing'}
             Write-TrmLog "Update downloaded file: $relative"
+            if ($ProgressCallback) {
+                $elapsedNow = [Math]::Max(0.1, ((Get-Date) - $started).TotalSeconds)
+                $currentSpeed = [int64]($bytesDownloaded / $elapsedNow)
+                & $ProgressCallback "Atualizado e validado: $relative" (($checked / [Math]::Max(1, $files.Count)) * 100) $currentSpeed $remaining
+            }
         }
 
         $manifestVersion = '0.0.0'
         if ($Manifest.PSObject.Properties.Name -contains 'version') { $manifestVersion = [string]$Manifest.version }
+        $remoteVersionString = $manifestVersion
+        if ($null -ne $RemoteVersion -and ($RemoteVersion.PSObject.Properties.Name -contains 'version')) {
+            $remoteVersionString = [string]$RemoteVersion.version
+        }
         if ($null -ne $RemoteVersion) {
             Save-TrmJsonFile -Path (Join-Path $root 'version.json') -Value $RemoteVersion
         } else {
@@ -466,6 +548,7 @@ function Sync-TrmFromManifest {
         $elapsed = [Math]::Max(0.1, ((Get-Date) - $started).TotalSeconds)
         $report = [pscustomobject]@{
             status = 'success'
+            remoteVersion = $remoteVersionString
             startedAt = $started.ToString('s')
             finishedAt = (Get-Date).ToString('s')
             checked = $checked
@@ -485,6 +568,7 @@ function Sync-TrmFromManifest {
         Restore-TrmBackup -BackupRoot $backup
         $report = [pscustomobject]@{
             status = 'failed'
+            remoteVersion = $(if ($null -ne $RemoteVersion -and ($RemoteVersion.PSObject.Properties.Name -contains 'version')) { [string]$RemoteVersion.version } else { '' })
             finishedAt = (Get-Date).ToString('s')
             checked = $checked
             downloaded = $downloaded
@@ -500,23 +584,109 @@ function Sync-TrmFromManifest {
 }
 
 function Invoke-TrmUpdateOrRepair {
-    param([switch]$ForceRepair, [scriptblock]$ProgressCallback)
+    param([switch]$ForceRepair, [scriptblock]$ProgressCallback, [string]$Trigger = 'manual')
     Ensure-TrmProjectStructure
     $config = Get-TrmConfig
-    if ([string]::IsNullOrWhiteSpace([string]$config.remoteVersionUrl)) {
-        throw 'URL de version.json remoto nao configurada em Config/launcher-config.json.'
+    $localVersion = Get-TrmLocalVersionForUpdate
+    $updatingState = New-TrmLauncherUpdateState -State 'UPDATING' -LocalVersion $localVersion
+    [void](Write-TrmUpdateStateReport -State $updatingState -Phase 'manifest-update' -Trigger $Trigger)
+    try {
+        if ([string]::IsNullOrWhiteSpace([string]$config.remoteVersionUrl)) {
+            throw 'URL de version.json remoto nao configurada em Config/launcher-config.json.'
+        }
+        if ([string]::IsNullOrWhiteSpace([string]$config.remoteManifestUrl)) {
+            throw 'URL de manifest.json remoto nao configurada em Config/launcher-config.json.'
+        }
+        $remoteVersion = Get-TrmRemoteJson $config.remoteVersionUrl 'version.json remoto'
+        [void](Assert-TrmRemoteVersionJson -VersionJson $remoteVersion -Url ([string]$config.remoteVersionUrl))
+        $manifest = Get-TrmRemoteJson $config.remoteManifestUrl 'manifest.json remoto'
+        [void](Assert-TrmRemoteManifestJson -Manifest $manifest -Url ([string]$config.remoteManifestUrl) -ExpectedVersion ([string]$remoteVersion.version))
+        if ($ProgressCallback -and $remoteVersion -and ($remoteVersion.PSObject.Properties.Name -contains 'version')) {
+            & $ProgressCallback ("Versao disponivel: " + $remoteVersion.version) 0 0 0
+        }
+        $result = Sync-TrmFromManifest -Manifest $manifest -RemoteVersion $remoteVersion -ForceRepair:$ForceRepair -ProgressCallback $ProgressCallback
+        $successState = New-TrmLauncherUpdateState -State 'UPDATE_SUCCESS' -LocalVersion ([string]$remoteVersion.version) -RemoteVersion ([string]$remoteVersion.version)
+        [void](Write-TrmUpdateStateReport -State $successState -Phase 'manifest-update' -Trigger $Trigger)
+        return $result
+    } catch {
+        $errorState = New-TrmLauncherUpdateState -State 'UPDATE_ERROR' -LocalVersion (Get-TrmLocalVersionForUpdate) -ErrorMessage $_.Exception.Message
+        [void](Write-TrmUpdateStateReport -State $errorState -Phase 'manifest-update' -Trigger $Trigger -ErrorMessage $_.Exception.ToString())
+        throw
     }
-    if ([string]::IsNullOrWhiteSpace([string]$config.remoteManifestUrl)) {
-        throw 'URL de manifest.json remoto nao configurada em Config/launcher-config.json.'
+}
+
+function Get-TrmLocalVersionForUpdate {
+    $localJson = Read-TrmJsonFile -Path (Join-Path (Get-TrmRoot) 'version.json') -Default $null
+    if ($null -eq $localJson -or -not ($localJson.PSObject.Properties.Name -contains 'version')) { return 'unknown' }
+    $value = [string]$localJson.version
+    if ([string]::IsNullOrWhiteSpace($value)) { return 'unknown' }
+    return $value
+}
+
+function Invoke-TrmAutomaticLauncherUpdate {
+    param(
+        [scriptblock]$ProgressCallback,
+        [scriptblock]$StateCallback,
+        [string]$Trigger = 'launcher-start'
+    )
+    $sequence = @()
+    $checkingState = New-TrmLauncherUpdateState -State 'CHECKING' -LocalVersion (Get-TrmLocalVersionForUpdate)
+    $sequence += $checkingState.state
+    if ($StateCallback) { & $StateCallback $checkingState }
+
+    $checkedState = Get-TrmLauncherVersionCheckState
+    $sequence += $checkedState.state
+    if ($StateCallback) { & $StateCallback $checkedState }
+    if ($checkedState.state -ne 'UPDATE_AVAILABLE') {
+        return [pscustomobject]@{
+            initialState = $checkedState
+            finalState = $checkedState
+            updateReport = $null
+            stateSequence = $sequence
+            updateAttempted = $false
+            restartRequired = $false
+        }
     }
-    $remoteVersion = Get-TrmRemoteJson $config.remoteVersionUrl 'version.json remoto'
-    [void](Assert-TrmRemoteVersionJson -VersionJson $remoteVersion -Url ([string]$config.remoteVersionUrl))
-    $manifest = Get-TrmRemoteJson $config.remoteManifestUrl 'manifest.json remoto'
-    [void](Assert-TrmRemoteManifestJson -Manifest $manifest -Url ([string]$config.remoteManifestUrl) -ExpectedVersion ([string]$remoteVersion.version))
-    if ($ProgressCallback -and $remoteVersion -and ($remoteVersion.PSObject.Properties.Name -contains 'version')) {
-        & $ProgressCallback ("Versao disponivel: " + $remoteVersion.version) 0 0 0
+
+    $updatingState = New-TrmLauncherUpdateState -State 'UPDATING' -LocalVersion ([string]$checkedState.localVersion) -RemoteVersion ([string]$checkedState.remoteVersion)
+    $sequence += $updatingState.state
+    if ($StateCallback) { & $StateCallback $updatingState }
+    try {
+        $updateReport = Invoke-TrmUpdateOrRepair -ProgressCallback $ProgressCallback -Trigger $Trigger
+        $postCheck = Get-TrmLauncherVersionCheckState
+        $localAfter = Get-TrmLocalVersionForUpdate
+        if ($postCheck.state -ne 'UP_TO_DATE' -and $localAfter -ne [string]$updateReport.remoteVersion) {
+            throw "Atualizacao aplicada, mas a verificacao final nao confirmou a versao. local=$localAfter remoto=$($updateReport.remoteVersion) estado=$($postCheck.state)"
+        }
+        $successRemote = if (-not [string]::IsNullOrWhiteSpace([string]$postCheck.remoteVersion)) { [string]$postCheck.remoteVersion } else { [string]$updateReport.remoteVersion }
+        $successState = New-TrmLauncherUpdateState -State 'UPDATE_SUCCESS' -LocalVersion $localAfter -RemoteVersion $successRemote
+        $sequence += $successState.state
+        if ($StateCallback) { & $StateCallback $successState }
+        [void](Write-TrmUpdateStateReport -State $successState -Phase 'automatic-update-complete' -Trigger $Trigger)
+        return [pscustomobject]@{
+            initialState = $checkedState
+            finalState = $successState
+            postCheckState = $postCheck
+            updateReport = $updateReport
+            stateSequence = $sequence
+            updateAttempted = $true
+            restartRequired = ([int]$updateReport.downloaded -gt 0)
+        }
+    } catch {
+        $errorState = New-TrmLauncherUpdateState -State 'UPDATE_ERROR' -LocalVersion (Get-TrmLocalVersionForUpdate) -RemoteVersion ([string]$checkedState.remoteVersion) -ErrorMessage $_.Exception.Message
+        $sequence += $errorState.state
+        if ($StateCallback) { & $StateCallback $errorState }
+        [void](Write-TrmUpdateStateReport -State $errorState -Phase 'automatic-update-complete' -Trigger $Trigger -ErrorMessage $_.Exception.ToString())
+        return [pscustomobject]@{
+            initialState = $checkedState
+            finalState = $errorState
+            updateReport = $null
+            stateSequence = $sequence
+            updateAttempted = $true
+            restartRequired = $false
+            error = $_.Exception.ToString()
+        }
     }
-    return Sync-TrmFromManifest -Manifest $manifest -RemoteVersion $remoteVersion -ForceRepair:$ForceRepair -ProgressCallback $ProgressCallback
 }
 
 Export-ModuleMember -Function *-Trm*

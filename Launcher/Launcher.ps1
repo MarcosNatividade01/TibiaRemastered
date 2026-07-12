@@ -3,6 +3,7 @@ param(
     [switch]$Repair,
     [switch]$Check,
     [switch]$Play,
+    [switch]$AutoUpdate,
     [switch]$MinimumQA,
     [switch]$NoGui
 )
@@ -109,6 +110,11 @@ function Show-LauncherGui {
     $script:BtnUpdatePlay = $null
     $script:BtnNews = $null
     $script:BtnCheckUpdates = $null
+    $script:BtnPlayOffline = $null
+    $script:BtnHostWorld = $null
+    $script:BtnJoinWorld = $null
+    $script:BtnRepairMain = $null
+    $script:LauncherAutoUpdateRunning = $false
     $script:LauncherUpdateState = New-TrmLauncherUpdateState -State 'CHECKING' -LocalVersion (Get-LauncherLocalVersionText)
 
     $form = New-Object System.Windows.Forms.Form
@@ -219,6 +225,10 @@ function Show-LauncherGui {
         }
         if ($script:BtnNews) { $script:BtnNews.Enabled = [bool]$State.canNews }
         if ($script:BtnCheckUpdates) { $script:BtnCheckUpdates.Enabled = [bool]$State.canCheckAgain }
+        if ($script:BtnPlayOffline) { $script:BtnPlayOffline.Enabled = [bool]$State.canPlayOffline }
+        if ($script:BtnHostWorld) { $script:BtnHostWorld.Enabled = [bool]$State.canHostWorld }
+        if ($script:BtnJoinWorld) { $script:BtnJoinWorld.Enabled = [bool]$State.canJoinWorld }
+        if ($script:BtnRepairMain) { $script:BtnRepairMain.Enabled = -not [bool]$State.isBusy }
         Add-UiLog ("Estado de atualizacao: {0} local={1} remoto={2}" -f $State.state, $State.localVersionDisplay, $State.remoteVersionDisplay)
     }
 
@@ -377,9 +387,14 @@ function Show-LauncherGui {
 
         $state = Get-TrmOnlineState
         $hostSession = [hashtable]::Synchronized(@{
-            Invite = ''
-            Port = 7172
+            RemoteInvite = ''
+            HostLocalConnection = $null
+        })
+        $joinSession = [hashtable]::Synchronized(@{
+            RawInvite = ''
+            ParsedInvite = $null
             World = ''
+            Version = ''
         })
 
         function Format-FriendlyError([string]$Message) {
@@ -423,12 +438,21 @@ function Show-LauncherGui {
 
         $hostInfo = New-Object System.Windows.Forms.TextBox
         $hostInfo.Location = New-Object System.Drawing.Point(14, 24)
-        $hostInfo.Size = New-Object System.Drawing.Size(690, 134)
+        $hostInfo.Size = New-Object System.Drawing.Size(330, 134)
         $hostInfo.Multiline = $true
         $hostInfo.ReadOnly = $true
         $hostInfo.ScrollBars = 'Vertical'
         Set-LauncherTextStyle $hostInfo
         $hostGroup.Controls.Add($hostInfo)
+
+        $remoteInviteOutput = New-Object System.Windows.Forms.TextBox
+        $remoteInviteOutput.Location = New-Object System.Drawing.Point(354, 24)
+        $remoteInviteOutput.Size = New-Object System.Drawing.Size(350, 134)
+        $remoteInviteOutput.Multiline = $true
+        $remoteInviteOutput.ReadOnly = $true
+        $remoteInviteOutput.ScrollBars = 'Vertical'
+        Set-LauncherTextStyle $remoteInviteOutput
+        $hostGroup.Controls.Add($remoteInviteOutput)
 
         $btnStartHost = New-Object System.Windows.Forms.Button
         $btnStartHost.Text = 'Iniciar Mundo'
@@ -438,13 +462,17 @@ function Show-LauncherGui {
             try {
                 $statusLabel.Text = 'Status: servidor iniciando'
                 $result = Start-TrmHostedWorld -ProgressCallback ${function:Set-UiStatus}
-                $hostSession.Invite = [string]$result.invite
-                $hostSession.Port = [int]$result.port
-                $hostSession.World = [string]$result.worldName
-                $hostInfo.Text = "Servidor online`r`nMundo: $($result.worldName)`r`nJogadores conectados: $($result.playersOnline)`r`nIP local: $($result.localIp)`r`nIP publico: $($result.publicIp)`r`nPorta Tibia: $($result.port)`r`nversion=$($result.version)`r`nmode=host-local`r`n`r`nConvite para amigos:`r`n$($hostSession.Invite)`r`n`r`n$(Format-OnlineDiagnosticText $result.diagnostic)"
+                $hostSession.RemoteInvite = [string]$result.remoteInvite
+                $hostSession.HostLocalConnection = $result.hostLocalConnection
+                $localConnection = $result.hostLocalConnection
+                $hostInfo.Text = "Conexao deste computador`r`nMundo: $($localConnection.worldName)`r`nhost=$($localConnection.host)`r`nport=$($localConnection.port)`r`nversion=$($localConnection.version)`r`nmode=$($localConnection.mode)`r`n`r`nServidor online; jogadores: $($result.playersOnline)"
+                $remoteInviteOutput.Text = [string]$hostSession.RemoteInvite
                 $statusLabel.Text = 'Status: servidor online'
             } catch {
                 $hostInfo.Text = Format-FriendlyError $_.Exception.Message
+                $remoteInviteOutput.Clear()
+                $hostSession.RemoteInvite = ''
+                $hostSession.HostLocalConnection = $null
                 $statusLabel.Text = 'Status: erro ao hospedar'
             }
         })
@@ -456,18 +484,19 @@ function Show-LauncherGui {
         $btnCopyHost.Location = New-Object System.Drawing.Point(144, 172)
         $btnCopyHost.Size = New-Object System.Drawing.Size(170, 32)
         $btnCopyHost.Add_Click({
-            if ([string]::IsNullOrWhiteSpace([string]$hostSession.Invite)) {
+            if ([string]::IsNullOrWhiteSpace([string]$hostSession.RemoteInvite)) {
+                try { [System.Windows.Forms.Clipboard]::Clear() } catch {}
                 $statusLabel.Text = 'Status: hospede o mundo antes de copiar convite'
                 return
             }
             try {
-                $copyText = Get-TrmCopyableWorldInvite -InviteText ([string]$hostSession.Invite)
+                $copyText = Set-TrmRemoteInviteClipboard -InviteText ([string]$hostSession.RemoteInvite)
+                $remoteInviteOutput.Text = $copyText
             } catch {
-                $statusLabel.Text = 'Status: convite remoto invalido; copie somente apos hospedar novamente'
+                $statusLabel.Text = 'Status: falha ao copiar convite remoto: ' + $_.Exception.Message
                 return
             }
-            [System.Windows.Forms.Clipboard]::SetText($copyText)
-            $statusLabel.Text = 'Status: convite remoto copiado'
+            $statusLabel.Text = 'Status: convite remoto copiado e conferido'
         })
         Set-LauncherButtonStyle $btnCopyHost
         $hostGroup.Controls.Add($btnCopyHost)
@@ -478,8 +507,10 @@ function Show-LauncherGui {
         $btnJoinOwnHost.Size = New-Object System.Drawing.Size(150, 32)
         $btnJoinOwnHost.Add_Click({
             try {
+                if ($null -eq $hostSession.HostLocalConnection) { throw 'Hospede o mundo antes de entrar no proprio servidor.' }
+                $localConnection = $hostSession.HostLocalConnection
                 $statusLabel.Text = 'Status: conectando localmente'
-                $result = JoinOwnHostedWorld -Port ([int]$hostSession.Port) -WorldName ([string]$hostSession.World) -ProgressCallback ${function:Set-UiStatus}
+                $result = JoinOwnHostedWorld -Port ([int]$localConnection.port) -WorldName ([string]$localConnection.worldName) -ProgressCallback ${function:Set-UiStatus}
                 $hostInfo.Text = "Cliente local iniciado.`r`nModo: $($result.mode)`r`nHost usado: $($result.clientWorldAddress)`r`nPorta: $($result.port)`r`nHistorico salvo em: $($result.statePath)`r`n`r`n$(Format-OnlineDiagnosticText $result.diagnostic)"
                 $statusLabel.Text = 'Status: cliente local iniciado'
             } catch {
@@ -587,15 +618,12 @@ function Show-LauncherGui {
         Set-LauncherTextStyle $inviteInput
         $joinGroup.Controls.Add($inviteInput)
 
-        $script:TrmInviteWorld = ''
-        $script:TrmInviteVersion = ''
-
         $btnUseInvite = New-Object System.Windows.Forms.Button
         $btnUseInvite.Text = 'Usar Convite'
         $btnUseInvite.Location = New-Object System.Drawing.Point(394, 124)
         $btnUseInvite.Size = New-Object System.Drawing.Size(95, 32)
         $btnUseInvite.Add_Click({
-            $parsed = ConvertFrom-TrmWorldInvite -InviteText $inviteInput.Text
+            $parsed = ParseRemoteInvite -InviteText $inviteInput.Text
             if (-not $parsed.valid) {
                 $reason = if (-not [string]::IsNullOrWhiteSpace([string]$parsed.error)) { [string]$parsed.error } else { 'Cole um convite remoto valido ou informe IP e porta manualmente.' }
                 $joinOutput.Text = "Convite nao reconhecido.`r`n$reason`r`n`r`nHost extraido: $($parsed.host)`r`nPorta extraida: $($parsed.port)`r`nVersao extraida: $($parsed.version)`r`nModo extraido: $($parsed.mode)"
@@ -604,9 +632,12 @@ function Show-LauncherGui {
             }
             $hostInput.Text = $parsed.host
             $portInput.Text = [string]$parsed.port
-            $script:TrmInviteWorld = [string]$parsed.worldName
-            $script:TrmInviteVersion = [string]$parsed.version
-            $joinOutput.Text = "Convite carregado.`r`nMundo: $script:TrmInviteWorld`r`nHost: $($parsed.host)`r`nPorta Tibia: $($parsed.port)`r`nversion=$script:TrmInviteVersion`r`nmode=$($parsed.mode)"
+            $joinSession.RawInvite = [string]$inviteInput.Text
+            $joinSession.ParsedInvite = $parsed
+            $joinSession.World = [string]$parsed.worldName
+            $joinSession.Version = [string]$parsed.version
+            $publicText = if ([string]::IsNullOrWhiteSpace([string]$parsed.publicHost)) { 'nao informado' } else { [string]$parsed.publicHost }
+            $joinOutput.Text = "Convite remoto carregado.`r`nMundo: $($joinSession.World)`r`nHost LAN: $($parsed.host)`r`nHost publico: $publicText`r`nPorta Tibia: $($parsed.port)`r`nversion=$($joinSession.Version)`r`nmode=$($parsed.mode)`r`nUse IP LAN na mesma rede ou selecione IP Publico para internet."
             $statusLabel.Text = 'Status: convite carregado'
         })
         Set-LauncherButtonStyle $btnUseInvite
@@ -634,16 +665,21 @@ function Show-LauncherGui {
             [void][int]::TryParse($portInput.Text, [ref]$port)
             try {
                 if (-not [string]::IsNullOrWhiteSpace($inviteInput.Text)) {
-                    $parsedTestInvite = ConvertFrom-TrmWorldInvite -InviteText $inviteInput.Text
+                    $parsedTestInvite = ParseRemoteInvite -InviteText $inviteInput.Text
                     if (-not $parsedTestInvite.valid) { throw "Convite remoto invalido: $($parsedTestInvite.error)" }
-                    $hostInput.Text = [string]$parsedTestInvite.host
-                    $port = [int]$parsedTestInvite.port
+                    $requestedHost = [string]$hostInput.Text
+                    if ($requestedHost -ne [string]$parsedTestInvite.host -and $requestedHost -ne [string]$parsedTestInvite.publicHost) { $requestedHost = '' }
+                    $target = Resolve-TrmRemoteInviteTarget -ParsedInvite $parsedTestInvite -RequestedHost $requestedHost
+                    $hostInput.Text = [string]$target.host
+                    $port = [int]$target.port
                     $portInput.Text = [string]$port
-                    $script:TrmInviteWorld = [string]$parsedTestInvite.worldName
-                    $script:TrmInviteVersion = [string]$parsedTestInvite.version
+                    $joinSession.RawInvite = [string]$inviteInput.Text
+                    $joinSession.ParsedInvite = $parsedTestInvite
+                    $joinSession.World = [string]$target.worldName
+                    $joinSession.Version = [string]$target.version
                 }
                 $resolved = Get-TrmRuntimeConfigResolved
-                $connectionReport = New-TrmConnectionTestReport -Mode 'remote' -RawInvite $inviteInput.Text -Host $hostInput.Text -Port $port -WebPort ([int]$resolved.config.webServerPort) -WorldName $script:TrmInviteWorld -ExpectedVersion $script:TrmInviteVersion -ClientWorldAddress $hostInput.Text -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory -ConfigDescription ("test remote world={0}:{1}" -f $hostInput.Text, $port) -Phase 'ui-test-connection'
+                $connectionReport = New-TrmConnectionTestReport -Mode 'remote' -RawInvite $inviteInput.Text -Host $hostInput.Text -Port $port -WebPort ([int]$resolved.config.webServerPort) -WorldName $joinSession.World -ExpectedVersion $joinSession.Version -ClientWorldAddress $hostInput.Text -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory -ConfigDescription ("test remote world={0}:{1}" -f $hostInput.Text, $port) -Phase 'ui-test-connection'
                 $diagnostic = New-TrmNetworkDiagnosticReport -Mode 'join' -Host $hostInput.Text -Port $port -WebPort ([int]$resolved.config.webServerPort)
                 if ($connectionReport.status -eq 'passed' -and $diagnostic.targetReachable) {
                     $joinOutput.Text = "Servidor encontrado.`r`nHost: $($hostInput.Text)`r`nPorta: $port`r`n`r`n$(Format-ConnectionReportText $connectionReport)`r`n`r`n$(Format-OnlineDiagnosticText $diagnostic)"
@@ -660,6 +696,36 @@ function Show-LauncherGui {
         Set-LauncherButtonStyle $btnTestConnection
         $joinGroup.Controls.Add($btnTestConnection)
 
+        $btnUsePublicHost = New-Object System.Windows.Forms.Button
+        $btnUsePublicHost.Text = 'Usar IP Publico'
+        $btnUsePublicHost.Location = New-Object System.Drawing.Point(244, 62)
+        $btnUsePublicHost.Size = New-Object System.Drawing.Size(120, 30)
+        $btnUsePublicHost.Add_Click({
+            if ($null -eq $joinSession.ParsedInvite -or [string]::IsNullOrWhiteSpace([string]$joinSession.ParsedInvite.publicHost)) {
+                $statusLabel.Text = 'Status: convite nao possui IP publico'
+                return
+            }
+            $hostInput.Text = [string]$joinSession.ParsedInvite.publicHost
+            $statusLabel.Text = 'Status: IP publico selecionado'
+        })
+        Set-LauncherButtonStyle $btnUsePublicHost
+        $joinGroup.Controls.Add($btnUsePublicHost)
+
+        $btnUseLanHost = New-Object System.Windows.Forms.Button
+        $btnUseLanHost.Text = 'Usar IP LAN'
+        $btnUseLanHost.Location = New-Object System.Drawing.Point(374, 62)
+        $btnUseLanHost.Size = New-Object System.Drawing.Size(110, 30)
+        $btnUseLanHost.Add_Click({
+            if ($null -eq $joinSession.ParsedInvite) {
+                $statusLabel.Text = 'Status: carregue um convite primeiro'
+                return
+            }
+            $hostInput.Text = [string]$joinSession.ParsedInvite.host
+            $statusLabel.Text = 'Status: IP LAN selecionado'
+        })
+        Set-LauncherButtonStyle $btnUseLanHost
+        $joinGroup.Controls.Add($btnUseLanHost)
+
         $btnConnect = New-Object System.Windows.Forms.Button
         $btnConnect.Text = 'Entrar'
         $btnConnect.Location = New-Object System.Drawing.Point(144, 62)
@@ -669,7 +735,7 @@ function Show-LauncherGui {
                 $port = 7172
                 [void][int]::TryParse($portInput.Text, [ref]$port)
                 $statusLabel.Text = 'Status: conectando'
-                $result = JoinRemoteWorld -Host $hostInput.Text -Port $port -WorldName $script:TrmInviteWorld -ExpectedVersion $script:TrmInviteVersion -RawInvite $inviteInput.Text -ProgressCallback ${function:Set-UiStatus}
+                $result = JoinRemoteWorld -Host $hostInput.Text -Port $port -WorldName $joinSession.World -ExpectedVersion $joinSession.Version -RawInvite $inviteInput.Text -ProgressCallback ${function:Set-UiStatus}
                 $joinOutput.Text = "Conectando ao mundo.`r`nModo: $($result.mode)`r`nMundo: $($result.worldName)`r`nHost do convite: $($result.host)`r`nIP usado pelo client: $($result.clientWorldAddress)`r`nPorta: $($result.port)`r`nHistorico salvo em: $($result.statePath)`r`n`r`n$(Format-ConnectionReportText $result.connectionReport)`r`n`r`n$(Format-OnlineDiagnosticText $result.diagnostic)"
                 $statusLabel.Text = 'Status: cliente online iniciado'
             } catch {
@@ -681,7 +747,8 @@ function Show-LauncherGui {
         $joinGroup.Controls.Add($btnConnect)
 
         if ($InitialMode -eq 'host') {
-            $hostInfo.Text = 'Clique em Hospedar Mundo para iniciar servidor local e obter dados de conexao.'
+            $hostInfo.Text = "Conexao deste computador`r`nClique em Iniciar Mundo.`r`nEntrar no Meu Mundo usara somente 127.0.0.1 / host-local."
+            $remoteInviteOutput.Text = "Convite para amigos`r`nApos hospedar, este campo mostrara somente o convite mode=remote."
         } elseif ($InitialMode -eq 'join') {
             $joinOutput.Text = "Informe IP/endereco e porta. Ultimos servidores: $historyText"
         }
@@ -893,9 +960,19 @@ function Show-LauncherGui {
         [void]$helpForm.ShowDialog($form)
     }
 
-    function Invoke-LauncherUpdateFromUi([bool]$PlayAfterUpdate) {
+    function Restart-LauncherAfterUpdate([bool]$PlayAfterUpdate) {
+        $launcherPath = Join-Path (Get-TrmRoot) 'Launcher\Launcher.ps1'
+        $args = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$launcherPath)
+        if ($PlayAfterUpdate) { $args += '-Play' }
+        Start-Process -FilePath 'powershell.exe' -ArgumentList $args -WorkingDirectory (Get-TrmRoot) | Out-Null
+        $form.Close()
+    }
+
+    function Invoke-LauncherUpdateFromUi([bool]$PlayAfterUpdate, [string]$Trigger = 'manual') {
+        if ($script:LauncherAutoUpdateRunning) { return }
+        $script:LauncherAutoUpdateRunning = $true
         try {
-            if ($PlayAfterUpdate -and $script:LauncherUpdateState -and @('UP_TO_DATE','UPDATE_SUCCESS','OFFLINE_CHECK','UPDATE_ERROR') -contains [string]$script:LauncherUpdateState.state) {
+            if ($PlayAfterUpdate -and $script:LauncherUpdateState -and @('UP_TO_DATE','UPDATE_SUCCESS','OFFLINE_AVAILABLE') -contains [string]$script:LauncherUpdateState.state) {
                 Start-TrmGame -ProgressCallback ${function:Set-UiStatus}
                 Set-UiStatus 'Cliente iniciado.' 100 0 0
                 Refresh-VersionLabels
@@ -903,25 +980,11 @@ function Show-LauncherGui {
             }
             Apply-LauncherUpdateState (New-TrmLauncherUpdateState -State 'UPDATING' -LocalVersion (Get-LauncherLocalVersionText) -RemoteVersion ([string]$script:LauncherUpdateState.remoteVersion))
             Set-UiStatus 'Atualizacao iniciada...' 0 0 0
-            $result = Invoke-TrmUpdateOrRepair -ProgressCallback ${function:Set-UiStatus}
+            $result = Invoke-TrmUpdateOrRepair -ProgressCallback ${function:Set-UiStatus} -Trigger $Trigger
             Set-UiStatus ("Atualizacao concluida. Baixados: $($result.downloaded), verificados: $($result.checked), protegidos: $($result.protected)") 100 $result.averageBytesPerSecond 0
-            $launcherUpdated = $false
-            foreach ($action in @($result.actions)) {
-                $path = ''
-                if ($action.PSObject.Properties.Name -contains 'path') { $path = ([string]$action.path -replace '\\','/') }
-                $actionName = ''
-                if ($action.PSObject.Properties.Name -contains 'action') { $actionName = [string]$action.action }
-                if ($actionName -eq 'downloaded' -and ($path -eq 'Launcher/Launcher.ps1' -or $path.StartsWith('Launcher/Modules/', [System.StringComparison]::OrdinalIgnoreCase))) {
-                    $launcherUpdated = $true
-                    break
-                }
-            }
-            if ($launcherUpdated) {
-                $launcherPath = Join-Path (Get-TrmRoot) 'Launcher\Launcher.ps1'
-                $args = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$launcherPath)
-                if ($PlayAfterUpdate) { $args += '-Play' }
-                Start-Process -FilePath 'powershell.exe' -ArgumentList $args -WorkingDirectory (Get-TrmRoot) | Out-Null
-                $form.Close()
+            if ([int]$result.downloaded -gt 0) {
+                Add-UiLog 'Arquivos alterados; reiniciando o Launcher para descartar o codigo antigo carregado em memoria.'
+                Restart-LauncherAfterUpdate $PlayAfterUpdate
                 return
             }
             Apply-LauncherUpdateState (New-TrmLauncherUpdateState -State 'UPDATE_SUCCESS' -LocalVersion (Get-LauncherLocalVersionText) -RemoteVersion (Get-LauncherRemoteVersionText))
@@ -933,6 +996,36 @@ function Show-LauncherGui {
         } catch {
             Apply-LauncherUpdateState (New-TrmLauncherUpdateState -State 'UPDATE_ERROR' -LocalVersion (Get-LauncherLocalVersionText) -RemoteVersion ([string]$script:LauncherUpdateState.remoteVersion) -ErrorMessage $_.Exception.Message)
             Set-UiStatus ("Erro na atualizacao: $($_.Exception.Message)") 0 0 0
+        } finally {
+            $script:LauncherAutoUpdateRunning = $false
+        }
+    }
+
+    function Invoke-LauncherAutomaticUpdateFromUi([string]$Trigger = 'launcher-start') {
+        if ($script:LauncherAutoUpdateRunning) { return }
+        $script:LauncherAutoUpdateRunning = $true
+        try {
+            $autoResult = Invoke-TrmAutomaticLauncherUpdate -ProgressCallback ${function:Set-UiStatus} -StateCallback ${function:Apply-LauncherUpdateState} -Trigger $Trigger
+            if ($autoResult.updateAttempted -and $autoResult.finalState.state -eq 'UPDATE_SUCCESS') {
+                $report = $autoResult.updateReport
+                Set-UiStatus ("Atualizacao automatica concluida. Baixados: $($report.downloaded), verificados: $($report.checked), protegidos: $($report.protected)") 100 $report.averageBytesPerSecond 0
+                if ($autoResult.restartRequired) {
+                    Add-UiLog 'Reiniciando o Launcher apos a atualizacao automatica.'
+                    Restart-LauncherAfterUpdate $false
+                    return
+                }
+                Refresh-VersionLabels
+            } elseif ($autoResult.finalState.state -eq 'UPDATE_ERROR') {
+                Set-UiStatus ("Erro na atualizacao automatica: $($autoResult.finalState.error)") 0 0 0
+            } elseif ($autoResult.finalState.state -eq 'OFFLINE_AVAILABLE') {
+                Add-UiLog 'GitHub indisponivel; modo Offline e recursos locais continuam disponiveis.'
+            }
+        } catch {
+            $errorState = New-TrmLauncherUpdateState -State 'UPDATE_ERROR' -LocalVersion (Get-LauncherLocalVersionText) -RemoteVersion ([string]$script:LauncherUpdateState.remoteVersion) -ErrorMessage $_.Exception.Message
+            Apply-LauncherUpdateState $errorState
+            Set-UiStatus ("Erro na atualizacao automatica: $($_.Exception.Message)") 0 0 0
+        } finally {
+            $script:LauncherAutoUpdateRunning = $false
         }
     }
 
@@ -963,35 +1056,35 @@ function Show-LauncherGui {
         [void]$newsForm.ShowDialog($form)
     }
 
-    $btnPlay = New-Object System.Windows.Forms.Button
-    $btnPlay.Text = 'Jogar Offline'
-    $btnPlay.Location = New-Object System.Drawing.Point(22, 440)
-    $btnPlay.Size = New-Object System.Drawing.Size(125, 38)
-    $btnPlay.Add_Click({
+    $script:BtnPlayOffline = New-Object System.Windows.Forms.Button
+    $script:BtnPlayOffline.Text = 'Jogar Offline'
+    $script:BtnPlayOffline.Location = New-Object System.Drawing.Point(22, 440)
+    $script:BtnPlayOffline.Size = New-Object System.Drawing.Size(125, 38)
+    $script:BtnPlayOffline.Add_Click({
         try {
             Start-TrmGame -ProgressCallback ${function:Set-UiStatus}
             Set-UiStatus 'Cliente iniciado.' 100 0 0
             Refresh-VersionLabels
         } catch { Set-UiStatus ('Erro: ' + $_.Exception.Message) 0 0 0 }
     })
-    Set-LauncherButtonStyle $btnPlay
-    $form.Controls.Add($btnPlay)
+    Set-LauncherButtonStyle $script:BtnPlayOffline
+    $form.Controls.Add($script:BtnPlayOffline)
 
-    $btnHostWorld = New-Object System.Windows.Forms.Button
-    $btnHostWorld.Text = 'Hospedar Mundo'
-    $btnHostWorld.Location = New-Object System.Drawing.Point(157, 440)
-    $btnHostWorld.Size = New-Object System.Drawing.Size(135, 38)
-    $btnHostWorld.Add_Click({ Show-HostAssistPanel 'host' })
-    Set-LauncherButtonStyle $btnHostWorld
-    $form.Controls.Add($btnHostWorld)
+    $script:BtnHostWorld = New-Object System.Windows.Forms.Button
+    $script:BtnHostWorld.Text = 'Hospedar Mundo'
+    $script:BtnHostWorld.Location = New-Object System.Drawing.Point(157, 440)
+    $script:BtnHostWorld.Size = New-Object System.Drawing.Size(135, 38)
+    $script:BtnHostWorld.Add_Click({ Show-HostAssistPanel 'host' })
+    Set-LauncherButtonStyle $script:BtnHostWorld
+    $form.Controls.Add($script:BtnHostWorld)
 
-    $btnJoinWorld = New-Object System.Windows.Forms.Button
-    $btnJoinWorld.Text = 'Entrar em Mundo'
-    $btnJoinWorld.Location = New-Object System.Drawing.Point(302, 440)
-    $btnJoinWorld.Size = New-Object System.Drawing.Size(135, 38)
-    $btnJoinWorld.Add_Click({ Show-HostAssistPanel 'join' })
-    Set-LauncherButtonStyle $btnJoinWorld
-    $form.Controls.Add($btnJoinWorld)
+    $script:BtnJoinWorld = New-Object System.Windows.Forms.Button
+    $script:BtnJoinWorld.Text = 'Entrar em Mundo'
+    $script:BtnJoinWorld.Location = New-Object System.Drawing.Point(302, 440)
+    $script:BtnJoinWorld.Size = New-Object System.Drawing.Size(135, 38)
+    $script:BtnJoinWorld.Add_Click({ Show-HostAssistPanel 'join' })
+    Set-LauncherButtonStyle $script:BtnJoinWorld
+    $form.Controls.Add($script:BtnJoinWorld)
 
     $btnDiagnostics = New-Object System.Windows.Forms.Button
     $btnDiagnostics.Text = 'Diagnostico'
@@ -1005,7 +1098,7 @@ function Show-LauncherGui {
     $script:BtnUpdate.Text = 'Atualizar'
     $script:BtnUpdate.Location = New-Object System.Drawing.Point(22, 388)
     $script:BtnUpdate.Size = New-Object System.Drawing.Size(110, 38)
-    $script:BtnUpdate.Add_Click({ Invoke-LauncherUpdateFromUi $false })
+    $script:BtnUpdate.Add_Click({ Invoke-LauncherUpdateFromUi $false 'manual-update' })
     Set-LauncherButtonStyle $script:BtnUpdate
     $form.Controls.Add($script:BtnUpdate)
 
@@ -1013,7 +1106,7 @@ function Show-LauncherGui {
     $script:BtnUpdatePlay.Text = 'Atualizar e Jogar'
     $script:BtnUpdatePlay.Location = New-Object System.Drawing.Point(142, 388)
     $script:BtnUpdatePlay.Size = New-Object System.Drawing.Size(145, 38)
-    $script:BtnUpdatePlay.Add_Click({ Invoke-LauncherUpdateFromUi $true })
+    $script:BtnUpdatePlay.Add_Click({ Invoke-LauncherUpdateFromUi $true 'manual-update-and-play' })
     Set-LauncherButtonStyle $script:BtnUpdatePlay
     $form.Controls.Add($script:BtnUpdatePlay)
 
@@ -1029,23 +1122,23 @@ function Show-LauncherGui {
     $script:BtnCheckUpdates.Text = 'Verificar Atualizacoes'
     $script:BtnCheckUpdates.Location = New-Object System.Drawing.Point(572, 388)
     $script:BtnCheckUpdates.Size = New-Object System.Drawing.Size(165, 38)
-    $script:BtnCheckUpdates.Add_Click({ Refresh-VersionLabels })
+    $script:BtnCheckUpdates.Add_Click({ Invoke-LauncherAutomaticUpdateFromUi 'manual-check' })
     Set-LauncherButtonStyle $script:BtnCheckUpdates
     $form.Controls.Add($script:BtnCheckUpdates)
 
-    $btnRepairMain = New-Object System.Windows.Forms.Button
-    $btnRepairMain.Text = 'Reparar Arquivos'
-    $btnRepairMain.Location = New-Object System.Drawing.Point(432, 388)
-    $btnRepairMain.Size = New-Object System.Drawing.Size(130, 38)
-    $btnRepairMain.Add_Click({
+    $script:BtnRepairMain = New-Object System.Windows.Forms.Button
+    $script:BtnRepairMain.Text = 'Reparar Arquivos'
+    $script:BtnRepairMain.Location = New-Object System.Drawing.Point(432, 388)
+    $script:BtnRepairMain.Size = New-Object System.Drawing.Size(130, 38)
+    $script:BtnRepairMain.Add_Click({
         try {
-            $r = Invoke-TrmUpdateOrRepair -ForceRepair -ProgressCallback ${function:Set-UiStatus}
+            $r = Invoke-TrmUpdateOrRepair -ForceRepair -ProgressCallback ${function:Set-UiStatus} -Trigger 'repair'
             Set-UiStatus ("Reparo concluido. Baixados: $($r.downloaded), verificados: $($r.checked)") 100 $r.averageBytesPerSecond 0
             Refresh-VersionLabels
         } catch { Set-UiStatus ("Erro no reparo. O modo Offline continua disponivel. $($_.Exception.Message)") 0 0 0 }
     })
-    Set-LauncherButtonStyle $btnRepairMain
-    $form.Controls.Add($btnRepairMain)
+    Set-LauncherButtonStyle $script:BtnRepairMain
+    $form.Controls.Add($script:BtnRepairMain)
 
     $btnConfig = New-Object System.Windows.Forms.Button
     $btnConfig.Text = 'Configuracoes'
@@ -1070,7 +1163,11 @@ function Show-LauncherGui {
     $refreshTimer.Interval = 250
     $refreshTimer.Add_Tick({
         $refreshTimer.Stop()
-        try { Refresh-VersionLabels } catch { Set-UiStatus ("Falha ao verificar versao remota: $($_.Exception.Message)") 0 0 0 }
+        try {
+            $config = Get-TrmConfig
+            $autoUpdateEnabled = -not ($config.PSObject.Properties.Name -contains 'autoUpdateOnLauncherStart') -or [bool]$config.autoUpdateOnLauncherStart
+            if ($autoUpdateEnabled) { Invoke-LauncherAutomaticUpdateFromUi 'launcher-start' } else { Refresh-VersionLabels }
+        } catch { Set-UiStatus ("Falha ao verificar versao remota: $($_.Exception.Message)") 0 0 0 }
     })
     $form.Add_Shown({ $refreshTimer.Start() })
     [void]$form.ShowDialog()
@@ -1087,12 +1184,18 @@ try {
         'RemoteVersion: {0}' -f $remote.version
         return
     }
+    if ($AutoUpdate) {
+        $autoResult = Invoke-TrmAutomaticLauncherUpdate -ProgressCallback { param($m,$p,$s,$r) Write-Host $m } -Trigger 'command-line'
+        $autoResult | ConvertTo-Json -Depth 12
+        if ($autoResult.finalState.state -eq 'UPDATE_ERROR') { throw $autoResult.finalState.error }
+        return
+    }
     if ($Repair) { Invoke-TrmUpdateOrRepair -ForceRepair -ProgressCallback { param($m,$p,$s,$r) Write-Host $m } | Format-List; return }
     if ($Play) { Start-TrmGame -ProgressCallback { param($m,$p,$s,$r) Write-Host $m }; return }
     if ($NoGui) { Ensure-TrmProjectStructure; Write-Host 'Launcher initialized.'; return }
     Show-LauncherGui
 } catch {
     Write-TrmLog $_.Exception.Message 'ERROR'
-    if ($NoGui -or $SelfTest -or $Repair -or $Play -or $Check) { throw }
+    if ($NoGui -or $SelfTest -or $Repair -or $Play -or $Check -or $AutoUpdate) { throw }
     [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Launcher error') | Out-Null
 }

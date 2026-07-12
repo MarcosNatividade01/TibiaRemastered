@@ -713,7 +713,8 @@ function Test-TrmHostIsLocalMachine {
 
 function Resolve-TrmClientWorldAddress {
     param([string]$Host)
-    if (Test-TrmHostIsLocalMachine -Host $Host) { return '127.0.0.1' }
+    # Enderecos remotos sao imutaveis: somente o fluxo host-local cria
+    # explicitamente 127.0.0.1. Nunca converter um convite remoto aqui.
     return $Host
 }
 
@@ -735,6 +736,42 @@ function Get-TrmConnectionTestDirectory {
     $path = Join-Path (Get-TrmRoot) 'Logs\ConnectionTests'
     if (-not (Test-Path $path)) { New-Item -ItemType Directory -Force -Path $path | Out-Null }
     return $path
+}
+
+function Write-TrmConnectionEventReport {
+    param(
+        [string]$Phase,
+        [ValidateSet('offline','host-local','remote')][string]$Mode,
+        [string]$RawInvite = '',
+        [string]$Host = '',
+        [int]$Port = 0,
+        [string]$Version = '',
+        [string]$InviteMode = '',
+        [string]$FinalHost = '',
+        [string]$ClientCommand = '',
+        [object]$TcpResult = $null,
+        [string]$ErrorMessage = ''
+    )
+    $path = Join-Path (Get-TrmConnectionTestDirectory) ('connection-event-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '.json')
+    $report = [pscustomobject]@{
+        generatedAt = (Get-Date).ToString('s')
+        phase = $Phase
+        mode = $Mode
+        rawInvite = $RawInvite
+        extractedHost = $Host
+        extractedPort = $Port
+        extractedVersion = $Version
+        inviteMode = $InviteMode
+        finalHost = $(if ([string]::IsNullOrWhiteSpace($FinalHost)) { $Host } else { $FinalHost })
+        finalPort = $Port
+        clientCommand = $ClientCommand
+        tcpResult = $TcpResult
+        error = $ErrorMessage
+        status = $(if ([string]::IsNullOrWhiteSpace($ErrorMessage)) { 'passed' } else { 'failed' })
+        reportPath = $path
+    }
+    Save-TrmJsonFile -Path $path -Value $report
+    return $report
 }
 
 function Test-TrmLoopbackHost {
@@ -914,6 +951,74 @@ function Get-TrmConnectedPlayerCount {
     }
 }
 
+function Test-TrmRemoteHostValue {
+    param([string]$Host)
+    if ([string]::IsNullOrWhiteSpace($Host)) { return $false }
+    $value = $Host.Trim().Trim('[',']')
+    if ($value -match '[\r\n=]' -or $value -match '^[a-z]+://' -or $value -match '[\\/]') { return $false }
+    if ($value -match '(^|\.)github\.com$|(^|\.)githubusercontent\.com$') { return $false }
+    $parsedIp = $null
+    if ([System.Net.IPAddress]::TryParse($value, [ref]$parsedIp)) { return $true }
+    return ([System.Uri]::CheckHostName($value) -ne [System.UriHostNameType]::Unknown)
+}
+
+function BuildHostLocalConnection {
+    param(
+        [string]$WorldName,
+        [int]$Port = 7172,
+        [string]$Version = ''
+    )
+    if ([string]::IsNullOrWhiteSpace($WorldName)) { $WorldName = Get-TrmWorldName }
+    if ([string]::IsNullOrWhiteSpace($Version)) { $Version = GetCurrentVersion }
+    if ($Port -lt 1 -or $Port -gt 65535) { throw "Porta host-local invalida: $Port." }
+    $connection = [pscustomobject]@{
+        worldName = $WorldName
+        host = '127.0.0.1'
+        publicHost = ''
+        port = $Port
+        version = $Version
+        mode = 'host-local'
+    }
+    [void](Write-TrmConnectionEventReport -Phase 'build-host-local-connection' -Mode 'host-local' -Host $connection.host -Port $Port -Version $Version -InviteMode 'host-local' -FinalHost $connection.host)
+    return $connection
+}
+
+function BuildRemoteInvite {
+    param(
+        [string]$WorldName,
+        [string]$Host,
+        [string]$PublicHost = '',
+        [int]$Port = 7172,
+        [string]$Version = ''
+    )
+    if ([string]::IsNullOrWhiteSpace($WorldName)) { $WorldName = Get-TrmWorldName }
+    if ([string]::IsNullOrWhiteSpace($Version)) { $Version = GetCurrentVersion }
+    if ($WorldName -match '[\r\n=]' -or [string]::IsNullOrWhiteSpace($WorldName)) { throw 'Convite remoto exige um nome de mundo valido.' }
+    if (-not (Test-TrmRemoteHostValue -Host $Host) -or (Test-TrmLoopbackHost -Host $Host)) {
+        throw 'Convite remoto exige um IP/endereco LAN ou publico valido; localhost, GitHub e URLs nao sao aceitos.'
+    }
+    if ($Port -lt 1 -or $Port -gt 65535) { throw "Convite remoto exige port entre 1 e 65535; recebido: $Port." }
+    if ($Version -notmatch '^\d+\.\d+\.\d+(?:-(?:dev|test|rc\d*|stable))?$') { throw "Convite remoto exige uma version valida; recebido: $Version." }
+    if ($PublicHost -eq 'indisponivel') { $PublicHost = '' }
+    if (-not [string]::IsNullOrWhiteSpace($PublicHost)) {
+        if (-not (Test-TrmRemoteHostValue -Host $PublicHost) -or (Test-TrmLoopbackHost -Host $PublicHost)) {
+            throw 'publicHost do convite remoto e invalido; localhost, GitHub e URLs nao sao aceitos.'
+        }
+    }
+    $invite = @"
+TIBIA_REMASTERED_INVITE
+world=$WorldName
+host=$Host
+publicHost=$PublicHost
+port=$Port
+version=$Version
+mode=remote
+"@
+    $text = $invite.Trim()
+    [void](Write-TrmConnectionEventReport -Phase 'build-remote-invite' -Mode 'remote' -RawInvite $text -Host $Host -Port $Port -Version $Version -InviteMode 'remote' -FinalHost $Host)
+    return $text
+}
+
 function New-TrmWorldInvite {
     param(
         [string]$WorldName,
@@ -923,24 +1028,19 @@ function New-TrmWorldInvite {
         [string]$Version,
         [ValidateSet('remote','host-local')][string]$Mode = 'remote'
     )
-    if ([string]::IsNullOrWhiteSpace($WorldName)) { $WorldName = Get-TrmWorldName }
-    if ([string]::IsNullOrWhiteSpace($Version)) { $Version = GetCurrentVersion }
-    if ([string]::IsNullOrWhiteSpace($PublicHost)) { $PublicHost = $Host }
     if ($Mode -eq 'remote') {
-        if (Test-TrmLoopbackHost -Host $Host) { throw 'Convite remoto nao pode usar localhost ou 127.0.0.1.' }
-        if ([string]::IsNullOrWhiteSpace($Host)) { throw 'Convite remoto exige um IP/endereco LAN ou publico.' }
-        if ((Test-TrmLoopbackHost -Host $PublicHost) -or $PublicHost -eq 'indisponivel') { $PublicHost = $Host }
+        return (BuildRemoteInvite -WorldName $WorldName -Host $Host -PublicHost $PublicHost -Port $Port -Version $Version)
     }
-    $invite = @"
+    $local = BuildHostLocalConnection -WorldName $WorldName -Port $Port -Version $Version
+    return (@"
 TIBIA_REMASTERED_INVITE
-world=$WorldName
-host=$Host
-publicHost=$PublicHost
-port=$Port
-version=$Version
-mode=$Mode
-"@
-    return $invite.Trim()
+world=$($local.worldName)
+host=$($local.host)
+publicHost=
+port=$($local.port)
+version=$($local.version)
+mode=host-local
+"@).Trim()
 }
 
 function ConvertFrom-TrmWorldInvite {
@@ -990,7 +1090,7 @@ function ConvertFrom-TrmWorldInvite {
     if ([string]::IsNullOrWhiteSpace([string]$result.mode)) {
         $result.mode = if ($hasOfficialHeader) { '' } else { 'remote' }
     }
-    if ([string]::IsNullOrWhiteSpace([string]$result.publicHost)) { $result.publicHost = $result.host }
+    if (-not $hasOfficialHeader -and [string]::IsNullOrWhiteSpace([string]$result.publicHost)) { $result.publicHost = $result.host }
     if ($hasOfficialHeader -and -not [string]::IsNullOrWhiteSpace([string]$result.error)) { }
     elseif ($hasOfficialHeader -and (-not $seenOfficial.ContainsKey('host') -or [string]::IsNullOrWhiteSpace([string]$result.host))) { $result.error = 'Convite invalido: campo host ausente.' }
     elseif ($hasOfficialHeader -and (-not $seenOfficial.ContainsKey('port') -or [int]$result.port -le 0)) { $result.error = 'Convite invalido: campo port ausente ou invalido.' }
@@ -1004,13 +1104,59 @@ function ConvertFrom-TrmWorldInvite {
     return [pscustomobject]$result
 }
 
-function Get-TrmCopyableWorldInvite {
+function ParseRemoteInvite {
     param([string]$InviteText)
     $parsed = ConvertFrom-TrmWorldInvite -InviteText $InviteText
+    $errorText = [string]$parsed.error
+    $hasOfficialHeader = (-not [string]::IsNullOrWhiteSpace($InviteText) -and $InviteText -match '(?im)^\s*TIBIA_REMASTERED_INVITE\s*$')
+    if ([string]::IsNullOrWhiteSpace($errorText) -and -not $hasOfficialHeader) { $errorText = 'Convite remoto invalido: cabecalho TIBIA_REMASTERED_INVITE ausente.' }
+    if ([string]::IsNullOrWhiteSpace($errorText) -and [string]::IsNullOrWhiteSpace([string]$parsed.worldName)) { $errorText = 'Convite remoto invalido: campo world ausente.' }
+    if ([string]::IsNullOrWhiteSpace($errorText) -and $parsed.mode -ne 'remote') { $errorText = "Convite remoto invalido: mode=$($parsed.mode); Entrar em Mundo aceita somente mode=remote." }
+    if ([string]::IsNullOrWhiteSpace($errorText) -and (-not (Test-TrmRemoteHostValue -Host ([string]$parsed.host)) -or (Test-TrmLoopbackHost -Host ([string]$parsed.host)))) { $errorText = 'Convite remoto invalido: host deve ser um IP/endereco remoto e nao pode ser localhost, GitHub ou URL.' }
+    if ([string]::IsNullOrWhiteSpace($errorText) -and ([int]$parsed.port -lt 1 -or [int]$parsed.port -gt 65535)) { $errorText = "Convite remoto invalido: port=$($parsed.port) fora do intervalo 1..65535." }
+    if ([string]::IsNullOrWhiteSpace($errorText) -and [string]::IsNullOrWhiteSpace([string]$parsed.version)) { $errorText = 'Convite remoto invalido: campo version ausente.' }
+    if ([string]::IsNullOrWhiteSpace($errorText) -and -not [string]::IsNullOrWhiteSpace([string]$parsed.publicHost)) {
+        if (-not (Test-TrmRemoteHostValue -Host ([string]$parsed.publicHost)) -or (Test-TrmLoopbackHost -Host ([string]$parsed.publicHost))) {
+            $errorText = 'Convite remoto invalido: publicHost nao pode ser localhost, GitHub ou URL.'
+        }
+    }
+    $parsed.valid = [string]::IsNullOrWhiteSpace($errorText)
+    $parsed.error = $errorText
+    $parsed | Add-Member -NotePropertyName selectedHost -NotePropertyValue ([string]$parsed.host) -Force
+    [void](Write-TrmConnectionEventReport -Phase 'parse-remote-invite' -Mode 'remote' -RawInvite $InviteText -Host ([string]$parsed.host) -Port ([int]$parsed.port) -Version ([string]$parsed.version) -InviteMode ([string]$parsed.mode) -FinalHost ([string]$parsed.host) -ErrorMessage $errorText)
+    return $parsed
+}
+
+function Get-TrmCopyableWorldInvite {
+    param([string]$InviteText)
+    $parsed = ParseRemoteInvite -InviteText $InviteText
     if (-not $parsed.valid -or $parsed.mode -ne 'remote' -or (Test-TrmLoopbackHost -Host $parsed.host)) {
         throw "Convite remoto invalido para copia: $($parsed.error)"
     }
-    return (New-TrmWorldInvite -WorldName $parsed.worldName -Host $parsed.host -PublicHost $parsed.publicHost -Port ([int]$parsed.port) -Version $parsed.version -Mode remote)
+    return (BuildRemoteInvite -WorldName $parsed.worldName -Host $parsed.host -PublicHost $parsed.publicHost -Port ([int]$parsed.port) -Version $parsed.version)
+}
+
+function Set-TrmRemoteInviteClipboard {
+    param([string]$InviteText)
+    Add-Type -AssemblyName System.Windows.Forms
+    try {
+        $copyText = Get-TrmCopyableWorldInvite -InviteText $InviteText
+        [System.Windows.Forms.Clipboard]::Clear()
+        [System.Windows.Forms.Clipboard]::SetText($copyText)
+        $actual = [System.Windows.Forms.Clipboard]::GetText()
+        $expectedNormalized = ($copyText -replace "`r`n", "`n").Trim()
+        $actualNormalized = ($actual -replace "`r`n", "`n").Trim()
+        if ($actualNormalized -ne $expectedNormalized) { throw 'Falha ao confirmar o convite gravado na area de transferencia.' }
+        if ($actual -match 'github\.com|githubusercontent\.com|localhost|127\.0\.0\.1|mode=host-local') { throw 'A area de transferencia recebeu conteudo proibido para um convite remoto.' }
+        $parsed = ParseRemoteInvite -InviteText $actual
+        [void](Write-TrmConnectionEventReport -Phase 'clipboard-copy-verified' -Mode 'remote' -RawInvite $actual -Host ([string]$parsed.host) -Port ([int]$parsed.port) -Version ([string]$parsed.version) -InviteMode ([string]$parsed.mode) -FinalHost ([string]$parsed.host))
+        return $actual
+    } catch {
+        $failure = $_.Exception.ToString()
+        try { [System.Windows.Forms.Clipboard]::Clear() } catch {}
+        [void](Write-TrmConnectionEventReport -Phase 'clipboard-copy-failed' -Mode 'remote' -RawInvite $InviteText -ErrorMessage $failure)
+        throw
+    }
 }
 
 function Get-TrmHostVersion {
@@ -1215,7 +1361,8 @@ function Start-TrmHostedWorld {
     Ensure-TrmPortableWebEndpointMode -Config $resolved.config -ProgressCallback $ProgressCallback -BindAddress '0.0.0.0' -WorldAddress $localIp -GamePort $port
     $diagnostic = New-TrmNetworkDiagnosticReport -Mode 'host' -Port $port -WebPort ([int]$resolved.config.webServerPort)
     $players = Get-TrmConnectedPlayerCount -Port $port
-    $invite = New-TrmWorldInvite -WorldName $worldName -Host $localIp -PublicHost $publicIp -Port $port -Version $version -Mode remote
+    $hostLocalConnection = BuildHostLocalConnection -WorldName $worldName -Port $port -Version $version
+    $remoteInvite = BuildRemoteInvite -WorldName $worldName -Host $localIp -PublicHost $publicIp -Port $port -Version $version
     return [pscustomobject]@{
         status = 'online'
         worldName = $worldName
@@ -1226,7 +1373,9 @@ function Start-TrmHostedWorld {
         port = $port
         webPort = [int]$resolved.config.webServerPort
         connection = "$localIp`:$port"
-        invite = $invite
+        hostLocalConnection = $hostLocalConnection
+        remoteInvite = $remoteInvite
+        invite = $remoteInvite
         diagnostic = $diagnostic
         note = 'LAN tende a funcionar diretamente. Internet pode exigir port forwarding/firewall liberado.'
     }
@@ -1256,9 +1405,6 @@ function Test-TrmAssistedHostConnection {
         $client.EndConnect($async)
         return $true
     } catch {
-        if ((Test-TrmHostIsLocalMachine -Host $Host) -and $Host -ne '127.0.0.1') {
-            return (Test-TrmAssistedHostConnection -Host '127.0.0.1' -Port $Port)
-        }
         return $false
     } finally {
         $client.Close()
@@ -1324,18 +1470,43 @@ function JoinOwnHostedWorld {
     param([int]$Port = 7172, [string]$WorldName = '', [scriptblock]$ProgressCallback)
     $resolved = Get-TrmRuntimeConfigResolved
     Ensure-TrmLocalServerStarted -Resolved $resolved -ProgressCallback $ProgressCallback
-    return (Start-TrmClientForWorld -Mode 'own-hosted' -Host '127.0.0.1' -ClientWorldAddress '127.0.0.1' -Port $Port -WorldName $WorldName -ProgressCallback $ProgressCallback)
+    $connection = BuildHostLocalConnection -WorldName $WorldName -Port $Port -Version (GetCurrentVersion)
+    return (Start-TrmClientForWorld -Mode 'own-hosted' -Host $connection.host -ClientWorldAddress $connection.host -Port ([int]$connection.port) -WorldName $connection.worldName -ExpectedVersion $connection.version -ProgressCallback $ProgressCallback)
+}
+
+function Resolve-TrmRemoteInviteTarget {
+    param([object]$ParsedInvite, [string]$RequestedHost = '')
+    if ($null -eq $ParsedInvite -or -not [bool]$ParsedInvite.valid -or [string]$ParsedInvite.mode -ne 'remote') {
+        throw 'Nao foi possivel resolver o destino: convite remoto invalido.'
+    }
+    $targetHost = if ([string]::IsNullOrWhiteSpace($RequestedHost)) { [string]$ParsedInvite.host } else { $RequestedHost.Trim() }
+    $allowedHosts = @([string]$ParsedInvite.host)
+    if (-not [string]::IsNullOrWhiteSpace([string]$ParsedInvite.publicHost)) { $allowedHosts += [string]$ParsedInvite.publicHost }
+    if ($allowedHosts -notcontains $targetHost) {
+        throw "Host escolhido '$targetHost' nao pertence ao convite. Opcoes validas: $($allowedHosts -join ', ')."
+    }
+    if (Test-TrmLoopbackHost -Host $targetHost) { throw 'Destino remoto nao pode ser localhost ou 127.0.0.1.' }
+    return [pscustomobject]@{
+        host = $targetHost
+        port = [int]$ParsedInvite.port
+        worldName = [string]$ParsedInvite.worldName
+        version = [string]$ParsedInvite.version
+        mode = 'remote'
+        rawHost = [string]$ParsedInvite.host
+        publicHost = [string]$ParsedInvite.publicHost
+    }
 }
 
 function JoinRemoteWorld {
     param([string]$Host, [int]$Port = 7172, [string]$WorldName = '', [string]$ExpectedVersion = '', [string]$RawInvite = '', [scriptblock]$ProgressCallback)
     if (-not [string]::IsNullOrWhiteSpace($RawInvite)) {
-        $parsedInvite = ConvertFrom-TrmWorldInvite -InviteText $RawInvite
+        $parsedInvite = ParseRemoteInvite -InviteText $RawInvite
         if (-not $parsedInvite.valid) { throw "Convite remoto invalido: $($parsedInvite.error)" }
-        $Host = [string]$parsedInvite.host
-        $Port = [int]$parsedInvite.port
-        $WorldName = [string]$parsedInvite.worldName
-        $ExpectedVersion = [string]$parsedInvite.version
+        $target = Resolve-TrmRemoteInviteTarget -ParsedInvite $parsedInvite -RequestedHost $Host
+        $Host = [string]$target.host
+        $Port = [int]$target.port
+        $WorldName = [string]$target.worldName
+        $ExpectedVersion = [string]$target.version
     }
     if (Test-TrmLoopbackHost -Host $Host) {
         $resolved = Get-TrmRuntimeConfigResolved
@@ -1598,4 +1769,4 @@ function Start-TrmGame {
     Start-Process -FilePath $clientExe -WorkingDirectory $clientWorkingDirectory | Out-Null
 }
 
-Export-ModuleMember -Function *-Trm*,GetCurrentVersion,StartOffline,HostWorld,JoinOwnHostedWorld,JoinRemoteWorld
+Export-ModuleMember -Function *-Trm*,GetCurrentVersion,StartOffline,HostWorld,BuildHostLocalConnection,BuildRemoteInvite,ParseRemoteInvite,JoinOwnHostedWorld,JoinRemoteWorld
