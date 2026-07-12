@@ -2,6 +2,16 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.23-test] - Autenticação remota no banco do host
+
+- Corrigida a causa raiz do erro `Your email or password is not correct` ao selecionar personagem em outro computador.
+- No modo convidado remoto, o endpoint local do client agora atua como proxy para o endpoint web do host, em vez de criar/autenticar contas no banco local do convidado.
+- Criação de conta, criação de personagem, login e lista de personagens passam a vir do banco oficial do host hospedado.
+- O convite remoto passa a incluir `webPort=80` para que o convidado saiba qual endpoint do host deve receber criação/login.
+- Relatórios técnicos passam a mostrar o modo do endpoint de conta (`direct-db` ou `remote-proxy`) e a URL remota usada.
+- Mantidos separados os fluxos Offline/Entrar no Meu Mundo (`direct-db` local) e Convidado Remoto (`remote-proxy` para o host).
+- Adicionado teste automatizado de proxy remoto de conta/login, validando que o convidado encaminha chamadas ao host e recebe o game server `192.168.x.x:7172`.
+
 ## [0.1.22-test] - Correção pós-TCP do convite remoto
 
 - Corrigido o fluxo em que `TCP=True` com erro vazio ainda era mostrado como `Falha de conexao`.
