@@ -25,11 +25,15 @@ Assert-True ($launcherSource -match 'Set-TrmRemoteInviteClipboard\s+-InviteText\
 Assert-True ($launcherSource -notmatch 'Clipboard\]\:\:SetText') 'Launcher ainda grava o clipboard diretamente sem validacao/leitura de retorno.'
 Assert-True ($runtimeSource -match '(?s)function JoinOwnHostedWorld.*?BuildHostLocalConnection.*?Start-TrmClientForWorld') 'Entrar no Meu Mundo nao usa a estrutura host-local isolada.'
 Assert-True ($runtimeSource -match '(?s)function JoinRemoteWorld.*?ParseRemoteInvite.*?Resolve-TrmRemoteInviteTarget') 'Entrar em Mundo nao usa parser/target remoto isolado.'
+Assert-True ($runtimeSource -notmatch '(?s)if \(-not \$preflight\.loginServer\.responded\).*?throw \(Format-TrmConnectionFailure \$preflight\)') 'Fluxo remoto ainda trata web/login remoto indisponivel como falha apos TCP OK.'
+Assert-True ($runtimeSource -match '(?s)Test-TrmLocalClientLoginEndpoint.*?advertisedGameHost.*?advertisedGamePort') 'Fluxo nao valida o endpoint local que anuncia host/porta ao client.'
 $invite = BuildRemoteInvite -WorldName 'FazendoTibia' -Host '192.168.0.10' -PublicHost '203.0.113.10' -Port 7172 -Version $version
 $badRemotePattern = 'github\.com|githubusercontent\.com|localhost|127\.0\.0\.1|mode=host-local'
 Assert-True ($invite -match '^TIBIA_REMASTERED_INVITE') 'Convite remoto nao contem cabecalho oficial.'
 Assert-True ($invite -match "version=$([regex]::Escape($version))") 'Convite remoto nao contem a versao real.'
 Assert-True ($invite -match 'publicHost=203\.0\.113\.10') 'Convite remoto nao contem publicHost.'
+Assert-True ($invite -match 'loginPort=7171') 'Convite remoto nao contem loginPort.'
+Assert-True ($invite -match 'gamePort=7172') 'Convite remoto nao contem gamePort.'
 Assert-True ($invite -notmatch $badRemotePattern) 'Convite remoto contem GitHub, loopback ou host-local.'
 
 $parsed = ParseRemoteInvite $invite
@@ -38,6 +42,8 @@ Assert-True ($parsed.worldName -eq 'FazendoTibia') 'Parser nao extraiu world cor
 Assert-True ($parsed.host -eq '192.168.0.10') 'Parser nao extraiu host correto.'
 Assert-True ($parsed.publicHost -eq '203.0.113.10') 'Parser nao extraiu publicHost correto.'
 Assert-True ([int]$parsed.port -eq 7172) 'Parser nao extraiu porta correta.'
+Assert-True ([int]$parsed.loginPort -eq 7171) 'Parser nao extraiu loginPort correto.'
+Assert-True ([int]$parsed.gamePort -eq 7172) 'Parser nao extraiu gamePort correto.'
 Assert-True ($parsed.version -eq $version) 'Parser nao extraiu versao correta.'
 Assert-True ($parsed.mode -eq 'remote') 'Parser nao extraiu mode=remote.'
 
@@ -78,7 +84,7 @@ try {
     $postLocalParsed = ParseRemoteInvite -InviteText ([System.Windows.Forms.Clipboard]::GetText())
     Assert-True $postLocalParsed.valid "Convite remoto deixou de ser valido depois do fluxo host-local: $($postLocalParsed.error)"
     Assert-True ($postLocalParsed.mode -eq 'remote') 'Fluxo host-local contaminou o convite remoto no clipboard.'
-    Assert-True ($postLocalParsed.host -eq $parsed.host -and [int]$postLocalParsed.port -eq [int]$parsed.port -and $postLocalParsed.version -eq $parsed.version) 'Fluxo host-local alterou host, porta ou versao do convite remoto.'
+    Assert-True ($postLocalParsed.host -eq $parsed.host -and [int]$postLocalParsed.port -eq [int]$parsed.port -and [int]$postLocalParsed.gamePort -eq [int]$parsed.gamePort -and $postLocalParsed.version -eq $parsed.version) 'Fluxo host-local alterou host, porta ou versao do convite remoto.'
     Assert-True ((Normalize-ClipboardText $postLocalCopy) -eq (Normalize-ClipboardText $invite)) 'Segunda copia remota divergiu do convite original.'
 } finally {
     [System.Windows.Forms.Clipboard]::Clear()
@@ -96,6 +102,8 @@ world=FazendoTibia
 host=127.0.0.1
 publicHost=
 port=7172
+loginPort=7171
+gamePort=7172
 version=$version
 mode=remote
 "@
@@ -108,6 +116,8 @@ world=FazendoTibia
 host=github.com
 publicHost=
 port=7172
+loginPort=7171
+gamePort=7172
 version=$version
 mode=remote
 "@
@@ -130,6 +140,8 @@ world=FazendoTibia
 host=192.168.0.10
 publicHost=
 port=7172
+loginPort=7171
+gamePort=7172
 mode=remote
 "@
 $parsedMissingVersion = ParseRemoteInvite $missingVersion
@@ -141,6 +153,8 @@ mode=remote
 version=$version
 publicHost=203.0.113.10
 port=7172
+loginPort=7171
+gamePort=7172
 host=192.168.0.10
 world=FazendoTibia
 "@
@@ -156,10 +170,14 @@ try {
     $simulatedInvite = BuildRemoteInvite -WorldName 'FazendoTibia' -Host $localIp -Port $tcpPort -Version $version
     $simulatedParsed = ParseRemoteInvite $simulatedInvite
     $target = Resolve-TrmRemoteInviteTarget -ParsedInvite $simulatedParsed -RequestedHost $simulatedParsed.host
-    $report = New-TrmConnectionTestReport -Mode remote -RawInvite $simulatedInvite -Host $target.host -Port $target.port -WebPort 9 -WorldName $target.worldName -ExpectedVersion $target.version -ClientWorldAddress $target.host -Phase 'remote-local-simulated'
+    $report = New-TrmConnectionTestReport -Mode remote -RawInvite $simulatedInvite -Host $target.host -Port $target.port -LoginPort $target.loginPort -WebPort 9 -WorldName $target.worldName -ExpectedVersion $target.version -ClientWorldAddress $target.host -Phase 'remote-local-simulated'
     Assert-True $report.tcpTest.succeeded 'Teste TCP remoto local nao alcancou o host:port do convite.'
+    Assert-True ($report.status -eq 'passed') 'TCP=True com web/login remoto indisponivel foi tratado como falha.'
+    Assert-True (-not $report.loginServer.responded) 'Cenario de teste esperava web/login remoto indisponivel.'
+    Assert-True ([string]::IsNullOrWhiteSpace([string]$report.failureReason)) 'Relatorio gerou falha com TCP=True e erro vazio.'
     Assert-True ($report.finalHost -eq $localIp -and $report.clientWorldAddress -eq $localIp) 'Host remoto foi trocado antes de chegar ao client.'
     Assert-True ([int]$report.finalPort -eq $tcpPort -and $report.clientUsesSameHostAndPort) 'Porta/host do client divergem do teste TCP.'
+    Assert-True ([int]$target.gamePort -eq $tcpPort -and [int]$target.loginPort -eq 7171) 'Target remoto nao preservou loginPort/gamePort.'
 } finally {
     $listener.Stop()
 }
@@ -189,6 +207,8 @@ Assert-True ($logCount -gt 0) 'Logs detalhados nao foram criados em Logs/Connect
     postHostLocalRemoteMode = $postLocalParsed.mode
     roundTripHost = $parsed.host
     roundTripPort = $parsed.port
+    roundTripLoginPort = $parsed.loginPort
+    roundTripGamePort = $parsed.gamePort
     roundTripVersion = $parsed.version
     roundTripMode = $parsed.mode
     simulatedRemoteHost = $localIp

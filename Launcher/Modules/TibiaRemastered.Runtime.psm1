@@ -821,12 +821,65 @@ function Test-TrmLoginHttpEndpoint {
     }
 }
 
+function Test-TrmLocalClientLoginEndpoint {
+    param(
+        [int]$WebPort = 80,
+        [string]$ExpectedWorldAddress = '',
+        [int]$ExpectedGamePort = 7172
+    )
+    $statusUri = "http://127.0.0.1:$WebPort/clientcreateaccount.php"
+    $versionUri = "http://127.0.0.1:$WebPort/version.json"
+    $state = Get-TrmPortableWebEndpointState
+    $responded = $false
+    $statusError = ''
+    $versionResponse = $null
+    $statusResponse = $null
+    try {
+        $body = '{"type":"GetAccountCreationStatus"}'
+        $statusResponse = Invoke-RestMethod -Uri $statusUri -Method Post -ContentType 'application/json' -Body $body -TimeoutSec 4
+        $responded = ($statusResponse -and ($statusResponse.PSObject.Properties.Name -contains 'RecommendedWorld'))
+    } catch {
+        $statusError = $_.Exception.Message
+    }
+    try {
+        $versionResponse = Invoke-RestMethod -Uri $versionUri -TimeoutSec 4
+    } catch {
+        if ([string]::IsNullOrWhiteSpace($statusError)) { $statusError = $_.Exception.Message }
+    }
+    $advertisedHost = ''
+    $advertisedPort = 0
+    if ($state.PSObject.Properties.Match('worldAddress').Count -gt 0) { $advertisedHost = [string]$state.worldAddress }
+    if ($state.PSObject.Properties.Match('gamePort').Count -gt 0) { $advertisedPort = [int]$state.gamePort }
+    $matchesExpected = (
+        $responded -and
+        -not [string]::IsNullOrWhiteSpace($ExpectedWorldAddress) -and
+        ($advertisedHost -eq $ExpectedWorldAddress) -and
+        ($advertisedPort -eq $ExpectedGamePort)
+    )
+    return [pscustomobject]@{
+        url = $statusUri
+        versionUrl = $versionUri
+        responded = $responded
+        error = $statusError
+        recommendedWorld = $(if($responded){[string]$statusResponse.RecommendedWorld}else{''})
+        version = $(if($versionResponse -and ($versionResponse.PSObject.Properties.Name -contains 'version')){[string]$versionResponse.version}else{''})
+        advertisedGameHost = $advertisedHost
+        advertisedGamePort = $advertisedPort
+        expectedGameHost = $ExpectedWorldAddress
+        expectedGamePort = $ExpectedGamePort
+        matchesExpected = $matchesExpected
+        statePath = (Get-TrmPortableWebEndpointStatePath)
+        state = $state
+    }
+}
+
 function New-TrmConnectionTestReport {
     param(
         [ValidateSet('offline','host-local','remote')][string]$Mode,
         [string]$RawInvite = '',
         [string]$Host = '',
         [int]$Port = 7172,
+        [int]$LoginPort = 7171,
         [int]$WebPort = 80,
         [string]$WorldName = '',
         [string]$ExpectedVersion = '',
@@ -846,10 +899,16 @@ function New-TrmConnectionTestReport {
     $localPortUsage = Get-TrmPortUsage -Port $Port
     $endpointState = Get-TrmPortableWebEndpointState
     $clientCommand = if (-not [string]::IsNullOrWhiteSpace($ClientExe)) { '"{0}" (WorkingDirectory="{1}")' -f $ClientExe, $ClientWorkingDirectory } else { '' }
+    $advertisedGameHost = ''
+    $advertisedGamePort = 0
+    if ($endpointState.PSObject.Properties.Match('worldAddress').Count -gt 0) { $advertisedGameHost = [string]$endpointState.worldAddress }
+    if ($endpointState.PSObject.Properties.Match('gamePort').Count -gt 0) { $advertisedGamePort = [int]$endpointState.gamePort }
 
     $failure = ''
+    $failureStage = 'none'
     if ($Mode -eq 'remote' -and $isLoopback) { $failure = "convite usa localhost; convidado remoto nunca deve conectar em 127.0.0.1/localhost. Use o convite oficial mode=remote com o IP LAN do host, por exemplo 192.168.x.x, ou publicHost quando estiver fora da LAN." }
     elseif (-not $tcp.succeeded) {
+        $failureStage = 'tcp'
         $tcpError = [string]$tcp.error
         if ($tcpError -match 'timeout') {
             $failure = "servidor nao respondeu em ${Host}:$Port dentro de $($tcp.timeoutMs)ms; possivel firewall, IP errado, computadores em redes diferentes, NAT/CGNAT ou servidor desligado"
@@ -859,8 +918,10 @@ function New-TrmConnectionTestReport {
             $failure = "falha TCP em ${Host}:$Port; erro de socket: $tcpError"
         }
     }
-    elseif (-not $version.compatible) { $failure = $version.message }
-    elseif (-not [string]::IsNullOrWhiteSpace($ErrorMessage)) { $failure = $ErrorMessage }
+    elseif (-not $version.compatible) { $failureStage = 'version'; $failure = $version.message }
+    elseif (-not [string]::IsNullOrWhiteSpace($ErrorMessage)) { $failureStage = $Phase; $failure = $ErrorMessage }
+    if ($Mode -eq 'remote' -and $isLoopback -and [string]::IsNullOrWhiteSpace($failureStage)) { $failureStage = 'remote-loopback' }
+    if ($Mode -eq 'remote' -and $isLoopback) { $failureStage = 'remote-loopback' }
 
     $path = Join-Path (Get-TrmConnectionTestDirectory) ('connection-test-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '.json')
     $report = [pscustomobject]@{
@@ -869,25 +930,41 @@ function New-TrmConnectionTestReport {
         phase = $Phase
         rawInvite = $RawInvite
         worldName = $WorldName
+        parsedHost = $Host
         extractedHost = $Host
+        parsedPort = $Port
+        loginPort = $LoginPort
+        gamePort = $Port
         publicHost = $invitePublicHost
         inviteVersion = $ExpectedVersion
         inviteMode = if ($parsedInvite) { [string]$parsedInvite.mode } else { $Mode }
         finalHost = $Host
         finalPort = $Port
+        tcpSuccess = [bool]$tcp.succeeded
+        tcpElapsedMs = [int]$tcp.elapsedMs
         webPort = $WebPort
         isLoopbackHost = $isLoopback
         tcpTest = $tcp
         localPortUsage = $localPortUsage
         loginServer = $login
+        remoteLoginProbe = $login
+        loginServerResponse = $login
         version = $version
+        advertisedGameHost = $advertisedGameHost
+        advertisedGamePort = $advertisedGamePort
+        protocolVersion = 'unknown'
         clientWorldAddress = $ClientWorldAddress
         clientUsesSameHostAndPort = ($ClientWorldAddress -eq $Host -and $Port -gt 0)
+        clientHost = $ClientWorldAddress
+        clientLoginPort = $WebPort
+        clientGamePort = $Port
+        clientConfigFile = (Get-TrmPortableWebEndpointStatePath)
         clientConfigDescription = $ConfigDescription
         portableEndpointState = $endpointState
         clientCommand = $clientCommand
         possibleFirewallOrNatBlock = (-not $tcp.succeeded -and -not $isLoopback)
         errorMessage = $ErrorMessage
+        failureStage = $failureStage
         failureReason = $failure
         status = if ([string]::IsNullOrWhiteSpace($failure)) { 'passed' } else { 'failed' }
         reportPath = $path
@@ -903,10 +980,17 @@ function Format-TrmConnectionFailure {
     if ($Report.PSObject.Properties.Name -contains 'tcpTest' -and $null -ne $Report.tcpTest) {
         $tcpDetails = " TCP=$($Report.tcpTest.succeeded); erro=$($Report.tcpTest.error); timeoutMs=$($Report.tcpTest.timeoutMs); elapsedMs=$($Report.tcpTest.elapsedMs)."
     }
-    if (-not [string]::IsNullOrWhiteSpace([string]$Report.failureReason)) {
-        return "Falha de conexao: $($Report.failureReason). Host=$($Report.finalHost):$($Report.finalPort).$tcpDetails Relatorio: $($Report.reportPath)"
+    $stage = ''
+    if ($Report.PSObject.Properties.Name -contains 'failureStage' -and -not [string]::IsNullOrWhiteSpace([string]$Report.failureStage) -and [string]$Report.failureStage -ne 'none') {
+        $stage = " Etapa=$($Report.failureStage)."
     }
-    return "Falha de conexao em $($Report.finalHost):$($Report.finalPort).$tcpDetails Relatorio: $($Report.reportPath)"
+    if (-not [string]::IsNullOrWhiteSpace([string]$Report.failureReason)) {
+        return "Falha de conexao: $($Report.failureReason). Host=$($Report.finalHost):$($Report.finalPort).$stage$tcpDetails Relatorio: $($Report.reportPath)"
+    }
+    if ($Report.PSObject.Properties.Name -contains 'tcpTest' -and $Report.tcpTest.succeeded) {
+        return "Conectividade TCP confirmada em $($Report.finalHost):$($Report.finalPort), mas a etapa seguinte nao informou um erro especifico.$stage$tcpDetails Relatorio: $($Report.reportPath)"
+    }
+    return "Falha de conexao em $($Report.finalHost):$($Report.finalPort).$stage$tcpDetails Relatorio: $($Report.reportPath)"
 }
 
 function Get-TrmPublicIPAddress {
@@ -989,16 +1073,20 @@ function BuildHostLocalConnection {
     param(
         [string]$WorldName,
         [int]$Port = 7172,
+        [int]$LoginPort = 7171,
         [string]$Version = ''
     )
     if ([string]::IsNullOrWhiteSpace($WorldName)) { $WorldName = Get-TrmWorldName }
     if ([string]::IsNullOrWhiteSpace($Version)) { $Version = GetCurrentVersion }
     if ($Port -lt 1 -or $Port -gt 65535) { throw "Porta host-local invalida: $Port." }
+    if ($LoginPort -lt 1 -or $LoginPort -gt 65535) { throw "LoginPort host-local invalida: $LoginPort." }
     $connection = [pscustomobject]@{
         worldName = $WorldName
         host = '127.0.0.1'
         publicHost = ''
         port = $Port
+        loginPort = $LoginPort
+        gamePort = $Port
         version = $Version
         mode = 'host-local'
     }
@@ -1012,6 +1100,8 @@ function BuildRemoteInvite {
         [string]$Host,
         [string]$PublicHost = '',
         [int]$Port = 7172,
+        [int]$LoginPort = 7171,
+        [int]$GamePort = 0,
         [string]$Version = ''
     )
     if ([string]::IsNullOrWhiteSpace($WorldName)) { $WorldName = Get-TrmWorldName }
@@ -1021,6 +1111,9 @@ function BuildRemoteInvite {
         throw 'Convite remoto exige um IP/endereco LAN ou publico valido; localhost, GitHub e URLs nao sao aceitos.'
     }
     if ($Port -lt 1 -or $Port -gt 65535) { throw "Convite remoto exige port entre 1 e 65535; recebido: $Port." }
+    if ($LoginPort -lt 1 -or $LoginPort -gt 65535) { throw "Convite remoto exige loginPort entre 1 e 65535; recebido: $LoginPort." }
+    if ($GamePort -le 0) { $GamePort = $Port }
+    if ($GamePort -lt 1 -or $GamePort -gt 65535) { throw "Convite remoto exige gamePort entre 1 e 65535; recebido: $GamePort." }
     if ($Version -notmatch '^\d+\.\d+\.\d+(?:-(?:dev|test|rc\d*|stable))?$') { throw "Convite remoto exige uma version valida; recebido: $Version." }
     if ($PublicHost -eq 'indisponivel') { $PublicHost = '' }
     if (-not [string]::IsNullOrWhiteSpace($PublicHost)) {
@@ -1034,11 +1127,13 @@ world=$WorldName
 host=$Host
 publicHost=$PublicHost
 port=$Port
+loginPort=$LoginPort
+gamePort=$GamePort
 version=$Version
 mode=remote
 "@
     $text = $invite.Trim()
-    [void](Write-TrmConnectionEventReport -Phase 'build-remote-invite' -Mode 'remote' -RawInvite $text -Host $Host -Port $Port -Version $Version -InviteMode 'remote' -FinalHost $Host)
+    [void](Write-TrmConnectionEventReport -Phase 'build-remote-invite' -Mode 'remote' -RawInvite $text -Host $Host -Port $GamePort -Version $Version -InviteMode 'remote' -FinalHost $Host)
     return $text
 }
 
@@ -1052,15 +1147,17 @@ function New-TrmWorldInvite {
         [ValidateSet('remote','host-local')][string]$Mode = 'remote'
     )
     if ($Mode -eq 'remote') {
-        return (BuildRemoteInvite -WorldName $WorldName -Host $Host -PublicHost $PublicHost -Port $Port -Version $Version)
+        return (BuildRemoteInvite -WorldName $WorldName -Host $Host -PublicHost $PublicHost -Port $Port -LoginPort 7171 -GamePort $Port -Version $Version)
     }
-    $local = BuildHostLocalConnection -WorldName $WorldName -Port $Port -Version $Version
+    $local = BuildHostLocalConnection -WorldName $WorldName -Port $Port -LoginPort 7171 -Version $Version
     return (@"
 TIBIA_REMASTERED_INVITE
 world=$($local.worldName)
 host=$($local.host)
 publicHost=
 port=$($local.port)
+loginPort=$($local.loginPort)
+gamePort=$($local.gamePort)
 version=$($local.version)
 mode=host-local
 "@).Trim()
@@ -1073,6 +1170,8 @@ function ConvertFrom-TrmWorldInvite {
         host = ''
         publicHost = ''
         port = 7172
+        loginPort = 7171
+        gamePort = 7172
         version = ''
         mode = ''
         valid = $false
@@ -1100,6 +1199,14 @@ function ConvertFrom-TrmWorldInvite {
                 if ($value -match '^\d+$') { $result.port = [int]$value } else { $result.error = "Convite invalido: port=$value nao e numerico." }
                 continue
             }
+            if ($key -eq 'loginport') {
+                if ($value -match '^\d+$') { $result.loginPort = [int]$value } else { $result.error = "Convite invalido: loginPort=$value nao e numerico." }
+                continue
+            }
+            if ($key -eq 'gameport') {
+                if ($value -match '^\d+$') { $result.gamePort = [int]$value } else { $result.error = "Convite invalido: gamePort=$value nao e numerico." }
+                continue
+            }
             if ($key -eq 'version') { $result.version = $value; continue }
             if ($key -eq 'mode') { $result.mode = $value.ToLowerInvariant(); continue }
             continue
@@ -1114,16 +1221,20 @@ function ConvertFrom-TrmWorldInvite {
         $result.mode = if ($hasOfficialHeader) { '' } else { 'remote' }
     }
     if (-not $hasOfficialHeader -and [string]::IsNullOrWhiteSpace([string]$result.publicHost)) { $result.publicHost = $result.host }
+    if ($hasOfficialHeader -and -not $seenOfficial.ContainsKey('gameport')) { $result.gamePort = [int]$result.port }
+    if ($hasOfficialHeader -and -not $seenOfficial.ContainsKey('loginport')) { $result.loginPort = 7171 }
     if ($hasOfficialHeader -and -not [string]::IsNullOrWhiteSpace([string]$result.error)) { }
     elseif ($hasOfficialHeader -and (-not $seenOfficial.ContainsKey('host') -or [string]::IsNullOrWhiteSpace([string]$result.host))) { $result.error = 'Convite invalido: campo host ausente.' }
     elseif ($hasOfficialHeader -and (-not $seenOfficial.ContainsKey('port') -or [int]$result.port -le 0)) { $result.error = 'Convite invalido: campo port ausente ou invalido.' }
+    elseif ($hasOfficialHeader -and ([int]$result.loginPort -lt 1 -or [int]$result.loginPort -gt 65535)) { $result.error = 'Convite invalido: campo loginPort fora do intervalo 1..65535.' }
+    elseif ($hasOfficialHeader -and ([int]$result.gamePort -lt 1 -or [int]$result.gamePort -gt 65535)) { $result.error = 'Convite invalido: campo gamePort fora do intervalo 1..65535.' }
     elseif ($hasOfficialHeader -and (-not $seenOfficial.ContainsKey('version') -or [string]::IsNullOrWhiteSpace([string]$result.version))) { $result.error = 'Convite invalido: campo version ausente.' }
     elseif ($hasOfficialHeader -and (-not $seenOfficial.ContainsKey('mode') -or [string]::IsNullOrWhiteSpace([string]$result.mode))) { $result.error = 'Convite invalido: campo mode ausente.' }
     elseif ($result.mode -eq 'host-local') { $result.error = 'Este convite e local do host e nao deve ser usado por convidados.' }
     elseif ($hasOfficialHeader -and $result.mode -ne 'remote') { $result.error = "Convite invalido: mode=$($result.mode) nao e aceito em Entrar em Mundo." }
     elseif ($result.mode -eq 'remote' -and (Test-TrmLoopbackHost -Host ([string]$result.host))) { $result.error = 'Convite remoto invalido: host nao pode ser localhost ou 127.0.0.1.' }
     elseif (-not [string]::IsNullOrWhiteSpace([string]$result.version) -and $result.version -notmatch '^\d+\.\d+\.\d+([-.][A-Za-z0-9.-]+)?$') { $result.error = "Convite invalido: version=$($result.version) nao parece uma versao do projeto." }
-    $result.valid = ([string]::IsNullOrWhiteSpace([string]$result.error) -and -not [string]::IsNullOrWhiteSpace([string]$result.host) -and [int]$result.port -gt 0)
+    $result.valid = ([string]::IsNullOrWhiteSpace([string]$result.error) -and -not [string]::IsNullOrWhiteSpace([string]$result.host) -and [int]$result.port -gt 0 -and [int]$result.gamePort -gt 0)
     return [pscustomobject]$result
 }
 
@@ -1137,6 +1248,8 @@ function ParseRemoteInvite {
     if ([string]::IsNullOrWhiteSpace($errorText) -and $parsed.mode -ne 'remote') { $errorText = "Convite remoto invalido: mode=$($parsed.mode); Entrar em Mundo aceita somente mode=remote." }
     if ([string]::IsNullOrWhiteSpace($errorText) -and (-not (Test-TrmRemoteHostValue -Host ([string]$parsed.host)) -or (Test-TrmLoopbackHost -Host ([string]$parsed.host)))) { $errorText = 'Convite remoto invalido: host deve ser um IP/endereco remoto e nao pode ser localhost, GitHub ou URL.' }
     if ([string]::IsNullOrWhiteSpace($errorText) -and ([int]$parsed.port -lt 1 -or [int]$parsed.port -gt 65535)) { $errorText = "Convite remoto invalido: port=$($parsed.port) fora do intervalo 1..65535." }
+    if ([string]::IsNullOrWhiteSpace($errorText) -and ([int]$parsed.loginPort -lt 1 -or [int]$parsed.loginPort -gt 65535)) { $errorText = "Convite remoto invalido: loginPort=$($parsed.loginPort) fora do intervalo 1..65535." }
+    if ([string]::IsNullOrWhiteSpace($errorText) -and ([int]$parsed.gamePort -lt 1 -or [int]$parsed.gamePort -gt 65535)) { $errorText = "Convite remoto invalido: gamePort=$($parsed.gamePort) fora do intervalo 1..65535." }
     if ([string]::IsNullOrWhiteSpace($errorText) -and [string]::IsNullOrWhiteSpace([string]$parsed.version)) { $errorText = 'Convite remoto invalido: campo version ausente.' }
     if ([string]::IsNullOrWhiteSpace($errorText) -and -not [string]::IsNullOrWhiteSpace([string]$parsed.publicHost)) {
         if (-not (Test-TrmRemoteHostValue -Host ([string]$parsed.publicHost)) -or (Test-TrmLoopbackHost -Host ([string]$parsed.publicHost))) {
@@ -1146,7 +1259,7 @@ function ParseRemoteInvite {
     $parsed.valid = [string]::IsNullOrWhiteSpace($errorText)
     $parsed.error = $errorText
     $parsed | Add-Member -NotePropertyName selectedHost -NotePropertyValue ([string]$parsed.host) -Force
-    [void](Write-TrmConnectionEventReport -Phase 'parse-remote-invite' -Mode 'remote' -RawInvite $InviteText -Host ([string]$parsed.host) -Port ([int]$parsed.port) -Version ([string]$parsed.version) -InviteMode ([string]$parsed.mode) -FinalHost ([string]$parsed.host) -ErrorMessage $errorText)
+    [void](Write-TrmConnectionEventReport -Phase 'parse-remote-invite' -Mode 'remote' -RawInvite $InviteText -Host ([string]$parsed.host) -Port ([int]$parsed.gamePort) -Version ([string]$parsed.version) -InviteMode ([string]$parsed.mode) -FinalHost ([string]$parsed.host) -ErrorMessage $errorText)
     return $parsed
 }
 
@@ -1156,7 +1269,7 @@ function Get-TrmCopyableWorldInvite {
     if (-not $parsed.valid -or $parsed.mode -ne 'remote' -or (Test-TrmLoopbackHost -Host $parsed.host)) {
         throw "Convite remoto invalido para copia: $($parsed.error)"
     }
-    return (BuildRemoteInvite -WorldName $parsed.worldName -Host $parsed.host -PublicHost $parsed.publicHost -Port ([int]$parsed.port) -Version $parsed.version)
+    return (BuildRemoteInvite -WorldName $parsed.worldName -Host $parsed.host -PublicHost $parsed.publicHost -Port ([int]$parsed.port) -LoginPort ([int]$parsed.loginPort) -GamePort ([int]$parsed.gamePort) -Version $parsed.version)
 }
 
 function Set-TrmRemoteInviteClipboard {
@@ -1172,7 +1285,7 @@ function Set-TrmRemoteInviteClipboard {
         if ($actualNormalized -ne $expectedNormalized) { throw 'Falha ao confirmar o convite gravado na area de transferencia.' }
         if ($actual -match 'github\.com|githubusercontent\.com|localhost|127\.0\.0\.1|mode=host-local') { throw 'A area de transferencia recebeu conteudo proibido para um convite remoto.' }
         $parsed = ParseRemoteInvite -InviteText $actual
-        [void](Write-TrmConnectionEventReport -Phase 'clipboard-copy-verified' -Mode 'remote' -RawInvite $actual -Host ([string]$parsed.host) -Port ([int]$parsed.port) -Version ([string]$parsed.version) -InviteMode ([string]$parsed.mode) -FinalHost ([string]$parsed.host))
+        [void](Write-TrmConnectionEventReport -Phase 'clipboard-copy-verified' -Mode 'remote' -RawInvite $actual -Host ([string]$parsed.host) -Port ([int]$parsed.gamePort) -Version ([string]$parsed.version) -InviteMode ([string]$parsed.mode) -FinalHost ([string]$parsed.host))
         return $actual
     } catch {
         $failure = $_.Exception.ToString()
@@ -1378,6 +1491,7 @@ function Start-TrmHostedWorld {
         throw 'Nao foi encontrado um IP LAN valido. O convite remoto nao sera gerado com localhost.'
     }
     $publicIp = Get-TrmPublicIPAddress
+    $loginPort = [int](@($resolved.config.serverPorts)[0])
     $port = [int](@($resolved.config.serverPorts)[1])
     $worldName = Get-TrmWorldName
     $version = GetCurrentVersion
@@ -1385,7 +1499,7 @@ function Start-TrmHostedWorld {
     $diagnostic = New-TrmNetworkDiagnosticReport -Mode 'host' -Port $port -WebPort ([int]$resolved.config.webServerPort)
     $players = Get-TrmConnectedPlayerCount -Port $port
     $hostLocalConnection = BuildHostLocalConnection -WorldName $worldName -Port $port -Version $version
-    $remoteInvite = BuildRemoteInvite -WorldName $worldName -Host $localIp -PublicHost $publicIp -Port $port -Version $version
+    $remoteInvite = BuildRemoteInvite -WorldName $worldName -Host $localIp -PublicHost $publicIp -Port $port -LoginPort $loginPort -GamePort $port -Version $version
     return [pscustomobject]@{
         status = 'online'
         worldName = $worldName
@@ -1394,6 +1508,8 @@ function Start-TrmHostedWorld {
         localIp = $localIp
         publicIp = $publicIp
         port = $port
+        loginPort = $loginPort
+        gamePort = $port
         webPort = [int]$resolved.config.webServerPort
         connection = "$localIp`:$port"
         hostLocalConnection = $hostLocalConnection
@@ -1451,16 +1567,14 @@ function Start-TrmClientForWorld {
     Ensure-TrmProjectStructure
     Ensure-TrmPlayerPackage -Config $resolved.config -ServerExe $resolved.serverExe -ClientExe $resolved.clientExe -ProgressCallback $ProgressCallback
     $webPort = [int]$resolved.config.webServerPort
+    $loginPort = [int](@($resolved.config.serverPorts)[0])
     $configDescription = ("portable-web-endpoint bind=127.0.0.1 world={0}:{1}" -f $ClientWorldAddress, $Port)
     $preflightMode = if ($Mode -eq 'own-hosted') { 'host-local' } else { 'remote' }
-    $preflight = New-TrmConnectionTestReport -Mode $preflightMode -RawInvite $RawInvite -Host $Host -Port $Port -WebPort $webPort -WorldName $WorldName -ExpectedVersion $ExpectedVersion -ClientWorldAddress $ClientWorldAddress -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory -ConfigDescription $configDescription -Phase 'preflight'
+    $preflight = New-TrmConnectionTestReport -Mode $preflightMode -RawInvite $RawInvite -Host $Host -Port $Port -LoginPort $loginPort -WebPort $webPort -WorldName $WorldName -ExpectedVersion $ExpectedVersion -ClientWorldAddress $ClientWorldAddress -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory -ConfigDescription $configDescription -Phase 'preflight'
     if ($Mode -eq 'remote' -and $preflight.isLoopbackHost) {
         throw (Format-TrmConnectionFailure $preflight)
     }
     if (-not $preflight.tcpTest.succeeded) {
-        throw (Format-TrmConnectionFailure $preflight)
-    }
-    if (-not $preflight.loginServer.responded) {
         throw (Format-TrmConnectionFailure $preflight)
     }
     $diagnostic = New-TrmNetworkDiagnosticReport -Mode 'join' -Host $Host -Port $Port -WebPort ([int]$resolved.config.webServerPort)
@@ -1475,6 +1589,19 @@ function Start-TrmClientForWorld {
     }
     Save-TrmOnlineState -Host $Host -Port $Port -WorldName $WorldName -Version $diagnostic.version.localVersion | Out-Null
     Ensure-TrmPortableWebEndpointMode -Config $resolved.config -ProgressCallback $ProgressCallback -BindAddress '127.0.0.1' -WorldAddress $ClientWorldAddress -GamePort $Port
+    $localLogin = Test-TrmLocalClientLoginEndpoint -WebPort $webPort -ExpectedWorldAddress $ClientWorldAddress -ExpectedGamePort $Port
+    if (-not $localLogin.responded) {
+        $localReport = New-TrmConnectionTestReport -Mode $preflightMode -RawInvite $RawInvite -Host $Host -Port $Port -LoginPort $loginPort -WebPort $webPort -WorldName $WorldName -ExpectedVersion $ExpectedVersion -ClientWorldAddress $ClientWorldAddress -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory -ConfigDescription $configDescription -ErrorMessage "Conectividade TCP OK, mas o webservice local do client nao respondeu em $($localLogin.url): $($localLogin.error)" -Phase 'local-login-endpoint'
+        $localReport | Add-Member -NotePropertyName localLoginEndpoint -NotePropertyValue $localLogin -Force
+        Save-TrmJsonFile -Path $localReport.reportPath -Value $localReport
+        throw (Format-TrmConnectionFailure $localReport)
+    }
+    if (-not $localLogin.matchesExpected) {
+        $localReport = New-TrmConnectionTestReport -Mode $preflightMode -RawInvite $RawInvite -Host $Host -Port $Port -LoginPort $loginPort -WebPort $webPort -WorldName $WorldName -ExpectedVersion $ExpectedVersion -ClientWorldAddress $ClientWorldAddress -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory -ConfigDescription $configDescription -ErrorMessage "Conectividade TCP OK, mas o login local do client anunciou game server em $($localLogin.advertisedGameHost):$($localLogin.advertisedGamePort) em vez de $ClientWorldAddress`:$Port" -Phase 'advertised-game-server'
+        $localReport | Add-Member -NotePropertyName localLoginEndpoint -NotePropertyValue $localLogin -Force
+        Save-TrmJsonFile -Path $localReport.reportPath -Value $localReport
+        throw (Format-TrmConnectionFailure $localReport)
+    }
     if ($ProgressCallback) { & $ProgressCallback "Abrindo cliente para $ClientWorldAddress`:$Port..." 100 0 0 }
     Remove-Item Env:\QT_QUICK_BACKEND -ErrorAction SilentlyContinue
     Remove-Item Env:\QT_OPENGL -ErrorAction SilentlyContinue
@@ -1484,7 +1611,9 @@ function Start-TrmClientForWorld {
     $env:TRM_ONLINE_HOST = $ClientWorldAddress
     $env:TRM_ONLINE_PORT = [string]$Port
     Write-TrmClientLaunchLog -Mode $Mode -Host $Host -Port $Port -ClientWorldAddress $ClientWorldAddress -ConfigDescription $configDescription -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory
-    $connectionReport = New-TrmConnectionTestReport -Mode $preflightMode -RawInvite $RawInvite -Host $Host -Port $Port -WebPort $webPort -WorldName $WorldName -ExpectedVersion $ExpectedVersion -ClientWorldAddress $ClientWorldAddress -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory -ConfigDescription $configDescription -Phase 'client-launch'
+    $connectionReport = New-TrmConnectionTestReport -Mode $preflightMode -RawInvite $RawInvite -Host $Host -Port $Port -LoginPort $loginPort -WebPort $webPort -WorldName $WorldName -ExpectedVersion $ExpectedVersion -ClientWorldAddress $ClientWorldAddress -ClientExe $resolved.clientExe -ClientWorkingDirectory $resolved.clientWorkingDirectory -ConfigDescription $configDescription -Phase 'client-launch'
+    $connectionReport | Add-Member -NotePropertyName localLoginEndpoint -NotePropertyValue $localLogin -Force
+    Save-TrmJsonFile -Path $connectionReport.reportPath -Value $connectionReport
     Start-Process -FilePath $resolved.clientExe -WorkingDirectory $resolved.clientWorkingDirectory | Out-Null
     return [pscustomobject]@{mode=$Mode; host=$Host; clientWorldAddress=$ClientWorldAddress; port=$Port; worldName=$WorldName; clientStarted=$true; statePath=(Get-TrmOnlineStatePath); diagnostic=$diagnostic; connectionReport=$connectionReport}
 }
@@ -1511,7 +1640,9 @@ function Resolve-TrmRemoteInviteTarget {
     if (Test-TrmLoopbackHost -Host $targetHost) { throw 'Destino remoto nao pode ser localhost ou 127.0.0.1.' }
     return [pscustomobject]@{
         host = $targetHost
-        port = [int]$ParsedInvite.port
+        port = [int]$ParsedInvite.gamePort
+        loginPort = [int]$ParsedInvite.loginPort
+        gamePort = [int]$ParsedInvite.gamePort
         worldName = [string]$ParsedInvite.worldName
         version = [string]$ParsedInvite.version
         mode = 'remote'

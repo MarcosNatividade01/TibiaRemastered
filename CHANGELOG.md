@@ -2,6 +2,16 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.22-test] - Correção pós-TCP do convite remoto
+
+- Corrigido o fluxo em que `TCP=True` com erro vazio ainda era mostrado como `Falha de conexao`.
+- O teste TCP remoto agora valida somente conectividade com o game server; o endpoint web/login remoto permanece diagnóstico opcional.
+- O Launcher passa a validar separadamente o endpoint local usado pelo client e confirma que ele anuncia exatamente o host e a porta do convite remoto.
+- Convites remotos agora incluem `loginPort=7171` e `gamePort=7172`, mantendo `port` para compatibilidade com versões anteriores.
+- Relatórios em `Logs/ConnectionTests/` passam a registrar `failureStage`, `tcpSuccess`, `tcpElapsedMs`, `loginPort`, `gamePort`, host/porta efetivos do client e game server anunciado.
+- A interface de diagnóstico mostra conectividade TCP, web/login remoto opcional, endpoint local e etapa real da falha, em vez de uma mensagem genérica.
+- Preservados Offline, Host Assistido, Entrar no Meu Mundo, Copiar/Usar Convite, auto-update, `UserData`, banco e saves.
+
 ## [0.1.21-test] - Diagnostico remoto de conexao
 
 - O erro de conexao remota agora mostra host, porta, resultado TCP, timeout, tempo decorrido, erro de socket e caminho do relatorio.
