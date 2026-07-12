@@ -43,7 +43,7 @@ try {
     $own = JoinOwnHostedWorld -Port $hostResult.port -WorldName $hostResult.worldName
     Assert-True ($own.clientWorldAddress -eq '127.0.0.1') 'Host local nao usou 127.0.0.1.'
     Assert-True ($own.mode -eq 'own-hosted') 'Entrar no Meu Mundo nao preservou o modo local.'
-    $inviteAfterOwnJoin = BuildRemoteInvite -WorldName $hostResult.worldName -Host $hostResult.localIp -PublicHost $hostResult.publicIp -Port $hostResult.port -Version $hostResult.version
+    $inviteAfterOwnJoin = BuildRemoteInvite -WorldName $hostResult.worldName -Host $hostResult.localIp -PublicHost $parsedHostedInvite.publicHost -Port $hostResult.port -LoginPort $hostResult.loginPort -GamePort $hostResult.gamePort -WebPort $hostResult.webPort -Version $hostResult.version
     Assert-True ($inviteBeforeOwnJoin -eq $inviteAfterOwnJoin) 'Entrar no Meu Mundo contaminou o convite remoto.'
     Assert-True ((ParseRemoteInvite $inviteAfterOwnJoin).mode -eq 'remote') 'Convite apos Entrar no Meu Mundo deixou de ser remote.'
     foreach ($path in $preexistingUserDataFiles) { Assert-True (Test-Path -LiteralPath $path) "Arquivo preexistente de UserData foi removido: $path" }

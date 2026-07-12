@@ -1,8 +1,10 @@
-# Host Assistido
+# Host Direto / Host Assistido
 
 ## Objetivo
 
-O Host Assistido e um modo online opcional do Launcher. Ele nao altera o modo Offline e nao move, apaga ou sobrescreve o banco local.
+O modo de hospedagem online do Launcher inicia um servidor local e gera convite para Conexao Direta. Ele nao altera o modo Offline e nao move, apaga ou sobrescreve o banco local.
+
+Nesta versao, nao existe infraestrutura de relay reverso configurada. Portanto, o termo "assistido" significa assistencia local de inicializacao/diagnostico, nao relay/proxy externo.
 
 ## Opcoes do Launcher
 
@@ -16,18 +18,20 @@ Ao clicar em `Hospedar Mundo`, o Launcher:
 
 1. inicia o banco local se necessario;
 2. inicia o servidor local;
-3. verifica portas configuradas;
+3. verifica portas configuradas (`7171` login/status e `7172` game);
 4. detecta IP local;
 5. tenta detectar IP publico;
-6. mostra nome do mundo;
-7. mostra jogadores conectados;
-8. mostra porta do servidor;
-9. mostra a conexao local e o convite remoto em campos separados;
-10. permite copiar e conferir no clipboard somente o convite oficial `mode=remote`;
-11. permite abrir logs;
-12. testa a porta local do servidor;
-13. gera relatorios em `Logs/OnlineDiagnostics/` e `Logs/ConnectionTests/`;
-14. permite parar o processo do servidor.
+6. confirma se o bind aceita LAN e nao esta restrito a `127.0.0.1`;
+7. testa `127.0.0.1` e o IPv4 LAN;
+8. tenta validar o IP publico;
+9. verifica regras de Firewall para `7171`, `7172` e `80`;
+10. mostra nome do mundo;
+11. mostra jogadores conectados;
+12. mostra a conexao local e o convite remoto em campos separados;
+13. permite copiar e conferir no clipboard somente o convite oficial `mode=remote` quando o diagnostico libera;
+14. permite abrir logs;
+15. gera relatorios em `Logs/OnlineDiagnostics/` e `Logs/ConnectionTests/`;
+16. permite parar o processo do servidor.
 
 ## Convite
 
@@ -39,9 +43,14 @@ world=FazendoTibia
 host=192.168.0.10
 publicHost=177.192.12.76
 port=7172
-version=0.1.20-test
+loginPort=7171
+gamePort=7172
+webPort=80
+version=0.1.24-test
 mode=remote
 ```
+
+`publicHost` fica vazio quando o IP publico/porta externa nao foi validado. Nesse caso o convite e adequado para LAN; internet exige redirecionamento de porta ou relay real.
 
 `Entrar no Meu Mundo` nao reutiliza esse convite. Ele constroi uma conexao separada com `host=127.0.0.1` e `mode=host-local`. O botao `Copiar Convite para Amigos` limpa um clipboard antigo quando o convite e invalido, grava apenas o bloco oficial acima e le o clipboard de volta para confirmar o conteudo.
 
@@ -81,7 +90,7 @@ O Launcher possui botao `Diagnostico` na tela principal. Ele gera relatorios em:
 Logs/OnlineDiagnostics/
 ```
 
-Use essa tela para testar host, porta Tibia, versao, modo e mensagens de erro antes de abrir o client.
+Use essa tela para testar host, porta Tibia, versao, modo e mensagens de erro antes de abrir o client. O botao `Liberar Firewall` solicita elevacao administrativa e cria regras TCP de entrada para `7171`, `7172` e `80`.
 
 ## Separacao de dados
 
@@ -101,8 +110,10 @@ Eventos de geracao, parse, clipboard, TCP e abertura do client ficam em `Logs/Co
 
 ## Limitacoes
 
-Sem VPN, servidor dedicado ou abertura de portas, conexoes pela internet podem nao funcionar dependendo de NAT, CGNAT, roteador e firewall.
+Sem VPN, servidor dedicado, relay real ou abertura de portas, conexoes pela internet podem nao funcionar dependendo de NAT, CGNAT, roteador e firewall.
 
 Modo LAN tende a funcionar com mais facilidade.
 
 Conexao externa pode exigir redirecionamento das portas do servidor no roteador.
+
+Se o convidado recebe timeout em um IP publico, por exemplo `177.x.x.x:7172`, isso significa que a Conexao Direta nao chegou ao servidor. O proximo passo e validar firewall, port forwarding, IP publico real e possivel CGNAT; nao e uma falha de parser do convite.

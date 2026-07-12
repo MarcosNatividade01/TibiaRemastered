@@ -2,6 +2,18 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.24-test] - Diagnostico de conexao direta e firewall multiplayer
+
+- Corrigida a leitura operacional do erro `TCP=False timeout` em IP publico: o Launcher agora deixa claro que Conexao Direta externa exige porta realmente acessivel, firewall liberado, port forwarding e IPv4 publico sem CGNAT impeditivo.
+- O timeout TCP de diagnostico foi aumentado de `2500ms` para `8000ms`, sem mascarar porta fechada.
+- Adicionado diagnostico multiplayer do host verificando processo do servidor, portas `7171`/`7172` em LISTENING, porta web `80`, bind externo, teste em `127.0.0.1`, teste no IPv4 LAN, teste no IP publico, regras de Firewall, relay e suspeita de CGNAT.
+- A hospedagem deixa de tratar portas abertas por outra copia do servidor como servidor valido desta instalacao.
+- `Copiar Convite para Amigos` agora depende do diagnostico LAN aprovado e nao publica `publicHost` quando a porta externa nao foi validada.
+- A tela `Diagnostico` ganhou relatorio multiplayer visual e botao administrativo `Liberar Firewall` para criar regras TCP de entrada em `7171`, `7172` e `80`.
+- Documentada a separacao entre `Conexao Direta` e `Conexao por Relay`; relay reverso permanece indisponivel nesta versao ate existir infraestrutura real.
+- Relatorios de `Logs/ConnectionTests/` passam a registrar IP local/publico, modo de conexao, relay indisponivel e suspeita de CGNAT no lado convidado.
+- Preservados Jogar Offline, Entrar no Meu Mundo, convites remotos, proxy remoto de conta/login, auto-update, UserData, banco e saves.
+
 ## [0.1.23-test] - Autenticação remota no banco do host
 
 - Corrigida a causa raiz do erro `Your email or password is not correct` ao selecionar personagem em outro computador.

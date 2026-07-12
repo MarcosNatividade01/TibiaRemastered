@@ -2,7 +2,7 @@
 
 ## Estado atual
 
-O modo online atual e uma base assistida, nao uma plataforma online completa.
+O modo online atual usa Conexao Direta. Ele inicia o servidor local, gera convite remoto e valida portas/rede, mas ainda nao possui relay reverso hospedado.
 
 ## Preservacao do Offline
 
@@ -30,16 +30,21 @@ Eles nao substituem `UserData/Database/`.
 
 ## Hospedagem
 
-O host assistido inicia o servidor local e mostra:
+O host inicia o servidor local e mostra:
 
 - status;
 - nome do mundo;
 - jogadores conectados;
 - IP local;
-- IP publico quando disponivel;
-- porta;
+- IP publico somente para diagnostico/convite quando validado;
+- porta de login `7171`;
+- porta de game `7172`;
+- porta web `80`;
 - convite oficial;
-- teste da porta local;
+- teste da porta local e LAN;
+- teste do IP publico quando disponivel;
+- estado do Firewall;
+- relay indisponivel quando nao houver infraestrutura real;
 - caminho do relatorio de diagnostico.
 
 ## Entrada em mundo
@@ -75,10 +80,17 @@ Se o host responder em `/version.json`, a versao e comparada com o `version.json
 
 Se a versao do host nao estiver disponivel, o Launcher registra aviso e continua assumindo compatibilidade local.
 
+## Modos de conexao
+
+- `Conexao Direta LAN`: usa o IPv4 local do host, como `192.168.x.x`.
+- `Conexao Direta Internet`: exige firewall liberado, port forwarding TCP `7171/7172` e IPv4 publico acessivel. `publicHost` so e publicado no convite quando o teste externo passa.
+- `Conexao por Relay`: nao esta disponivel nesta versao porque nao ha servidor relay configurado.
+
 ## Limitacoes conhecidas
 
 - Nao instala VPN.
 - Nao configura roteador.
 - Nao contorna CGNAT.
+- Nao possui relay reverso ativo nesta versao.
 - Nao cria servidor dedicado.
 - Internet externa pode exigir port forwarding e firewall liberado.

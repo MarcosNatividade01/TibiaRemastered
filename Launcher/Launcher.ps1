@@ -389,6 +389,7 @@ function Show-LauncherGui {
         $hostSession = [hashtable]::Synchronized(@{
             RemoteInvite = ''
             HostLocalConnection = $null
+            MultiplayerDiagnostic = $null
         })
         $joinSession = [hashtable]::Synchronized(@{
             RawInvite = ''
@@ -420,6 +421,14 @@ function Show-LauncherGui {
         function Format-ConnectionReportText($Report) {
             if ($null -eq $Report) { return 'Relatorio de conexao indisponivel.' }
             return "Relatorio de conexao: $($Report.status)`r`nmode=$($Report.mode)`r`nFase: $($Report.phase)`r`nEtapa de falha: $($Report.failureStage)`r`nIP final: $($Report.finalHost)`r`nLoginPort: $($Report.loginPort)`r`nGamePort: $($Report.gamePort)`r`nHost e localhost: $($Report.isLoopbackHost)`r`nConectividade TCP: $($Report.tcpTest.succeeded) $($Report.tcpTest.error) elapsedMs=$($Report.tcpTest.elapsedMs)`r`nWeb/login remoto opcional: $($Report.loginServer.responded) $($Report.loginServer.error)`r`nEndpoint de conta: $($Report.accountEndpointMode) $($Report.remoteAccountBaseUrl)`r`nversion=$($Report.version.localVersion)`r`nCompatibilidade: $($Report.version.message)`r`nClient usa: $($Report.clientHost):$($Report.clientGamePort)`r`nEndpoint local anuncia: $($Report.advertisedGameHost):$($Report.advertisedGamePort)`r`nConfig client: $($Report.clientConfigDescription)`r`nComando: $($Report.clientCommand)`r`nFalha: $($Report.failureReason)`r`nArquivo: $($Report.reportPath)"
+        }
+
+        function Format-MultiplayerDiagnosticText($Diagnostic) {
+            if ($null -eq $Diagnostic) { return 'Diagnostico multiplayer indisponivel.' }
+            $warnings = @($Diagnostic.warnings)
+            $warningText = if ($warnings.Count -gt 0) { ($warnings -join "`r`n- ") } else { 'Nenhum aviso critico.' }
+            $relayStatus = if ($null -ne $Diagnostic.relay) { "$($Diagnostic.relay.status) - $($Diagnostic.relay.reason)" } else { 'indisponivel' }
+            return "Diagnostico Multiplayer`r`nModo: Conexao Direta`r`nLauncher/Servidor: $($Diagnostic.launcherVersion)`r`nIP LAN: $($Diagnostic.localIPv4)`r`nIP publico: $($Diagnostic.publicIPv4)`r`nPorta login 7171 LISTENING: $($Diagnostic.loginPortUsage.inUse)`r`nPorta game 7172 LISTENING: $($Diagnostic.gamePortUsage.inUse)`r`nBind externo OK: $($Diagnostic.bindExternalOk)`r`nTeste 127.0.0.1: $($Diagnostic.loopbackTcp.succeeded)`r`nTeste IP LAN: $($Diagnostic.lanTcp.succeeded) $($Diagnostic.lanTcp.error)`r`nTeste IP publico: $($Diagnostic.remoteTcp.succeeded) $($Diagnostic.remoteTcp.error)`r`nConvite LAN liberado: $($Diagnostic.inviteAllowedForLan)`r`nConvite Internet liberado: $($Diagnostic.inviteAllowedForInternet)`r`nRelay: $relayStatus`r`nCGNAT suspeito: $($Diagnostic.cgnatSuspected)`r`nAvisos:`r`n- $warningText`r`nRelatorio: $($Diagnostic.reportPath)"
         }
 
         $statusLabel = New-Object System.Windows.Forms.Label
@@ -464,8 +473,9 @@ function Show-LauncherGui {
                 $result = Start-TrmHostedWorld -ProgressCallback ${function:Set-UiStatus}
                 $hostSession.RemoteInvite = [string]$result.remoteInvite
                 $hostSession.HostLocalConnection = $result.hostLocalConnection
+                $hostSession.MultiplayerDiagnostic = $result.multiplayerDiagnostic
                 $localConnection = $result.hostLocalConnection
-                $hostInfo.Text = "Conexao deste computador`r`nMundo: $($localConnection.worldName)`r`nhost=$($localConnection.host)`r`nport=$($localConnection.port)`r`nversion=$($localConnection.version)`r`nmode=$($localConnection.mode)`r`n`r`nServidor online; jogadores: $($result.playersOnline)"
+                $hostInfo.Text = "Conexao deste computador`r`nMundo: $($localConnection.worldName)`r`nhost=$($localConnection.host)`r`nport=$($localConnection.port)`r`nversion=$($localConnection.version)`r`nmode=$($localConnection.mode)`r`n`r`nServidor online; jogadores: $($result.playersOnline)`r`n`r`n$($result.note)`r`n`r`n$(Format-MultiplayerDiagnosticText $result.multiplayerDiagnostic)"
                 $remoteInviteOutput.Text = [string]$hostSession.RemoteInvite
                 $statusLabel.Text = 'Status: servidor online'
             } catch {
@@ -473,6 +483,7 @@ function Show-LauncherGui {
                 $remoteInviteOutput.Clear()
                 $hostSession.RemoteInvite = ''
                 $hostSession.HostLocalConnection = $null
+                $hostSession.MultiplayerDiagnostic = $null
                 $statusLabel.Text = 'Status: erro ao hospedar'
             }
         })
@@ -487,6 +498,12 @@ function Show-LauncherGui {
             if ([string]::IsNullOrWhiteSpace([string]$hostSession.RemoteInvite)) {
                 try { [System.Windows.Forms.Clipboard]::Clear() } catch {}
                 $statusLabel.Text = 'Status: hospede o mundo antes de copiar convite'
+                return
+            }
+            if ($null -eq $hostSession.MultiplayerDiagnostic -or -not [bool]$hostSession.MultiplayerDiagnostic.inviteAllowedForLan) {
+                try { [System.Windows.Forms.Clipboard]::Clear() } catch {}
+                $remoteInviteOutput.Text = "Convite bloqueado.`r`nO servidor precisa estar rodando, 7171/7172 em LISTENING e bind externo/LAN validado antes de copiar para amigos.`r`n`r`n$(Format-MultiplayerDiagnosticText $hostSession.MultiplayerDiagnostic)"
+                $statusLabel.Text = 'Status: convite bloqueado pelo diagnostico multiplayer'
                 return
             }
             try {
@@ -884,6 +901,13 @@ function Show-LauncherGui {
             return "Resultado: $($Diagnostic.status)`r`nmode=$($Diagnostic.connectionMode)`r`nversion=$($Diagnostic.currentVersion)`r`nHost acessivel: $($Diagnostic.targetReachable)`r`nIP local: $($Diagnostic.localIp)`r`nIP publico: $($Diagnostic.publicIp)`r`nPorta: $($Diagnostic.port)`r`nCompatibilidade: $($Diagnostic.version.message)`r`n`r`nAvisos:`r`n- $warningText`r`n`r`nRelatorio salvo em:`r`n$($Diagnostic.reportPath)"
         }
 
+        function Format-MultiplayerDiagnosticForUser($Diagnostic) {
+            $warnings = @($Diagnostic.warnings)
+            $warningText = if ($warnings.Count -gt 0) { ($warnings -join "`r`n- ") } else { 'Nenhum problema critico encontrado.' }
+            $fwText = @($Diagnostic.firewall | ForEach-Object { "TCP $($_.port): Allow=$($_.hasAllowRule)" }) -join "`r`n"
+            return "Diagnostico Multiplayer`r`nResultado: $($Diagnostic.status)`r`nModo: Conexao Direta`r`nLauncher: $($Diagnostic.launcherVersion)`r`nServidor: $($Diagnostic.serverVersion)`r`nIP LAN: $($Diagnostic.localIPv4)`r`nIP publico: $($Diagnostic.publicIPv4)`r`nCGNAT suspeito: $($Diagnostic.cgnatSuspected)`r`nBind externo OK: $($Diagnostic.bindExternalOk)`r`nSomente localhost: $($Diagnostic.bindOnlyLoopback)`r`n7171 LISTENING: $($Diagnostic.loginPortUsage.inUse)`r`n7172 LISTENING: $($Diagnostic.gamePortUsage.inUse)`r`nWeb LISTENING: $($Diagnostic.webPortUsage.inUse)`r`nTeste 127.0.0.1: $($Diagnostic.loopbackTcp.succeeded) $($Diagnostic.loopbackTcp.error)`r`nTeste IPv4 LAN: $($Diagnostic.lanTcp.succeeded) $($Diagnostic.lanTcp.error)`r`nTeste IP publico: $($Diagnostic.remoteTcp.succeeded) $($Diagnostic.remoteTcp.error)`r`nConvite LAN liberado: $($Diagnostic.inviteAllowedForLan)`r`nConvite Internet liberado: $($Diagnostic.inviteAllowedForInternet)`r`nRelay: $($Diagnostic.relay.status) - $($Diagnostic.relay.reason)`r`nFirewall:`r`n$fwText`r`n`r`nAvisos:`r`n- $warningText`r`n`r`nRelatorio salvo em:`r`n$($Diagnostic.reportPath)"
+        }
+
         $btnHostDiag = New-Object System.Windows.Forms.Button
         $btnHostDiag.Text = 'Diagnostico Host'
         $btnHostDiag.Location = New-Object System.Drawing.Point(16, 400)
@@ -892,8 +916,9 @@ function Show-LauncherGui {
             try {
                 $resolved = Get-TrmRuntimeConfigResolved
                 $port = [int](@($resolved.config.serverPorts)[1])
-                $diag = New-TrmNetworkDiagnosticReport -Mode 'host' -Port $port -WebPort ([int]$resolved.config.webServerPort)
-                $output.Text = Format-DiagnosticForUser $diag
+                $loginPort = [int](@($resolved.config.serverPorts)[0])
+                $diag = New-TrmMultiplayerHostDiagnosticReport -LoginPort $loginPort -GamePort $port -WebPort ([int]$resolved.config.webServerPort)
+                $output.Text = Format-MultiplayerDiagnosticForUser $diag
             } catch {
                 $output.Text = "Nao foi possivel gerar diagnostico.`r`nDetalhes: $($_.Exception.Message)"
             }
@@ -927,6 +952,23 @@ function Show-LauncherGui {
         Set-LauncherButtonStyle $btnOpenReports
         $diagForm.Controls.Add($btnOpenReports)
 
+        $btnFirewall = New-Object System.Windows.Forms.Button
+        $btnFirewall.Text = 'Liberar Firewall'
+        $btnFirewall.Location = New-Object System.Drawing.Point(421, 400)
+        $btnFirewall.Size = New-Object System.Drawing.Size(125, 34)
+        $btnFirewall.Add_Click({
+            try {
+                $scriptPath = Join-Path (Get-TrmRoot) 'Tools\NetworkDiagnostics\Enable-TibiaRemasteredFirewall.ps1'
+                if (-not (Test-Path $scriptPath)) { throw "Script nao encontrado: $scriptPath" }
+                Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scriptPath) -Verb RunAs -WorkingDirectory (Get-TrmRoot) | Out-Null
+                $output.Text = "Solicitacao administrativa enviada.`r`nConfirme o UAC para criar regras TCP de entrada em 7171, 7172 e 80.`r`nSe a elevacao for negada, nenhuma regra sera criada."
+            } catch {
+                $output.Text = "Falha ao solicitar liberacao do Firewall.`r`nDetalhes: $($_.Exception.Message)"
+            }
+        })
+        Set-LauncherButtonStyle $btnFirewall
+        $diagForm.Controls.Add($btnFirewall)
+
         [void]$diagForm.ShowDialog($form)
     }
 
@@ -945,7 +987,7 @@ function Show-LauncherGui {
         $helpText.Multiline = $true
         $helpText.ReadOnly = $true
         $helpText.ScrollBars = 'Vertical'
-        $helpText.Text = "Como jogar`r`n`r`nJogar Offline`r`nAbre o servidor local e o client no seu computador. Nao precisa de internet.`r`n`r`nHospedar Mundo`r`nInicia seu servidor local, mostra IP, porta, jogadores conectados e gera um convite para copiar.`r`n`r`nEntrar em Mundo`r`nCole o convite recebido ou informe IP e porta manualmente. O Launcher testa a conexao antes de abrir o client.`r`n`r`nLAN e Internet`r`nNa mesma rede, use o IP local mostrado pelo host. Pela internet, pode ser necessario liberar firewall e redirecionar portas no roteador.`r`n`r`nLimitacoes`r`nO Launcher nao instala VPN, nao altera roteador e nao contorna CGNAT. Se o online falhar, o modo Offline continua funcionando."
+        $helpText.Text = "Como jogar`r`n`r`nJogar Offline`r`nAbre o servidor local e o client no seu computador. Nao precisa de internet.`r`n`r`nHospedar Mundo`r`nInicia seu servidor local, valida portas 7171/7172, testa bind local/LAN e gera convite somente quando o diagnostico permite.`r`n`r`nEntrar em Mundo`r`nCole o convite recebido ou informe IP e porta manualmente. O Launcher testa a conexao antes de abrir o client.`r`n`r`nConexao Direta LAN`r`nNa mesma rede, use o IP local mostrado pelo host, por exemplo 192.168.x.x. Nao use 127.0.0.1 em outro computador.`r`n`r`nConexao Direta pela internet`r`nExige IPv4 publico acessivel, firewall liberado e port forwarding TCP 7171/7172 no roteador. O publicHost so e incluido quando a porta externa foi validada.`r`n`r`nRelay`r`nNenhuma infraestrutura de relay reverso esta configurada nesta versao. Se houver CGNAT, a conexao direta pela internet pode nao funcionar sem relay/VPN.`r`n`r`nLimitacoes`r`nO Launcher nao altera roteador e nao contorna CGNAT. Se o online falhar, o modo Offline continua funcionando."
         Set-LauncherTextStyle $helpText
         $helpForm.Controls.Add($helpText)
 

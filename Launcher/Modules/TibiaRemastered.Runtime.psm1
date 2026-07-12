@@ -820,7 +820,7 @@ function Test-TrmLoopbackHost {
 }
 
 function Test-TrmTcpConnectionDirect {
-    param([string]$Host, [int]$Port, [int]$TimeoutMs = 2500)
+    param([string]$Host, [int]$Port, [int]$TimeoutMs = 8000)
     $client = New-Object System.Net.Sockets.TcpClient
     $started = Get-Date
     try {
@@ -930,6 +930,9 @@ function New-TrmConnectionTestReport {
     )
     $parsedInvite = if (-not [string]::IsNullOrWhiteSpace($RawInvite)) { ConvertFrom-TrmWorldInvite -InviteText $RawInvite } else { $null }
     $invitePublicHost = if ($parsedInvite) { [string]$parsedInvite.publicHost } else { '' }
+    $localIPv4 = Get-TrmLocalIPv4Address
+    $publicIPv4 = Get-TrmPublicIPAddress
+    $cgnatSuspected = ($publicIPv4 -eq 'indisponivel' -or $publicIPv4 -match '^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)')
     $isLoopback = Test-TrmLoopbackHost -Host $Host
     $tcp = if (-not [string]::IsNullOrWhiteSpace($Host)) { Test-TrmTcpConnectionDirect -Host $Host -Port $Port } else { [pscustomobject]@{host=$Host; port=$Port; succeeded=$false; error='host vazio'; socketError='host vazio'; timeoutMs=0; elapsedMs=0; direct=$true} }
     $login = if (-not [string]::IsNullOrWhiteSpace($Host)) { Test-TrmLoginHttpEndpoint -Host $Host -WebPort $WebPort } else { [pscustomobject]@{url=''; responded=$false; error='host vazio'; recommendedWorld=''} }
@@ -968,6 +971,12 @@ function New-TrmConnectionTestReport {
         phase = $Phase
         rawInvite = $RawInvite
         worldName = $WorldName
+        launcherVersion = GetCurrentVersion
+        serverVersion = $ExpectedVersion
+        connectionMode = $(if ($Mode -eq 'remote') { 'direct' } else { $Mode })
+        localIPv4 = $localIPv4
+        publicIPv4 = $publicIPv4
+        cgnatSuspected = $cgnatSuspected
         parsedHost = $Host
         extractedHost = $Host
         parsedPort = $Port
@@ -1001,6 +1010,11 @@ function New-TrmConnectionTestReport {
         portableEndpointState = $endpointState
         accountEndpointMode = $(if ($endpointState.PSObject.Properties.Match('accountMode').Count -gt 0) { [string]$endpointState.accountMode } else { 'unknown' })
         remoteAccountBaseUrl = $(if ($endpointState.PSObject.Properties.Match('remoteAccountBaseUrl').Count -gt 0) { [string]$endpointState.remoteAccountBaseUrl } else { '' })
+        relay = [pscustomobject]@{
+            status = 'unavailable'
+            available = $false
+            reason = 'Nenhuma infraestrutura de relay reverso esta configurada nesta versao; convites remotos usam Conexao Direta.'
+        }
         clientCommand = $clientCommand
         possibleFirewallOrNatBlock = (-not $tcp.succeeded -and -not $isLoopback)
         errorMessage = $ErrorMessage
@@ -1039,6 +1053,148 @@ function Get-TrmPublicIPAddress {
     } catch {
         return 'indisponivel'
     }
+}
+
+function Get-TrmServerConfigNetwork {
+    $path = Join-Path (Get-TrmRoot) 'Server\config.lua'
+    $result = [ordered]@{
+        path = $path
+        exists = (Test-Path $path)
+        ip = ''
+        loginProtocolPort = 7171
+        gameProtocolPort = 7172
+        statusProtocolPort = 7171
+        bindOnlyGlobalAddress = $false
+    }
+    if (-not (Test-Path $path)) { return [pscustomobject]$result }
+    $text = Get-Content -Path $path -Raw -Encoding UTF8
+    if ($text -match '(?m)^\s*ip\s*=\s*"([^"]*)"') { $result.ip = $Matches[1] }
+    if ($text -match '(?m)^\s*loginProtocolPort\s*=\s*(\d+)') { $result.loginProtocolPort = [int]$Matches[1] }
+    if ($text -match '(?m)^\s*gameProtocolPort\s*=\s*(\d+)') { $result.gameProtocolPort = [int]$Matches[1] }
+    if ($text -match '(?m)^\s*statusProtocolPort\s*=\s*(\d+)') { $result.statusProtocolPort = [int]$Matches[1] }
+    if ($text -match '(?m)^\s*bindOnlyGlobalAddress\s*=\s*(true|false)') { $result.bindOnlyGlobalAddress = ($Matches[1] -eq 'true') }
+    return [pscustomobject]$result
+}
+
+function Get-TrmFirewallPortRules {
+    param([int[]]$Ports)
+    $items = @()
+    foreach ($port in $Ports) {
+        $rules = @()
+        try {
+            $filters = @(Get-NetFirewallPortFilter -Protocol TCP -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -eq [string]$port -or $_.LocalPort -eq 'Any' })
+            foreach ($filter in $filters) {
+                $rule = Get-NetFirewallRule -AssociatedNetFirewallPortFilter $filter -ErrorAction SilentlyContinue | Where-Object { $_.Direction -eq 'Inbound' }
+                foreach ($r in @($rule)) {
+                    $rules += [pscustomobject]@{
+                        displayName = [string]$r.DisplayName
+                        enabled = [string]$r.Enabled
+                        action = [string]$r.Action
+                        profile = [string]$r.Profile
+                    }
+                }
+            }
+        } catch {}
+        $allowing = @($rules | Where-Object { $_.enabled -eq 'True' -and $_.action -eq 'Allow' })
+        $items += [pscustomobject]@{port=$port; hasAllowRule=($allowing.Count -gt 0); rules=$rules}
+    }
+    return @($items)
+}
+
+function New-TrmMultiplayerHostDiagnosticReport {
+    param(
+        [int]$LoginPort = 7171,
+        [int]$GamePort = 7172,
+        [int]$WebPort = 80,
+        [string]$ExternalHost = ''
+    )
+    $localIp = Get-TrmLocalIPv4Address
+    $publicIp = Get-TrmPublicIPAddress
+    $serverConfig = Get-TrmServerConfigNetwork
+    $serverProcess = $null
+    try {
+        $resolved = Get-TrmRuntimeConfigResolved
+        $serverProcess = @(Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $resolved.serverExe } | Select-Object -First 5 | ForEach-Object {
+            [pscustomobject]@{pid=$_.Id; name=$_.ProcessName; path=$_.Path; started=$_.StartTime}
+        })
+    } catch { $serverProcess = @() }
+
+    $loginUsage = Get-TrmPortUsage -Port $LoginPort
+    $gameUsage = Get-TrmPortUsage -Port $GamePort
+    $webUsage = Get-TrmPortUsage -Port $WebPort
+    $connections = @()
+    foreach ($p in @($LoginPort,$GamePort,$WebPort)) {
+        $connections += @(Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue | ForEach-Object {
+            [pscustomobject]@{localAddress=$_.LocalAddress; localPort=$_.LocalPort; state=$_.State; owningProcess=$_.OwningProcess}
+        })
+    }
+    $listenAddresses = @($connections | Where-Object { $_.localPort -in @($LoginPort,$GamePort) } | Select-Object -ExpandProperty localAddress -Unique)
+    $bindOnlyLoopback = ($listenAddresses.Count -gt 0 -and @($listenAddresses | Where-Object { $_ -notin @('127.0.0.1','::1') }).Count -eq 0)
+    $bindExternalOk = (-not $bindOnlyLoopback -and $listenAddresses.Count -gt 0)
+    $localLoopbackGame = Test-TrmTcpConnectionDirect -Host '127.0.0.1' -Port $GamePort -TimeoutMs 8000
+    $localLanGame = if (-not (Test-TrmLoopbackHost -Host $localIp)) { Test-TrmTcpConnectionDirect -Host $localIp -Port $GamePort -TimeoutMs 8000 } else { [pscustomobject]@{host=$localIp; port=$GamePort; succeeded=$false; error='IP LAN indisponivel'; timeoutMs=0; elapsedMs=0; socketError='no-lan-ip'} }
+    $externalTcp = $null
+    if (-not [string]::IsNullOrWhiteSpace($ExternalHost)) {
+        $externalTcp = Test-TrmTcpConnectionDirect -Host $ExternalHost -Port $GamePort -TimeoutMs 8000
+    } elseif ($publicIp -ne 'indisponivel') {
+        $externalTcp = Test-TrmTcpConnectionDirect -Host $publicIp -Port $GamePort -TimeoutMs 8000
+    } else {
+        $externalTcp = [pscustomobject]@{host=''; port=$GamePort; succeeded=$false; error='IP publico indisponivel'; timeoutMs=0; elapsedMs=0; socketError='no-public-ip'}
+    }
+    $firewall = Get-TrmFirewallPortRules -Ports @($LoginPort,$GamePort,$WebPort)
+    $privatePublicMismatch = ($publicIp -ne 'indisponivel' -and $publicIp -match '^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)')
+    $cgnatSuspected = ($publicIp -eq 'indisponivel' -or $privatePublicMismatch)
+    $relay = [pscustomobject]@{
+        status = 'unavailable'
+        available = $false
+        reason = 'Nenhuma infraestrutura de relay reverso esta configurada neste projeto. Use Conexao Direta com LAN/port-forward/firewall ou adicione um servidor relay real.'
+    }
+    $warnings = @()
+    if (@($serverProcess).Count -eq 0) { $warnings += 'Servidor nao foi encontrado em execucao.' }
+    if (-not $loginUsage.inUse) { $warnings += "Porta login $LoginPort nao esta em LISTENING." }
+    if (-not $gameUsage.inUse) { $warnings += "Porta game $GamePort nao esta em LISTENING." }
+    if ($bindOnlyLoopback) { $warnings += 'Servidor parece restrito a 127.0.0.1/localhost; convidados remotos nao conseguem conectar.' }
+    if (-not $localLoopbackGame.succeeded) { $warnings += "Teste local 127.0.0.1:$GamePort falhou: $($localLoopbackGame.error)" }
+    if (-not $localLanGame.succeeded) { $warnings += "Teste LAN $localIp`:$GamePort falhou: $($localLanGame.error)" }
+    if ($publicIp -eq 'indisponivel') { $warnings += 'IP publico indisponivel; convite para internet nao pode ser validado.' }
+    if (-not $externalTcp.succeeded) { $warnings += "Teste externo/publicHost $($externalTcp.host):$GamePort falhou: $($externalTcp.error). Para internet, verifique port-forward, firewall, NAT/CGNAT." }
+    foreach ($fw in $firewall) { if (-not $fw.hasAllowRule) { $warnings += "Firewall sem regra Allow detectada para TCP $($fw.port)." } }
+    if ($cgnatSuspected) { $warnings += 'CGNAT suspeito ou IP publico indisponivel; conexao direta pela internet pode nao funcionar sem relay/VPN.' }
+
+    $path = Join-Path (Get-TrmOnlineDiagnosticDirectory) ('multiplayer-host-diagnostic-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '.json')
+    $report = [pscustomobject]@{
+        generatedAt = (Get-Date).ToString('s')
+        launcherVersion = GetCurrentVersion
+        serverVersion = GetCurrentVersion
+        connectionMode = 'direct'
+        localIPv4 = $localIp
+        publicIPv4 = $publicIp
+        cgnatSuspected = $cgnatSuspected
+        serverConfig = $serverConfig
+        serverProcess = $serverProcess
+        loginPort = $LoginPort
+        gamePort = $GamePort
+        webPort = $WebPort
+        loginPortUsage = $loginUsage
+        gamePortUsage = $gameUsage
+        webPortUsage = $webUsage
+        netstat = $connections
+        listenAddresses = $listenAddresses
+        bindOnlyLoopback = $bindOnlyLoopback
+        bindExternalOk = $bindExternalOk
+        loopbackTcp = $localLoopbackGame
+        lanTcp = $localLanGame
+        remoteTcp = $externalTcp
+        firewall = $firewall
+        relay = $relay
+        inviteAllowedForLan = (@($serverProcess).Count -gt 0 -and $loginUsage.inUse -and $gameUsage.inUse -and $bindExternalOk -and $localLanGame.succeeded)
+        inviteAllowedForInternet = (@($serverProcess).Count -gt 0 -and $loginUsage.inUse -and $gameUsage.inUse -and $bindExternalOk -and $publicIp -ne 'indisponivel' -and $externalTcp.succeeded)
+        warnings = $warnings
+        status = if ($warnings.Count -eq 0) { 'passed' } else { 'warning' }
+        reportPath = $path
+    }
+    Save-TrmJsonFile -Path $path -Value $report
+    return $report
 }
 
 function Get-TrmOnlineDiagnosticDirectory {
@@ -1519,9 +1675,21 @@ function Ensure-TrmLocalServerStarted {
     param([object]$Resolved, [scriptblock]$ProgressCallback)
     Ensure-TrmDatabaseServer -Config $Resolved.config -ProgressCallback $ProgressCallback
     $serverPortsOpen = Wait-TrmServerPorts -Ports @($Resolved.config.serverPorts) -TimeoutSeconds 3
+    $serverRunning = @(Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $Resolved.serverExe })
+    if ($serverPortsOpen -and @($serverRunning).Count -eq 0) {
+        $portDetails = @()
+        foreach ($p in @($Resolved.config.serverPorts)) {
+            $usage = Get-TrmPortUsage -Port ([int]$p)
+            foreach ($proc in @($usage.processes)) {
+                if ([int]$proc.state -eq 2 -or [string]$proc.state -eq 'Listen') {
+                    $portDetails += "TCP $p -> pid=$($proc.pid) name=$($proc.name) path=$($proc.path)"
+                }
+            }
+        }
+        throw "As portas do servidor ja estao em LISTENING, mas nao pertencem a esta instalacao. Feche a outra copia do servidor antes de hospedar por este Launcher. Esperado: $($Resolved.serverExe). Encontrado: $($portDetails -join ' | ')"
+    }
     if (-not $serverPortsOpen) {
-        $serverRunning = Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $Resolved.serverExe }
-        if (-not $serverRunning) {
+        if (@($serverRunning).Count -eq 0) {
             if ($ProgressCallback) { & $ProgressCallback 'Iniciando servidor local...' 0 0 0 }
             Start-Process -FilePath $Resolved.serverExe -WorkingDirectory $Resolved.serverWorkingDirectory -WindowStyle Minimized | Out-Null
         }
@@ -1548,10 +1716,15 @@ function Start-TrmHostedWorld {
     $worldName = Get-TrmWorldName
     $version = GetCurrentVersion
     Ensure-TrmPortableWebEndpointMode -Config $resolved.config -ProgressCallback $ProgressCallback -BindAddress '0.0.0.0' -WorldAddress $localIp -GamePort $port
+    $hostDiagnostic = New-TrmMultiplayerHostDiagnosticReport -LoginPort $loginPort -GamePort $port -WebPort ([int]$resolved.config.webServerPort)
+    if (-not $hostDiagnostic.inviteAllowedForLan) {
+        throw "Servidor iniciado, mas convite remoto nao foi liberado: $(@($hostDiagnostic.warnings) -join ' | '). Relatorio: $($hostDiagnostic.reportPath)"
+    }
+    $publicInviteHost = if ($hostDiagnostic.inviteAllowedForInternet) { $publicIp } else { '' }
     $diagnostic = New-TrmNetworkDiagnosticReport -Mode 'host' -Port $port -WebPort ([int]$resolved.config.webServerPort)
     $players = Get-TrmConnectedPlayerCount -Port $port
     $hostLocalConnection = BuildHostLocalConnection -WorldName $worldName -Port $port -Version $version
-    $remoteInvite = BuildRemoteInvite -WorldName $worldName -Host $localIp -PublicHost $publicIp -Port $port -LoginPort $loginPort -GamePort $port -WebPort ([int]$resolved.config.webServerPort) -Version $version
+    $remoteInvite = BuildRemoteInvite -WorldName $worldName -Host $localIp -PublicHost $publicInviteHost -Port $port -LoginPort $loginPort -GamePort $port -WebPort ([int]$resolved.config.webServerPort) -Version $version
     return [pscustomobject]@{
         status = 'online'
         worldName = $worldName
@@ -1568,7 +1741,8 @@ function Start-TrmHostedWorld {
         remoteInvite = $remoteInvite
         invite = $remoteInvite
         diagnostic = $diagnostic
-        note = 'LAN tende a funcionar diretamente. Internet pode exigir port forwarding/firewall liberado.'
+        multiplayerDiagnostic = $hostDiagnostic
+        note = $(if ($hostDiagnostic.inviteAllowedForInternet) { 'Conexao Direta LAN e internet validadas.' } else { 'Conexao Direta LAN validada. Internet exige port forwarding/firewall/IPv4 publico; publicHost nao foi incluído porque a porta externa nao foi validada. Relay reverso indisponivel nesta versao.' })
     }
 }
 
