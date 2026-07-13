@@ -211,6 +211,40 @@ function New-Sha1([string]$Value) {
     return ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-','').ToLowerInvariant()
 }
 
+function Test-PasswordMatches([string]$StoredPassword, [string]$CandidatePassword) {
+    if ([string]::IsNullOrWhiteSpace($StoredPassword) -or [string]::IsNullOrEmpty($CandidatePassword)) { return $false }
+    $stored = $StoredPassword.Trim()
+    $candidateHash = New-Sha1 $CandidatePassword
+    if ($stored.ToLowerInvariant() -eq $candidateHash) { return $true }
+    if ($stored -eq $CandidatePassword) { return $true }
+    return $false
+}
+
+function Get-PayloadString($Payload, [string[]]$Names) {
+    foreach ($name in $Names) {
+        if ($Payload.PSObject.Properties.Name -contains $name) {
+            $value = [string]$Payload.$name
+            if (-not [string]::IsNullOrWhiteSpace($value)) { return $value }
+        }
+    }
+    return ''
+}
+
+function Resolve-AccountIdentifier($Payload) {
+    $identifier = Get-PayloadString $Payload @('email','EMail','Email','accountname','AccountName','account','Account')
+    if (-not [string]::IsNullOrWhiteSpace($identifier)) { return $identifier.Trim().ToLowerInvariant() }
+    if ($Payload.PSObject.Properties.Name -contains 'sessionkey' -and -not [string]::IsNullOrWhiteSpace([string]$Payload.sessionkey)) {
+        $parts = ([string]$Payload.sessionkey -replace "`r`n","`n").Split("`n",2)
+        if ($parts.Count -ge 1 -and -not [string]::IsNullOrWhiteSpace($parts[0])) { return $parts[0].Trim().ToLowerInvariant() }
+    }
+    return ''
+}
+
+function Get-AccountRowByIdentifier([string]$Identifier) {
+    if ([string]::IsNullOrWhiteSpace($Identifier)) { return @() }
+    return Invoke-Db ("SELECT id,name,email,password,lastday FROM accounts WHERE LOWER(email) = {0} OR LOWER(name) = {0} LIMIT 1;" -f (Sql-Escape $Identifier.ToLowerInvariant()))
+}
+
 function Normalize-CharacterName([string]$Name) {
     $normalized = $Name.Normalize([Text.NormalizationForm]::FormD)
     $builder = New-Object System.Text.StringBuilder
@@ -346,26 +380,37 @@ function Handle-ClientCreate($Stream, $Payload) {
             Send-Json $Stream ([pscustomobject]@{GeneratedName=(New-CharacterName '')})
         }
         'createaccountandcharacter' {
-            $emailValue = if ($Payload.PSObject.Properties.Name -contains 'EMail') { $Payload.EMail } else { $Payload.Email }
-            $passwordValue = if ($Payload.PSObject.Properties.Name -contains 'Password') { $Payload.Password } else { $Payload.Password1 }
-            $email = ([string]$emailValue).Trim().ToLowerInvariant()
-            $password = [string]$passwordValue
-            if ($email -notmatch '^[^@\s]+@[^@\s]+\.[^@\s]+$') { throw 'Invalid email format.' }
+            $identifier = Resolve-AccountIdentifier $Payload
+            $password = Get-PayloadString $Payload @('Password','password','Password1')
+            if ([string]::IsNullOrWhiteSpace($identifier)) { throw 'Account identifier is required.' }
             if ($password.Length -lt 10) { throw 'Password does not meet the requirements.' }
-            $exists = Invoke-Db ("SELECT 1 FROM accounts WHERE email = {0} LIMIT 1;" -f (Sql-Escape $email))
-            if ($exists.Count -gt 0) { throw 'Email already exists.' }
-            $accountName = New-AccountName $email
+            $accountRows = Get-AccountRowByIdentifier $identifier
+            $accountName = ''
+            $email = ''
+            $accountId = 0
+            if ($accountRows.Count -gt 0) {
+                $account = $accountRows[0].Split("`t")
+                if (-not (Test-PasswordMatches $account[3] $password)) { throw 'Email or password is not correct.' }
+                $accountId = [int]$account[0]
+                $accountName = $account[1]
+                $email = $account[2]
+            } else {
+                $email = $identifier
+                if ($email -notmatch '^[^@\s]+@[^@\s]+\.[^@\s]+$') { throw 'Invalid email format.' }
+                $accountName = New-AccountName $email
+                $now = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+                $hash = New-Sha1 $password
+                Invoke-Db ("INSERT INTO accounts (name,password,email,creation,coins) VALUES ({0},{1},{2},{3},999999);" -f (Sql-Escape $accountName),(Sql-Escape $hash),(Sql-Escape $email),$now) | Out-Null
+                $accountId = [int](Invoke-Db ("SELECT id FROM accounts WHERE name = {0} LIMIT 1;" -f (Sql-Escape $accountName)))[0]
+            }
             $characterName = New-CharacterName ([string]$Payload.CharacterName)
             $sexRaw = if ($Payload.PSObject.Properties.Name -contains 'CharacterSex') { $Payload.CharacterSex } else { 'male' }
             $sexValue = ([string]$sexRaw).ToLowerInvariant()
             $sex = if ($sexValue -eq 'female' -or $sexValue -eq '0') { 0 } else { 1 }
             $lookType = if ($sex -eq 1) { 128 } else { 136 }
-            $now = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
-            $hash = New-Sha1 $password
-            Invoke-Db ("INSERT INTO accounts (name,password,email,creation,coins) VALUES ({0},{1},{2},{3},999999);" -f (Sql-Escape $accountName),(Sql-Escape $hash),(Sql-Escape $email),$now) | Out-Null
-            $accountId = [int](Invoke-Db ("SELECT id FROM accounts WHERE name = {0} LIMIT 1;" -f (Sql-Escape $accountName)))[0]
             foreach ($group in @('Enemies','Friends','Trading Partner')) {
-                Invoke-Db ("INSERT INTO account_vipgroups (account_id,name,customizable) VALUES ({0},{1},0);" -f $accountId,(Sql-Escape $group)) | Out-Null
+                $existingGroup = Invoke-Db ("SELECT 1 FROM account_vipgroups WHERE account_id = {0} AND name = {1} LIMIT 1;" -f $accountId,(Sql-Escape $group))
+                if ($existingGroup.Count -eq 0) { Invoke-Db ("INSERT INTO account_vipgroups (account_id,name,customizable) VALUES ({0},{1},0);" -f $accountId,(Sql-Escape $group)) | Out-Null }
             }
             $town = Invoke-Db 'SELECT id,posx,posy,posz FROM towns WHERE id = 1 LIMIT 1;'
             if ($town.Count -gt 0) { $t = $town[0].Split("`t"); $townId=$t[0]; $posx=$t[1]; $posy=$t[2]; $posz=$t[3] } else { $townId=1; $posx=32069; $posy=31901; $posz=6 }
@@ -385,17 +430,16 @@ function Handle-Login($Stream, $Payload) {
     }
     $type = ([string]$Payload.type).ToLowerInvariant()
     if ($type -ne 'login') { Send-Json $Stream ([pscustomobject]@{categorycounts=@(); gamenews=@(); idOfNewestReadEntry=0; isreturner=$false; lastupdatetimestamp=0; maxeditdate=0; showrewardnews=$false}); return }
-    $emailValue = if ($Payload.PSObject.Properties.Name -contains 'email') { $Payload.email } else { $Payload.accountname }
-    $email = ([string]$emailValue).Trim().ToLowerInvariant()
-    $password = [string]$Payload.password
-    if (([string]::IsNullOrWhiteSpace($email) -or [string]::IsNullOrWhiteSpace($password)) -and $Payload.sessionkey) {
+    $email = Resolve-AccountIdentifier $Payload
+    $password = Get-PayloadString $Payload @('password','Password','Password1')
+    if ([string]::IsNullOrWhiteSpace($password) -and $Payload.PSObject.Properties.Name -contains 'sessionkey') {
         $parts = ([string]$Payload.sessionkey -replace "`r`n","`n").Split("`n",2)
-        if ($parts.Count -eq 2) { $email = $parts[0].Trim().ToLowerInvariant(); $password = $parts[1] }
+        if ($parts.Count -eq 2) { $password = $parts[1] }
     }
-    $rows = Invoke-Db ("SELECT id,password,lastday FROM accounts WHERE email = {0} OR name = {0} LIMIT 1;" -f (Sql-Escape $email))
+    $rows = Get-AccountRowByIdentifier $email
     if ($rows.Count -eq 0) { Send-Json $Stream ([pscustomobject]@{errorCode=3; errorMessage='Email or password is not correct.'}); return }
     $account = $rows[0].Split("`t")
-    if ((New-Sha1 $password) -ne $account[1]) { Send-Json $Stream ([pscustomobject]@{errorCode=3; errorMessage='Email or password is not correct.'}); return }
+    if (-not (Test-PasswordMatches $account[3] $password)) { Send-Json $Stream ([pscustomobject]@{errorCode=3; errorMessage='Email or password is not correct.'}); return }
     $accountId = [int]$account[0]
     $players = Invoke-Db ("SELECT name,level,sex,vocation,looktype,lookhead,lookbody,looklegs,lookfeet,lookaddons,isreward,istutorial FROM players WHERE account_id = {0} AND deletion = 0 ORDER BY name ASC;" -f $accountId)
     $characters = @()

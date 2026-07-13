@@ -16,7 +16,7 @@ if ([string]::IsNullOrWhiteSpace($VersionOutput)) { $VersionOutput = Join-Path $
 $excludeRoots = @(
     'UserData','Logs','Backup','Backups','Saves','Save','.git','.github','.vs','.vscode','.idea',
     'Reports','release','Release','dist','build','tmp','temp','cache','Cache',
-    'Client/characterdata','Client/minimap'
+    'Client/characterdata','Client/minimap','Client/screenshots'
 )
 $excludePatterns = @(
     '.gitignore','.gitattributes','manifest.json','version.json','*.tmp','*.temp','*.log','*.bak*',
@@ -36,6 +36,7 @@ function Convert-ToRelativePath([string]$Base, [string]$Path) {
 function Test-Ignored([string]$Relative) {
     if ($Relative -ieq 'Client/conf/clientoptions.json') { return $true }
     if ($Relative.StartsWith('Client/cache/', [System.StringComparison]::OrdinalIgnoreCase)) { return $true }
+    if ($Relative.StartsWith('Client/screenshots/', [System.StringComparison]::OrdinalIgnoreCase)) { return $true }
     if ($Relative.StartsWith('Database_Template/', [System.StringComparison]::OrdinalIgnoreCase) -and $Relative -like '*.sql') { return $false }
     foreach ($rootName in $excludeRoots) {
         if ($Relative -ieq $rootName -or $Relative.StartsWith($rootName + '/', [System.StringComparison]::OrdinalIgnoreCase)) { return $true }

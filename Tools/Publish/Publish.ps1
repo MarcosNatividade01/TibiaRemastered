@@ -140,6 +140,7 @@ function Assert-SafetyRules {
         'temp/',
         'Client/characterdata/',
         'Client/minimap/',
+        'Client/screenshots/',
         'Client/bin/Qt6WebEngineCore.dll',
         'Client/bin/Qt6WebEngineCore.dll.part*',
         'Server/data-global/world/world.otbm'
@@ -355,7 +356,7 @@ function Test-TrmProtectedPathForPublish {
     foreach ($fileName in $protectedFiles) {
         if ($norm -ieq $fileName) { return $true }
     }
-    $protectedRoots = @('UserData','Logs','Backup','Backups','Saves','Save','Database','Databases','PrivateDatabase','Reports','tmp','temp')
+    $protectedRoots = @('UserData','Logs','Backup','Backups','Saves','Save','Database','Databases','PrivateDatabase','Reports','tmp','temp','Client/screenshots')
     foreach ($root in $protectedRoots) {
         if ($norm -ieq $root -or $norm.StartsWith($root + '/', [System.StringComparison]::OrdinalIgnoreCase)) { return $true }
     }
@@ -410,6 +411,7 @@ function Remove-ForbiddenTrackedFiles {
         'Config/launcher-config.json',
         'Client/characterdata',
         'Client/minimap',
+        'Client/screenshots',
         'Client/bin/Qt6WebEngineCore.dll',
         'Client/bin/Qt6WebEngineCore.dll.part1',
         'Client/bin/Qt6WebEngineCore.dll.part2',
@@ -424,7 +426,7 @@ function Remove-ForbiddenTrackedFiles {
 function Assert-NoForbiddenInGitStatus {
     Write-Step 'Verificando se arquivos proibidos seriam publicados'
     $status = Invoke-Git -Arguments @('status','--porcelain') -AllowFailure
-    $forbiddenRegex = '(^|\s)(UserData/|Logs/|Backup/|Backups/|Saves/|Save/|tmp/|temp/|Reports/|Config/launcher-config\.json|Client/characterdata/|Client/minimap/|Client/bin/Qt6WebEngineCore\.dll(\.part[0-9]+)?|Server/data-global/world/world\.otbm|.*\.(db|sqlite|sqlite3|dump|bak|backup|log|token|key|pem|p12|pfx|crt))'
+    $forbiddenRegex = '(^|\s)(UserData/|Logs/|Backup/|Backups/|Saves/|Save/|tmp/|temp/|Reports/|Config/launcher-config\.json|Client/characterdata/|Client/minimap/|Client/screenshots/|Client/bin/Qt6WebEngineCore\.dll(\.part[0-9]+)?|Server/data-global/world/world\.otbm|.*\.(db|sqlite|sqlite3|dump|bak|backup|log|token|key|pem|p12|pfx|crt))'
     $bad = @($status.Output -split "`r?`n" | Where-Object {
         $_ -match $forbiddenRegex -and $_ -notmatch '^\s*D\s+'
     })

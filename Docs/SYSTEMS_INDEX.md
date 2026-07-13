@@ -20,7 +20,7 @@ Status usados:
 | Validacao | Mapeado | `TibiaRemastered.Validation.psm1`, `Test-Project.ps1` | PowerShell | `Scripts/Test-Project.ps1` |
 | Runtime local | Parcial | `TibiaRemastered.Runtime.psm1` | PowerShell | `Test-Project.ps1 -StrictRuntime` com binarios reais |
 | Banco de dados | Parcial | `Ensure-TrmDatabaseServer`, `UserData/Database`, `Database_Template` | PowerShell/SQL | iniciar runtime completo e verificar persistencia |
-| Endpoint criacao/login | Parcial | `Write-TrmPortableWebEndpointScript` | PowerShell/SQL/HTTP | criar conta/personagem pelo cliente |
+| Endpoint criacao/login | Mapeado | `Write-TrmPortableWebEndpointScript`, `Scripts/Test-AccountCharacterList.ps1` | PowerShell/SQL/HTTP | `Scripts/Test-AccountCharacterList.ps1` |
 | Servidor | Localizado no pacote | `tmp/player-package-download/TibiaRemastered-Player.zip/Server/crystalserver.exe` | C++/Lua/XML | instalar runtime real e testar portas 7171/7172 |
 | Cliente | Localizado no pacote | `tmp/player-package-download/TibiaRemastered-Player.zip/Client/bin/client-local.exe` | binario/JSON/assets | instalar runtime real e executar `-Play` |
 | Scripts Lua | Localizado no pacote | `Server/data`, `Server/data-crystal`, `Server/data-global` no ZIP | Lua | `Scripts/Test-Project.ps1` com `lua` ou `luac` apos instalacao |
@@ -45,8 +45,8 @@ Status usados:
 | Quests | Localizado no pacote | quest libs/scripts no ZIP | Lua | testar quest especifica em runtime controlado |
 | Respawn | Localizado no pacote | `world/`, raids, respawn events | OTBM/Lua/XML | testar area especifica em runtime controlado |
 | Saves | Parcial | `UserData/`, banco local | SQL/arquivos locais | jogar, fechar, abrir e validar persistencia |
-| Login | Parcial | `Handle-Login` no endpoint gerado | PowerShell/SQL/HTTP | login pelo cliente |
-| Criacao de personagem | Parcial | `Handle-ClientCreate` | PowerShell/SQL/HTTP | criar personagem pelo cliente |
+| Login | Mapeado | `Handle-Login` no endpoint gerado | PowerShell/SQL/HTTP | login por email e account name em `Scripts/Test-AccountCharacterList.ps1` |
+| Criacao de personagem | Mapeado | `Handle-ClientCreate` | PowerShell/SQL/HTTP | criar multiplos personagens na mesma conta em `Scripts/Test-AccountCharacterList.ps1` |
 
 ## Ordem recomendada para mapeamento futuro
 

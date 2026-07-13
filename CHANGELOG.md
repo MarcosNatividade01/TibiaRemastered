@@ -2,6 +2,11 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.25-test] - Publicacao GitHub
+
+- Publicada versao 0.1.25-test para testes online/LAN.
+- Atualizados `version.json` e `manifest.json` para o Launcher baixar arquivos pelo GitHub.
+- Mantidas protecoes para `UserData`, logs, backups, saves, banco local e arquivos pessoais.
 ## [0.1.24-test] - Diagnostico de conexao direta e firewall multiplayer
 
 - Corrigida a leitura operacional do erro `TCP=False timeout` em IP publico: o Launcher agora deixa claro que Conexao Direta externa exige porta realmente acessivel, firewall liberado, port forwarding e IPv4 publico sem CGNAT impeditivo.
@@ -272,6 +277,7 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Criada a estrutura inicial do repositorio.
 - Adicionados arquivos base para README, roadmap, ideias, versao e manifest.
 - Adicionado `.gitignore` para proteger dados reais e arquivos sensiveis.
+
 
 
 
