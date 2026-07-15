@@ -87368,4 +87368,75 @@
 	<item id="52963" article="a" name="skill trainer">
 		<attribute key="description" value="Use this statue to train your shielding skill and your melee or distance fighting or your magic level offline." />
 	</item>
+	<item id="53074" article="an" name="adventurer backpack">
+		<attribute key="primarytype" value="containers" />
+		<attribute key="containersize" value="20" />
+		<attribute key="weight" value="1800" />
+		<attribute key="script" value="moveevent">
+			<attribute key="slot" value="backpack" />
+		</attribute>
+	</item>
+	<item id="53078" article="a" name="dead lizard henchman">
+		<attribute key="fluidsource" value="blood" />
+		<attribute key="containersize" value="20" />
+	</item>
+	<item id="53082" article="a" name="dead lizard magician">
+		<attribute key="fluidsource" value="blood" />
+		<attribute key="containersize" value="20" />
+	</item>
+	<item id="53086" article="a" name="dead lizard swordmaster">
+		<attribute key="fluidsource" value="blood" />
+		<attribute key="containersize" value="20" />
+	</item>
+	<item id="53090" article="a" name="dead lizard commander">
+		<attribute key="fluidsource" value="blood" />
+		<attribute key="containersize" value="20" />
+	</item>
+	<item id="53094" article="a" name="dead lizard executioner">
+		<attribute key="fluidsource" value="blood" />
+		<attribute key="containersize" value="20" />
+	</item>
+	<item id="53098" article="a" name="dead pirate navigator">
+		<attribute key="fluidsource" value="blood" />
+		<attribute key="containersize" value="20" />
+	</item>
+	<item id="53103" article="a" name="dead pirate quartermaster">
+		<attribute key="fluidsource" value="blood" />
+		<attribute key="containersize" value="20" />
+	</item>
+	<item id="53108" article="a" name="dead herald of fire">
+		<attribute key="containersize" value="30" />
+	</item>
+	<item id="53110" article="a" name="dead pirate gunner">
+		<attribute key="fluidsource" value="blood" />
+		<attribute key="containersize" value="20" />
+	</item>
+	<item id="53113" article="a" name="dead pirate cook">
+		<attribute key="fluidsource" value="blood" />
+		<attribute key="containersize" value="20" />
+	</item>
+	<item id="53119" article="a" name="dead sea captain">
+		<attribute key="fluidsource" value="blood" />
+		<attribute key="containersize" value="20" />
+	</item>
+	<item id="53122" article="a" name="dead infernoid hound">
+		<attribute key="containersize" value="20" />
+	</item>
+	<item id="53125" article="a" name="dead infernoid soul">
+		<attribute key="containersize" value="20" />
+	</item>
+	<item id="53128" article="a" name="dead infernoid spiritual">
+		<attribute key="containersize" value="20" />
+	</item>
+	<item id="53132" article="a" name="dead infernoid blob">
+		<attribute key="containersize" value="20" />
+	</item>
+	<item id="53158" article="an" name="old treasure map">
+		<attribute key="description" value="It shows encrypted coordinates, someone related to Aragonia should take a look at it." />
+		<attribute key="weight" value="400" />
+	</item>
+	<item id="53167" article="a" name="sail pass">
+		<attribute key="weight" value="10" />
+		<attribute key="description" value="A pass that grants passage by sail." />
+	</item>
 </items>

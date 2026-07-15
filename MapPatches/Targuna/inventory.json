@@ -1,0 +1,266 @@
+[
+  {
+    "file": "scripts/monsters/aragonia/freshwater_turtle.lua",
+    "type": "monster",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/monsters/aragonia/pirate_cook.lua",
+    "type": "monster",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/monsters/aragonia/pirate_gunner.lua",
+    "type": "monster",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/monsters/aragonia/pirate_navigator.lua",
+    "type": "monster",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/monsters/aragonia/pirate_quartermaster.lua",
+    "type": "monster",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/monsters/aragonia/sea_captain.lua",
+    "type": "monster",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/monsters/bosses/herald_of_fire.lua",
+    "type": "boss",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/npcs/aurelia.lua",
+    "type": "npc",
+    "dependency": "map positions and missing travel/quest assets",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/npcs/camilla.lua",
+    "type": "npc",
+    "dependency": "map positions and missing travel/quest assets",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/npcs/captain_indigo.lua",
+    "type": "npc",
+    "dependency": "map positions and missing travel/quest assets",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/npcs/emiliana.lua",
+    "type": "npc",
+    "dependency": "map positions and missing travel/quest assets",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/npcs/leonora.lua",
+    "type": "npc",
+    "dependency": "map positions and missing travel/quest assets",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/npcs/lizzie.lua",
+    "type": "npc",
+    "dependency": "map positions and missing travel/quest assets",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/npcs/morla.lua",
+    "type": "npc",
+    "dependency": "map positions and missing travel/quest assets",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/npcs/sterling.lua",
+    "type": "npc",
+    "dependency": "map positions and missing travel/quest assets",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/quests/actions_herald_lever.lua",
+    "type": "quest-script",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/quests/actions_reliable_ram.lua",
+    "type": "quest-script",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/quests/actions_three_fold_path_shrine_targuna.lua",
+    "type": "quest-script",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/quests/actions_tortoise_eggs.lua",
+    "type": "quest-script",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/quests/actions_treasure_chest.lua",
+    "type": "quest-script",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/quests/creaturescripts_herald_of_fire.lua",
+    "type": "quest-script",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/quests/creaturescripts_lizard_commander.lua",
+    "type": "quest-script",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/quests/creaturescripts_pirates.lua",
+    "type": "quest-script",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/quests/eventcallbacks_secondary_tasks.lua",
+    "type": "quest-script",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/quests/movements_aragonia.lua",
+    "type": "quest-script",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/quests/movements_crimson_court.lua",
+    "type": "quest-script",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/quests/movements_herald_red_floors.lua",
+    "type": "quest-script",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/quests/movements_main_continent_hint.lua",
+    "type": "quest-script",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/quests/movements_sandcastles.lua",
+    "type": "quest-script",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "scripts/quests/movements_temple_teleport.lua",
+    "type": "quest-script",
+    "dependency": "missing item/corpse IDs 530xx/531xx and map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Blocked in current runtime: required Targuna assets are absent from Server/data/items/items.xml and map fragment cannot be extracted safely yet."
+  },
+  {
+    "file": "world/world-monster.xml selected Aragonia spawns",
+    "type": "spawns",
+    "dependency": "monster scripts, corpse assets, map fragment",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "Spawns extracted to monsters.xml but not active in patch.json because required monsters use absent corpse/item IDs."
+  },
+  {
+    "file": "world/world-npc.xml selected Targuna NPCs",
+    "type": "npcs",
+    "dependency": "npc scripts, map fragment, quest storages",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "NPC positions extracted to npcs.xml but not active in patch.json because target map and quest assets are absent."
+  },
+  {
+    "file": "world/world.otbm / maps.7z",
+    "type": "map",
+    "dependency": "OTBM fragment extractor",
+    "compatible15_24": false,
+    "importable": false,
+    "reason": "No trusted local tool exists to extract only the Targuna fragment without replacing world.otbm."
+  }
+]

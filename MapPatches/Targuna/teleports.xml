@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<teleports>
+	<teleport id="anna-to-targuna" type="npc-travel" status="blocked">
+		<from label="Anna/Newhaven" />
+		<to x="31938" y="31928" z="7" />
+		<reason>Would alter current Anna travel flow and depends on missing Targuna map tiles.</reason>
+	</teleport>
+	<teleport id="sterling-to-aragonia" type="quest-travel" status="blocked">
+		<from x="31928" y="31903" z="7" />
+		<to label="Aragonia turtle travel" />
+		<reason>Requires Targuna/Aragonia map and quest storages.</reason>
+	</teleport>
+	<teleport id="captain-indigo-to-thais" type="npc-travel" status="blocked">
+		<from x="31973" y="31892" z="6" />
+		<to label="Thais" />
+		<reason>Uses sail pass item 53167, absent in current items.xml.</reason>
+	</teleport>
+</teleports>

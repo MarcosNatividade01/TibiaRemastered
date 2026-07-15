@@ -27,6 +27,11 @@ function New-Issue([string]$Severity, [string]$Code, [string]$Message, [string]$
     }
 }
 
+function Get-ArrayCount($Value) {
+    if ($null -eq $Value) { return 0 }
+    return @($Value).Length
+}
+
 function Test-InArea($Area, [int]$X, [int]$Y, [int]$Z) {
     return (
         $Z -ge [int]$Area.from.z -and $Z -le [int]$Area.to.z -and
@@ -43,18 +48,43 @@ function Get-EntityAbsolutePosition($GroupNode, $ChildNode) {
     }
 }
 
-function Test-MonsterExists([string]$Name) {
+function Test-ScriptContainsDefinition([string]$Name, [string[]]$Paths, [string[]]$Patterns) {
+    $escaped = [regex]::Escape($Name)
+    foreach ($path in @($Paths)) {
+        $full = if ([System.IO.Path]::IsPathRooted($path)) { $path } else { Join-Path $Root $path }
+        if (Test-Path $full -PathType Container) {
+            $files = @(Get-ChildItem -Path $full -Recurse -Filter '*.lua' -File -ErrorAction SilentlyContinue)
+        } elseif (Test-Path $full -PathType Leaf) {
+            $files = @(Get-Item -LiteralPath $full)
+        } else {
+            $files = @()
+        }
+        foreach ($patternTemplate in $Patterns) {
+            $pattern = $patternTemplate -f $escaped
+            if ((Get-ArrayCount $files) -gt 0 -and (Get-ArrayCount @($files | Select-String -Pattern $pattern -List -ErrorAction SilentlyContinue | Select-Object -First 1)) -gt 0) {
+                return $true
+            }
+        }
+    }
+    return $false
+}
+
+function Test-MonsterExists([string]$Name, [string[]]$ExtraPaths = @()) {
     $escaped = [regex]::Escape($Name)
     $patterns = @(
-        "Game\.createMonsterType\(`"$escaped`"\)",
-        "Game\.createMonsterType\('$escaped'\)"
+        'Game\.createMonsterType\("{0}"\)',
+        "Game\.createMonsterType\('{0}'\)"
     )
+    if ((Get-ArrayCount $ExtraPaths) -gt 0 -and (Test-ScriptContainsDefinition $Name @($ExtraPaths) $patterns)) {
+        return $true
+    }
     foreach ($path in @('Server\data-global\monster','Server\data-crystal\monster','Server\data\monster')) {
         $full = Join-Path $Root $path
         if (Test-Path $full) {
             $files = @(Get-ChildItem -Path $full -Recurse -Filter '*.lua' -File -ErrorAction SilentlyContinue)
-            foreach ($pattern in $patterns) {
-                if ($files.Count -gt 0 -and @($files | Select-String -Pattern $pattern -List -ErrorAction SilentlyContinue | Select-Object -First 1).Count -gt 0) {
+            foreach ($patternTemplate in $patterns) {
+                $pattern = $patternTemplate -f $escaped
+                if ((Get-ArrayCount $files) -gt 0 -and (Get-ArrayCount @($files | Select-String -Pattern $pattern -List -ErrorAction SilentlyContinue | Select-Object -First 1)) -gt 0) {
                     return $true
                 }
             }
@@ -63,20 +93,24 @@ function Test-MonsterExists([string]$Name) {
     return $false
 }
 
-function Test-NpcExists([string]$Name) {
+function Test-NpcExists([string]$Name, [string[]]$ExtraPaths = @()) {
     $escaped = [regex]::Escape($Name)
     $patterns = @(
-        "Game\.createNpcType\(`"$escaped`"\)",
-        "Game\.createNpcType\('$escaped'\)",
-        "local\s+internalNpcName\s*=\s*`"$escaped`"",
-        "local\s+internalNpcName\s*=\s*'$escaped'"
+        'Game\.createNpcType\("{0}"\)',
+        "Game\.createNpcType\('{0}'\)",
+        'local\s+internalNpcName\s*=\s*"{0}"',
+        "local\s+internalNpcName\s*=\s*'{0}'"
     )
+    if ((Get-ArrayCount $ExtraPaths) -gt 0 -and (Test-ScriptContainsDefinition $Name @($ExtraPaths) $patterns)) {
+        return $true
+    }
     foreach ($path in @('Server\data-global\npc','Server\data-crystal\npc','Server\data\npc')) {
         $full = Join-Path $Root $path
         if (Test-Path $full) {
             $files = @(Get-ChildItem -Path $full -Recurse -Filter '*.lua' -File -ErrorAction SilentlyContinue)
-            foreach ($pattern in $patterns) {
-                if ($files.Count -gt 0 -and @($files | Select-String -Pattern $pattern -List -ErrorAction SilentlyContinue | Select-Object -First 1).Count -gt 0) {
+            foreach ($patternTemplate in $patterns) {
+                $pattern = $patternTemplate -f $escaped
+                if ((Get-ArrayCount $files) -gt 0 -and (Get-ArrayCount @($files | Select-String -Pattern $pattern -List -ErrorAction SilentlyContinue | Select-Object -First 1)) -gt 0) {
                     return $true
                 }
             }
@@ -108,9 +142,43 @@ function Read-Patch([string]$Path) {
     return $patch
 }
 
+function Get-PatchRelativePath([string]$PatchFile, [string]$Relative) {
+    if ([string]::IsNullOrWhiteSpace($Relative)) { return $null }
+    $patchRoot = Split-Path -Parent $PatchFile
+    return (Join-Path $patchRoot $Relative)
+}
+
+function Get-PatchScriptPaths($Patch, [string]$PatchFile, [string]$Kind) {
+    $paths = @()
+    if ($Patch.PSObject.Properties.Name -contains 'scriptPaths') {
+        $scriptPaths = $Patch.scriptPaths
+        if ($scriptPaths.PSObject.Properties.Name -contains $Kind) {
+            foreach ($relative in @($scriptPaths.$Kind)) {
+                $paths += Get-PatchRelativePath $PatchFile ([string]$relative)
+            }
+        }
+    }
+    return @($paths)
+}
+
+function Copy-PatchDirectory($Patch, [string]$PatchFile, [string]$Relative, [string]$SandboxRoot) {
+    $source = Get-PatchRelativePath $PatchFile $Relative
+    if (-not $source -or -not (Test-Path $source)) { return }
+    $target = Join-Path $SandboxRoot $Relative
+    $targetParent = Split-Path -Parent $target
+    New-Item -ItemType Directory -Force -Path $targetParent | Out-Null
+    if (Test-Path $source -PathType Container) {
+        Copy-Item -LiteralPath $source -Destination $targetParent -Recurse -Force
+    } else {
+        Copy-Item -LiteralPath $source -Destination $target -Force
+    }
+}
+
 function Test-Patch($Patch, [string]$PatchFile) {
     $paths = Get-WorldPaths
     $issues = @()
+    $monsterScriptPaths = Get-PatchScriptPaths $Patch $PatchFile 'monsters'
+    $npcScriptPaths = Get-PatchScriptPaths $Patch $PatchFile 'npcs'
 
     foreach ($path in @($paths.Map, $paths.Monsters, $paths.Npcs, $paths.Houses)) {
         if (-not (Test-Path $path)) {
@@ -164,7 +232,7 @@ function Test-Patch($Patch, [string]$PatchFile) {
     }
 
     foreach ($spawn in @($Patch.spawns)) {
-        if (-not (Test-MonsterExists ([string]$spawn.name))) {
+        if (-not (Test-MonsterExists ([string]$spawn.name) $monsterScriptPaths)) {
             $issues += New-Issue 'error' 'monster.missing' "Monster does not exist: $($spawn.name)" $PatchFile
         }
         if ([int]$spawn.radius -lt 0) {
@@ -183,7 +251,7 @@ function Test-Patch($Patch, [string]$PatchFile) {
     }
 
     foreach ($npc in @($Patch.npcs)) {
-        if (-not (Test-NpcExists ([string]$npc.name))) {
+        if (-not (Test-NpcExists ([string]$npc.name) $npcScriptPaths)) {
             $issues += New-Issue 'error' 'npc.missing' "NPC does not exist: $($npc.name)" $PatchFile
         }
         if (-not (Test-InArea $area ([int]$npc.x) ([int]$npc.y) ([int]$npc.z))) {
@@ -297,6 +365,16 @@ function Invoke-ApplySandbox($Patch, [string]$PatchFile) {
         backups = $backupManifest
     }
     $state | ConvertTo-Json -Depth 8 | Set-Content -Path (Join-Path $sandboxRoot 'state.json') -Encoding UTF8
+
+    if ($Patch.PSObject.Properties.Name -contains 'scriptPaths') {
+        foreach ($kind in @('monsters','npcs','quests','scripts')) {
+            if ($Patch.scriptPaths.PSObject.Properties.Name -contains $kind) {
+                foreach ($relative in @($Patch.scriptPaths.$kind)) {
+                    Copy-PatchDirectory $Patch $PatchFile ([string]$relative) $sandboxRoot
+                }
+            }
+        }
+    }
 
     [pscustomobject]@{
         patchId = $Patch.id

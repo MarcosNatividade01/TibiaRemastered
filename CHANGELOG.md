@@ -2,6 +2,14 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.28-test] - Consolidacao Targuna 15.24
+
+- Consolidados os 18 item definitions exigidos por Targuna/Aragonia Pirates na base 15.24, sem trocar client, protocolo, banco ou core C++.
+- Adicionadas feature flags de Targuna, todas desligadas por padrao.
+- Mantido Targuna como patch sandbox `PARTIALLY_READY`, sem `map-fragment.otbm` real e sem promocao ao `world.otbm` oficial.
+- Atualizada a documentacao de compatibilidade, validacao de assets, status do patch e pesquisa de ferramenta OTBM.
+- Preservados Launcher, Offline, Multiplayer, Auto Update, UserData, saves, banco real e balanceamento Remastered.
+
 ## [0.1.27-test] - Pipeline seguro de patch de mapa
 
 - Criado o Remastered Map Patch Pipeline para validar patches de mapa/spawns/NPCs/teleports em sandbox antes de qualquer promocao ao runtime.

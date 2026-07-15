@@ -1,0 +1,182 @@
+[
+  {
+    "id": 53074,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "adventurer backpack",
+    "localName": "adventurer backpack",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53078,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "dead lizard henchman",
+    "localName": "dead lizard henchman",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53082,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "dead lizard magician",
+    "localName": "dead lizard magician",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53086,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "dead lizard swordmaster",
+    "localName": "dead lizard swordmaster",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53090,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "dead lizard commander",
+    "localName": "dead lizard commander",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53094,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "dead lizard executioner",
+    "localName": "dead lizard executioner",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53098,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "dead pirate navigator",
+    "localName": "dead pirate navigator",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53103,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "dead pirate quartermaster",
+    "localName": "dead pirate quartermaster",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53108,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "dead herald of fire",
+    "localName": "dead herald of fire",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53110,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "dead pirate gunner",
+    "localName": "dead pirate gunner",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53113,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "dead pirate cook",
+    "localName": "dead pirate cook",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53119,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "dead sea captain",
+    "localName": "dead sea captain",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53122,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "dead infernoid hound",
+    "localName": "dead infernoid hound",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53125,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "dead infernoid soul",
+    "localName": "dead infernoid soul",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53128,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "dead infernoid spiritual",
+    "localName": "dead infernoid spiritual",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53132,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "dead infernoid blob",
+    "localName": "dead infernoid blob",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53158,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "old treasure map",
+    "localName": "old treasure map",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  },
+  {
+    "id": 53167,
+    "currentPresent": true,
+    "upstreamPresent": true,
+    "upstreamName": "sail pass",
+    "localName": "sail pass",
+    "appearance15_24": true,
+    "ported": true,
+    "compatibility": "ported-server-definition-client-appearance-present"
+  }
+]
