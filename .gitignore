@@ -64,6 +64,8 @@ Temp/
 *.temp
 *.log
 Reports/
+/Upstream/
+/UpstreamTesting/
 
 # Build e pacotes gerados
 build/

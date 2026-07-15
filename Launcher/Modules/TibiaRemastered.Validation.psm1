@@ -56,7 +56,7 @@ function Test-TrmValidationIgnoredPath {
     param([string]$Path)
     $normalized = ($Path -replace '\\','/')
     return (
-        $normalized -match '/(\.git|tmp|Release|Reports|Backup|Backups|Logs|UserData)/' -or
+        $normalized -match '/(\.git|tmp|Release|Reports|Backup|Backups|Logs|UserData|Upstream|UpstreamTesting)/' -or
         $normalized -match '/Database_Template/mysql/'
     )
 }

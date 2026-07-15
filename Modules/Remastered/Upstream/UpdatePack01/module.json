@@ -1,0 +1,11 @@
+{
+  "id": "upstream_update_pack_01",
+  "name": "Upstream Update Pack 01",
+  "version": "0.1.25-test-pack01",
+  "description": "Low-risk upstream content prepared for Tibia Remastered. Disabled by default.",
+  "main": "main.lua",
+  "enabled": true,
+  "featureFlag": "enable_upstream_pack_01",
+  "loadOrder": 80,
+  "dependencies": []
+}

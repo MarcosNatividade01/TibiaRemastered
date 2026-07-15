@@ -2,6 +2,15 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.26-test] - Update Pack 01 upstream seguro
+
+- Adicionado `Modules/Remastered/Upstream/UpdatePack01` com conteudo upstream de baixo risco, modular e desligado por padrao.
+- Criadas feature flags `enable_upstream_pack_01` e subflags de itens, monstros, NPCs, quests e mapas, todas inicialmente `false`.
+- Importada apenas a acao compatível do item `36938` para Singeing Steed, sem alterar `Server/data`, banco, mapa, protocolo, client ou core C++.
+- Rejeitados/adicionados ao backlog conteudos dependentes de 15.25, como storm arrows, Rotten Blood, Targuna, Newhaven, Cursor Aim, Monster AI e Weapon Proficiency.
+- Corrigido o fluxo de release para ignorar `/Upstream/` e `/UpstreamTesting/` na validacao/manifest e registrar aprovacao formal por versao de teste.
+- Auditados e restaurados caches locais corrompidos em `Client/storeimages` antes de regenerar o manifest.
+
 ## [0.1.25-test] - Publicacao GitHub
 
 - Publicada versao 0.1.25-test para testes online/LAN.

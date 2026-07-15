@@ -27,6 +27,7 @@ return {
 			"Features/MissingDependencyExampleModule",
 			"Balance/BalanceModule",
 			"Utilities/AdminBalanceTests",
+			"Upstream/UpdatePack01",
 		},
 	},
 
