@@ -15,6 +15,7 @@ return {
 	enable_upstream_pack_01_npcs = false,
 	enable_upstream_pack_01_quests = false,
 	enable_upstream_pack_01_maps = false,
+	enable_map_patch_test_room = false,
 	exampleModule = true,
 	disabledExampleModule = false,
 	invalidExampleModule = false,

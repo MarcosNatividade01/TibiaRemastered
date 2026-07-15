@@ -2,6 +2,15 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.27-test] - Pipeline seguro de patch de mapa
+
+- Criado o Remastered Map Patch Pipeline para validar patches de mapa/spawns/NPCs/teleports em sandbox antes de qualquer promocao ao runtime.
+- Adicionados `Tools/MapPatch/Invoke-MapPatch.ps1` e `Tools/MapPatch/Test-MapPatchPipeline.ps1`.
+- Adicionado patch artificial `MapPatches/TestRoom`, desligado por `enable_map_patch_test_room = false`, para validar o fluxo sem importar Targuna.
+- Criada documentacao em `Docs/MAP_PATCH_PIPELINE.md`, `Docs/MAP_PATCH_FORMAT.md`, `Docs/MAP_PATCH_ROLLBACK.md` e `Docs/MAP_PATCH_TESTING.md`.
+- Validado backup, rollback, reaplicacao e falhas controladas para conflito de coordenadas, monstro inexistente, NPC inexistente e teleport invalido.
+- Preservados `world.otbm`, arquivos de mundo de producao, protocolo, client, banco, core C++, Launcher, Offline, Multiplayer, UserData e saves.
+
 ## [0.1.26-test] - Update Pack 01 upstream seguro
 
 - Adicionado `Modules/Remastered/Upstream/UpdatePack01` com conteudo upstream de baixo risco, modular e desligado por padrao.
