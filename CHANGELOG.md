@@ -2,6 +2,15 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.29-test] - Promocao controlada de Targuna
+
+- Promovido Targuna/Aragonia para o runtime principal local apos validacao GUI real: login, entrada, navegacao, floors, barco/rotas, NPC essencial, spawns de piratas, combate, morte de monstros, corpos, loot/coleta e morte do personagem.
+- Expandido e validado o mapa de Targuna para remover areas pretas/intransponiveis observadas no teste manual.
+- Alinhados NPCs, spawns, Herald, floors e scripts de Targuna as coordenadas originais efetivas do runtime principal.
+- Corrigido `Unknown house id 3701` no sandbox antes da promocao e confirmado boot de producao sem esse erro.
+- Adicionado suporte de update para montar arquivos grandes por partes, publicando o mapa como partes verificadas por SHA256 e mantendo `world.otbm` direto fora do Git Raw.
+- Preservados UserData, saves, banco real, Launcher, Offline, Multiplayer, Auto Update, Remastered Core, Module Loader, Feature Flags e customizacoes de balanceamento existentes.
+
 ## [0.1.28-test] - Consolidacao Targuna 15.24
 
 - Consolidados os 18 item definitions exigidos por Targuna/Aragonia Pirates na base 15.24, sem trocar client, protocolo, banco ou core C++.

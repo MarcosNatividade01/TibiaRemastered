@@ -3,7 +3,7 @@
   "name": "Targuna / Aragonia Pirates Candidate",
   "version": "0.1.0-candidate",
   "featureFlag": "enable_map_patch_targuna",
-  "status": "blocked-map-fragment",
+  "status": "fragment-created-unmerged",
   "area": {
     "from": {
       "x": 50000,
@@ -34,7 +34,7 @@
     "protocol": "current",
     "databaseMigration": false,
     "coreChange": false,
-    "mapFragment": "blocked-no-safe-otbm-extractor",
+    "mapFragment": "map-fragment.otbm",
     "clientAppearancesValidated": true,
     "clientAppearanceFile": "Client/assets/appearances-ee339aff5b3cb38289287ff25cec261d8d2790e6e146938d4dfd9f138b065980.dat",
     "requiredItemDefinitionsPorted": [
@@ -87,6 +87,8 @@
     "spawns": "monsters.xml",
     "npcs": "npcs.xml",
     "teleports": "teleports.xml",
+    "mapFragment": "map-fragment.otbm",
+    "bounds": "targuna-fragment.bounds.csv",
     "inventory": "inventory.json",
     "assets": "asset-validation.json"
   }

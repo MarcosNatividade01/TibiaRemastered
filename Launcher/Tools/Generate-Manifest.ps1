@@ -27,8 +27,8 @@ $excludePatterns = @(
 )
 
 function Convert-ToRelativePath([string]$Base, [string]$Path) {
-    $basePath = (Resolve-Path $Base).Path.TrimEnd('\','/')
-    $fullPath = (Resolve-Path $Path).Path
+    $basePath = [System.IO.Path]::GetFullPath($Base).TrimEnd('\','/')
+    $fullPath = [System.IO.Path]::GetFullPath($Path)
     $rel = $fullPath.Substring($basePath.Length).TrimStart('\','/')
     return ($rel -replace '\\','/')
 }
@@ -167,11 +167,37 @@ Get-ChildItem -Path $Root -File -Recurse | ForEach-Object {
     }
 }
 
+$largeFiles = @()
+$worldMap = Join-Path $Root 'Server\data-global\world\world.otbm'
+$worldPartsRoot = Join-Path $Root 'Server\data-global\world\map-parts'
+if ((Test-Path $worldMap) -and (Test-Path $worldPartsRoot)) {
+    $partEntries = @(
+        Get-ChildItem -Path $worldPartsRoot -File -Filter 'world.otbm.part*' |
+            Sort-Object Name |
+            ForEach-Object {
+                $rel = Convert-ToRelativePath -Base $Root -Path $_.FullName
+                if (-not (Test-Ignored $rel) -and (-not $filterByGit -or $publishablePaths.Contains($rel))) {
+                    $rel
+                }
+            }
+    )
+    if ($partEntries.Count -gt 0) {
+        $worldInfo = Get-GitPublishedFileInfo $worldMap
+        $largeFiles += [pscustomobject]@{
+            path = 'Server/data-global/world/world.otbm'
+            sha256 = $worldInfo.Sha256
+            size = $worldInfo.Size
+            parts = $partEntries
+        }
+    }
+}
+
 $manifest = [pscustomobject]@{
     version = $Version
     generatedAt = (Get-Date).ToString('s')
     hashAlgorithm = 'SHA256'
     files = @($files | Sort-Object path)
+    largeFiles = @($largeFiles | Sort-Object path)
 }
 Write-Utf8NoBomFile -Path $Output -Content ($manifest | ConvertTo-Json -Depth 8)
-[pscustomobject]@{Output=$Output; VersionOutput=$VersionOutput; Version=$Version; Files=$files.Count}
+[pscustomobject]@{Output=$Output; VersionOutput=$VersionOutput; Version=$Version; Files=$files.Count; LargeFiles=$largeFiles.Count}

@@ -66,6 +66,13 @@ Temp/
 Reports/
 /Upstream/
 /UpstreamTesting/
+Run-Targuna-Full-Test.bat
+Start-Targuna-Client.bat
+Start-Targuna-Test.bat
+Stop-Targuna-Test.bat
+Tools/TargunaSandbox/
+Tools/OTBMFragmentExtractor/
+Tools/OTBMMerger/
 
 # Build e pacotes gerados
 build/
@@ -80,6 +87,15 @@ Release/
 Client/bin/Qt6WebEngineCore.dll
 Client/bin/Qt6WebEngineCore.dll.part*
 Server/data-global/world/world.otbm
+!Server/data-global/world/
+Server/data-global/world/*
+!Server/data-global/world/world-house.xml
+!Server/data-global/world/world-monster.xml
+!Server/data-global/world/world-npc.xml
+!Server/data-global/world/world-zones.xml
+!Server/data-global/world/map-parts/
+Server/data-global/world/map-parts/*
+!Server/data-global/world/map-parts/world.otbm.part*
 
 # Sistema operacional e editores
 .DS_Store

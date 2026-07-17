@@ -8,6 +8,7 @@ $install = Join-Path $sandbox 'install'
 if (Test-Path $sandbox) { Remove-Item -Path $sandbox -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $remote,$install | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $remote 'Client'),(Join-Path $remote 'Server'),(Join-Path $remote 'Config') | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $remote 'Server\data-global\world\map-parts') | Out-Null
 
 $env:TRM_ROOT = $install
 $moduleRoot = Join-Path $root 'Launcher\Modules'
@@ -17,6 +18,8 @@ Import-Module (Join-Path $moduleRoot 'TibiaRemastered.Update.psm1') -Force -Disa
 Set-Content -Path (Join-Path $remote 'Client\client.txt') -Value 'client-v1' -Encoding UTF8
 Set-Content -Path (Join-Path $remote 'Server\server.txt') -Value 'server-v1' -Encoding UTF8
 Set-Content -Path (Join-Path $remote 'Config\default.json') -Value '{"ok":true}' -Encoding UTF8
+Set-Content -Path (Join-Path $remote 'Server\data-global\world\map-parts\world.otbm.part001') -Value 'world-' -NoNewline -Encoding ASCII
+Set-Content -Path (Join-Path $remote 'Server\data-global\world\map-parts\world.otbm.part002') -Value 'v1' -NoNewline -Encoding ASCII
 
 function New-SimManifest([string]$RemoteRoot, [string]$Version) {
     $files = @()
@@ -31,7 +34,25 @@ function New-SimManifest([string]$RemoteRoot, [string]$Version) {
             category = $rel.Split('/')[0]
         }
     }
-    return [pscustomobject]@{version=$Version; generatedAt=(Get-Date).ToString('s'); hashAlgorithm='SHA256'; files=$files}
+    $worldBytes = [System.Text.Encoding]::ASCII.GetBytes('world-v1')
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $worldHash = ([BitConverter]::ToString($sha.ComputeHash($worldBytes))).Replace('-','').ToLowerInvariant()
+    } finally {
+        $sha.Dispose()
+    }
+    $largeFiles = @(
+        [pscustomobject]@{
+            path = 'Server/data-global/world/world.otbm'
+            sha256 = $worldHash
+            size = $worldBytes.Length
+            parts = @(
+                'Server/data-global/world/map-parts/world.otbm.part001',
+                'Server/data-global/world/map-parts/world.otbm.part002'
+            )
+        }
+    )
+    return [pscustomobject]@{version=$Version; generatedAt=(Get-Date).ToString('s'); hashAlgorithm='SHA256'; files=$files; largeFiles=$largeFiles}
 }
 
 $manifest = New-SimManifest $remote '9.9.9'
@@ -48,5 +69,6 @@ $protected = Test-TrmProtectedPath 'UserData/Database/player.db'
     cleanInstallDownloaded = $result1.downloaded
     repairDownloaded = $result2.downloaded
     protectedPathProtected = $protected
-    status = if ($result1.downloaded -gt 0 -and $result2.downloaded -gt 0 -and $protected) { 'passed' } else { 'failed' }
+    largeFileAssembled = (Test-Path (Join-Path $install 'Server\data-global\world\world.otbm'))
+    status = if ($result1.downloaded -gt 0 -and $result2.downloaded -gt 0 -and $protected -and (Test-Path (Join-Path $install 'Server\data-global\world\world.otbm'))) { 'passed' } else { 'failed' }
 } | ConvertTo-Json -Depth 8

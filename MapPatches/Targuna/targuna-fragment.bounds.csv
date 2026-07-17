@@ -1,0 +1,7 @@
+# xMin,xMax,yMin,yMax,zMin,zMax
+# Targuna hub and NPC island, confirmed visually around the NPC cluster.
+31915,31985,31875,31935,6,8
+# Aragonia pirates hunt, derived from the candidate pirate/turtle spawns and Morla position.
+33475,33560,32680,32760,7,8
+# Crimson Court recruiter/boss staging area around Emiliana z=12.
+32390,32430,32670,32700,12,12
