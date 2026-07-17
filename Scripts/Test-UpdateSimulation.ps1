@@ -64,11 +64,19 @@ $result2 = Sync-TrmFromManifest -Manifest $manifest -ForceRepair
 New-Item -ItemType Directory -Force -Path (Join-Path $install 'UserData\Database') | Out-Null
 Set-Content -Path (Join-Path $install 'UserData\Database\player.db') -Value 'private' -Encoding UTF8
 $protected = Test-TrmProtectedPath 'UserData/Database/player.db'
+$worldPath = Join-Path $install 'Server\data-global\world\world.otbm'
+$pendingData = [pscustomobject]@{version='9.9.9'; files=$manifest.largeFiles}
+New-Item -ItemType Directory -Force -Path (Join-Path $install 'Data') | Out-Null
+$pendingData | ConvertTo-Json -Depth 8 | Set-Content -Path (Join-Path $install 'Data\large-files.json') -Encoding UTF8
+if (Test-Path $worldPath) { Remove-Item -Path $worldPath -Force }
+$pendingActions = Complete-TrmPendingLargeFiles
+$pendingLargeFileAssembled = (Test-Path $worldPath)
 
 [pscustomobject]@{
     cleanInstallDownloaded = $result1.downloaded
     repairDownloaded = $result2.downloaded
     protectedPathProtected = $protected
-    largeFileAssembled = (Test-Path (Join-Path $install 'Server\data-global\world\world.otbm'))
-    status = if ($result1.downloaded -gt 0 -and $result2.downloaded -gt 0 -and $protected -and (Test-Path (Join-Path $install 'Server\data-global\world\world.otbm'))) { 'passed' } else { 'failed' }
+    largeFileAssembled = $pendingLargeFileAssembled
+    pendingActions = @($pendingActions).Count
+    status = if ($result1.downloaded -gt 0 -and $result2.downloaded -gt 0 -and $protected -and $pendingLargeFileAssembled) { 'passed' } else { 'failed' }
 } | ConvertTo-Json -Depth 8

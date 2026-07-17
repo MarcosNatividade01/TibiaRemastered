@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.30-test - Robustez do updater para mapa Targuna
+
+- Adicionado controle local de arquivos grandes em `Data/large-files.json`.
+- O Launcher monta partes de mapa pendentes na proxima checagem de versao.
+- `0.1.30-test` substitui `0.1.29-test` como versao recomendada de promocao.
+
 ## 0.1.29-test - Promocao controlada de Targuna
 
 - Promovido Targuna/Aragonia para o runtime principal local apos validacao GUI real.

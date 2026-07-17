@@ -2,6 +2,12 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.30-test] - Robustez do updater para mapa Targuna
+
+- Adicionado `Data/large-files.json` para registrar arquivos grandes montados localmente a partir de partes publicadas.
+- O Launcher agora monta arquivos grandes pendentes na checagem de versao, cobrindo instalacoes que baixaram as partes com um updater anterior.
+- Mantida a promocao de Targuna publicada em `0.1.29-test`, com `0.1.30-test` como versao recomendada para garantir que o mapa chegue pela atualizacao automatica.
+
 ## [0.1.29-test] - Promocao controlada de Targuna
 
 - Promovido Targuna/Aragonia para o runtime principal local apos validacao GUI real: login, entrada, navegacao, floors, barco/rotas, NPC essencial, spawns de piratas, combate, morte de monstros, corpos, loot/coleta e morte do personagem.

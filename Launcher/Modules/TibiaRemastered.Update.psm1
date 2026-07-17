@@ -259,6 +259,7 @@ function Resolve-TrmLauncherUpdateState {
 function Get-TrmLauncherVersionCheckState {
     param([string]$RemoteVersionUrl = '')
     $root = Get-TrmRoot
+    [void](Complete-TrmPendingLargeFiles)
     $localJson = Read-TrmJsonFile -Path (Join-Path $root 'version.json') -Default $null
     $localVersion = 'unknown'
     $localChannel = ''
@@ -397,6 +398,83 @@ function Get-TrmLastUpdateReport {
     return Read-TrmJsonFile -Path (Join-Path $root $relative) -Default $null
 }
 
+function Complete-TrmLargeFileSet {
+    param(
+        [object[]]$LargeFiles,
+        [string]$BackupRoot = '',
+        [switch]$Force,
+        [scriptblock]$ProgressCallback
+    )
+    if ($LargeFiles.Count -eq 0) { return @() }
+    $root = Get-TrmRoot
+    $actions = @()
+    foreach ($largeFile in @($LargeFiles)) {
+        $relative = ([string]$largeFile.path -replace '\\','/').TrimStart('/')
+        if ([string]::IsNullOrWhiteSpace($relative)) { throw 'Large file entry without path.' }
+        $expectedHash = ([string]$largeFile.sha256).ToLowerInvariant()
+        if ($expectedHash -notmatch '^[a-fA-F0-9]{64}$') { throw "Large file has invalid sha256: $relative" }
+        $target = Join-Path $root $relative
+        $currentHash = Get-TrmSha256 $target
+        if ($currentHash -eq $expectedHash -and -not $Force) {
+            $actions += [pscustomobject]@{path=$relative; action='current'; reason='large file hash match'}
+            Write-TrmLog "Skipped current large file: $relative"
+            continue
+        }
+
+        $parts = @()
+        if ($largeFile.PSObject.Properties.Name -contains 'parts') { $parts = @($largeFile.parts) }
+        if ($parts.Count -eq 0) { throw "Large file has no parts: $relative" }
+        foreach ($partRelativeRaw in $parts) {
+            $partRelative = ([string]$partRelativeRaw -replace '\\','/').TrimStart('/')
+            $partPath = Join-Path $root $partRelative
+            if (-not (Test-Path $partPath)) { throw "Missing large file part $partRelative for $relative" }
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($BackupRoot) -and (Test-Path $target)) {
+            Backup-TrmFileForUpdate -RelativePath $relative -BackupRoot $BackupRoot
+        }
+        $targetDir = Split-Path -Parent $target
+        if (-not (Test-Path $targetDir)) { New-Item -ItemType Directory -Force -Path $targetDir | Out-Null }
+        $tmp = $target + '.download'
+        if (Test-Path $tmp) { Remove-Item -Path $tmp -Force }
+
+        if ($ProgressCallback) { & $ProgressCallback "Montando $relative" 98 0 0 }
+        Write-TrmLog "Assembling large file: $relative parts=$($parts.Count)"
+        $output = [System.IO.File]::Create($tmp)
+        try {
+            foreach ($partRelativeRaw in $parts) {
+                $partRelative = ([string]$partRelativeRaw -replace '\\','/').TrimStart('/')
+                $partPath = Join-Path $root $partRelative
+                $input = [System.IO.File]::OpenRead($partPath)
+                try { $input.CopyTo($output) }
+                finally { $input.Dispose() }
+            }
+        } finally {
+            $output.Dispose()
+        }
+
+        $actualHash = Get-TrmSha256 $tmp
+        if ($actualHash -ne $expectedHash) {
+            Remove-Item -Path $tmp -Force -ErrorAction SilentlyContinue
+            throw "Large file hash mismatch for $relative. expected=$expectedHash actual=$actualHash"
+        }
+        Move-Item -Path $tmp -Destination $target -Force
+        $actions += [pscustomobject]@{path=$relative; action='assembled'; reason='large file parts'}
+        Write-TrmLog "Assembled large file: $relative"
+    }
+    return @($actions)
+}
+
+function Complete-TrmPendingLargeFiles {
+    param([scriptblock]$ProgressCallback)
+    $root = Get-TrmRoot
+    $path = Join-Path $root 'Data\large-files.json'
+    if (-not (Test-Path $path)) { return @() }
+    $data = Read-TrmJsonFile -Path $path -Default $null
+    if ($null -eq $data -or -not ($data.PSObject.Properties.Name -contains 'files')) { return @() }
+    return @(Complete-TrmLargeFileSet -LargeFiles @($data.files) -ProgressCallback $ProgressCallback)
+}
+
 function Get-TrmUpdateTestDirectory {
     $path = Join-Path (Get-TrmRoot) 'Logs\UpdateTests'
     if (-not (Test-Path $path)) { New-Item -ItemType Directory -Force -Path $path | Out-Null }
@@ -530,53 +608,7 @@ function Sync-TrmFromManifest {
         }
 
         if ($Manifest.PSObject.Properties.Name -contains 'largeFiles') {
-            foreach ($largeFile in @($Manifest.largeFiles)) {
-                $relative = ([string]$largeFile.path -replace '\\','/').TrimStart('/')
-                if ([string]::IsNullOrWhiteSpace($relative)) { throw 'Manifest contains large file without path.' }
-                $expectedHash = ([string]$largeFile.sha256).ToLowerInvariant()
-                if ($expectedHash -notmatch '^[a-fA-F0-9]{64}$') { throw "Manifest large file has invalid sha256: $relative" }
-                $currentHash = Get-TrmSha256 (Join-Path $root $relative)
-                if ($currentHash -eq $expectedHash -and -not $ForceRepair) {
-                    $actions += [pscustomobject]@{path=$relative; action='current'; reason='large file hash match'}
-                    Write-TrmLog "Update skipped current large file: $relative"
-                    continue
-                }
-
-                $parts = @()
-                if ($largeFile.PSObject.Properties.Name -contains 'parts') { $parts = @($largeFile.parts) }
-                if ($parts.Count -eq 0) { throw "Manifest large file has no parts: $relative" }
-                $target = Join-Path $root $relative
-                if (Test-Path $target) { Backup-TrmFileForUpdate -RelativePath $relative -BackupRoot $backup }
-                $targetDir = Split-Path -Parent $target
-                if (-not (Test-Path $targetDir)) { New-Item -ItemType Directory -Force -Path $targetDir | Out-Null }
-                $tmp = $target + '.download'
-                if (Test-Path $tmp) { Remove-Item -Path $tmp -Force }
-
-                if ($ProgressCallback) { & $ProgressCallback "Montando $relative" 98 0 0 }
-                Write-TrmLog "Update assembling large file: $relative parts=$($parts.Count)"
-                $output = [System.IO.File]::Create($tmp)
-                try {
-                    foreach ($partRelativeRaw in $parts) {
-                        $partRelative = ([string]$partRelativeRaw -replace '\\','/').TrimStart('/')
-                        $partPath = Join-Path $root $partRelative
-                        if (-not (Test-Path $partPath)) { throw "Missing large file part $partRelative for $relative" }
-                        $input = [System.IO.File]::OpenRead($partPath)
-                        try { $input.CopyTo($output) }
-                        finally { $input.Dispose() }
-                    }
-                } finally {
-                    $output.Dispose()
-                }
-
-                $actualHash = Get-TrmSha256 $tmp
-                if ($actualHash -ne $expectedHash) {
-                    Remove-Item -Path $tmp -Force -ErrorAction SilentlyContinue
-                    throw "Large file hash mismatch for $relative. expected=$expectedHash actual=$actualHash"
-                }
-                Move-Item -Path $tmp -Destination $target -Force
-                $actions += [pscustomobject]@{path=$relative; action='assembled'; reason='large file parts'}
-                Write-TrmLog "Update assembled large file: $relative"
-            }
+            $actions += Complete-TrmLargeFileSet -LargeFiles @($Manifest.largeFiles) -BackupRoot $backup -Force:$ForceRepair -ProgressCallback $ProgressCallback
         }
 
         $manifestVersion = '0.0.0'

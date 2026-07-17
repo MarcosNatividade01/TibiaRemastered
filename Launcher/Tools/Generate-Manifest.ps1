@@ -136,6 +136,29 @@ function Write-Utf8NoBomFile {
     [System.IO.File]::WriteAllText($Path, $Content, $encoding)
 }
 
+function Get-ReleaseLargeFiles {
+    $items = @()
+    $worldMap = Join-Path $Root 'Server\data-global\world\world.otbm'
+    $worldPartsRoot = Join-Path $Root 'Server\data-global\world\map-parts'
+    if ((Test-Path $worldMap) -and (Test-Path $worldPartsRoot)) {
+        $partEntries = @(
+            Get-ChildItem -Path $worldPartsRoot -File -Filter 'world.otbm.part*' |
+                Sort-Object Name |
+                ForEach-Object { Convert-ToRelativePath -Base $Root -Path $_.FullName }
+        )
+        if ($partEntries.Count -gt 0) {
+            $worldInfo = Get-GitPublishedFileInfo $worldMap
+            $items += [pscustomobject]@{
+                path = 'Server/data-global/world/world.otbm'
+                sha256 = $worldInfo.Sha256
+                size = $worldInfo.Size
+                parts = $partEntries
+            }
+        }
+    }
+    return @($items)
+}
+
 $versionJson = [pscustomobject]@{
     name = 'TibiaRemastered'
     version = $Version
@@ -144,6 +167,19 @@ $versionJson = [pscustomobject]@{
     minimumLauncherVersion = '0.1.0'
 }
 Write-Utf8NoBomFile -Path $VersionOutput -Content ($versionJson | ConvertTo-Json -Depth 8)
+
+$largeFiles = @(Get-ReleaseLargeFiles)
+$largeFilesDataPath = Join-Path $Root 'Data\large-files.json'
+if ($largeFiles.Count -gt 0) {
+    $largeFilesData = [pscustomobject]@{
+        version = $Version
+        generatedAt = (Get-Date).ToString('s')
+        files = @($largeFiles)
+    }
+    Write-Utf8NoBomFile -Path $largeFilesDataPath -Content ($largeFilesData | ConvertTo-Json -Depth 8)
+} elseif (Test-Path $largeFilesDataPath) {
+    Remove-Item -Path $largeFilesDataPath -Force
+}
 
 $publishablePaths = Get-GitPublishablePathSet $Root
 $filterByGit = ($publishablePaths.Count -gt 0)
@@ -164,31 +200,6 @@ Get-ChildItem -Path $Root -File -Recurse | ForEach-Object {
         url = Get-FileUrl -Relative $rel -Hash $fileInfo.Sha256
         overwrite = $overwrite
         category = $category
-    }
-}
-
-$largeFiles = @()
-$worldMap = Join-Path $Root 'Server\data-global\world\world.otbm'
-$worldPartsRoot = Join-Path $Root 'Server\data-global\world\map-parts'
-if ((Test-Path $worldMap) -and (Test-Path $worldPartsRoot)) {
-    $partEntries = @(
-        Get-ChildItem -Path $worldPartsRoot -File -Filter 'world.otbm.part*' |
-            Sort-Object Name |
-            ForEach-Object {
-                $rel = Convert-ToRelativePath -Base $Root -Path $_.FullName
-                if (-not (Test-Ignored $rel) -and (-not $filterByGit -or $publishablePaths.Contains($rel))) {
-                    $rel
-                }
-            }
-    )
-    if ($partEntries.Count -gt 0) {
-        $worldInfo = Get-GitPublishedFileInfo $worldMap
-        $largeFiles += [pscustomobject]@{
-            path = 'Server/data-global/world/world.otbm'
-            sha256 = $worldInfo.Sha256
-            size = $worldInfo.Size
-            parts = $partEntries
-        }
     }
 }
 
