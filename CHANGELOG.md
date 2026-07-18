@@ -2,6 +2,15 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.34-test] - Posturas e spells por vocacao 15.24
+
+- Auditadas todas as spells e posturas por vocacao contra `Upstream/CrystalLatest` 15.24, com relatorio em `Docs/TIBIA_15_24_VOCATION_SPELLS_AND_STANCES_AUDIT.md`.
+- Corrigidas 9 posturas oficiais para operar como stance: Sorcerer, Druid, Knight e Paladin; Monk permanece sem stance oficial no upstream local e com `Mentor Other` custom preservada.
+- Integradas 19 variantes ofensivas de Sorcerer sensiveis a postura elemental, cobrindo strikes, waves, beams, UE e dano por condicao.
+- Adaptado o grupo secundario de stance para o ID numerico `11`, compatibilizando com o binario atual sem recompilacao e sem warning `Unknown secondaryGroup: stance`.
+- Removido multiplicador local duplicado de spells ofensivas; o +15% de spells e +30% de runas permanecem centralizados no balanceamento Remastered.
+- Adicionada suíte `Scripts/Test-VocationSpellsAndStances.ps1` para validar cobertura por vocacao, posturas, variantes de Sorcerer e ausencia de duplicidade de multiplicador.
+
 ## [0.1.33-test] - Baseline operacional maxima 15.24
 
 - Criada baseline `Docs/TIBIA_15_24_100_PERCENT_BASELINE.md` com criterio honesto para `FULL_OPERATIONAL`, `PARTIAL_OPERATIONAL` e bloqueios de engine/protocolo/client.

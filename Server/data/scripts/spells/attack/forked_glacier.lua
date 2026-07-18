@@ -1,5 +1,4 @@
 local combat = Combat()
-local OFFENSIVE_SPELL_DAMAGE_MULTIPLIER = 1.15
 local BASE_POWER = 97
 
 combat:setParameter(COMBAT_PARAM_TYPE, COMBAT_ICEDAMAGE)
@@ -10,8 +9,8 @@ combat:setParameter(COMBAT_PARAM_CHAIN_EFFECT, CONST_ME_ICEATTACK)
 
 -- Base damage 97 (ML-scaled). Modeled on strong_ice_strike's formula curve.
 function onGetFormulaValues(player, level, maglevel, basePower)
-	local min = ((calculateBaseDamageHealing(level)) + (maglevel * 2.4) + 14 + (BASE_POWER * 0.1)) * OFFENSIVE_SPELL_DAMAGE_MULTIPLIER
-	local max = ((calculateBaseDamageHealing(level)) + (maglevel * 3.8) + 24 + (BASE_POWER * 0.1)) * OFFENSIVE_SPELL_DAMAGE_MULTIPLIER
+	local min = ((calculateBaseDamageHealing(level)) + (maglevel * 2.4) + 14 + (BASE_POWER * 0.1))
+	local max = ((calculateBaseDamageHealing(level)) + (maglevel * 3.8) + 24 + (BASE_POWER * 0.1))
 	return -math.floor(min), -math.floor(max)
 end
 
@@ -52,3 +51,4 @@ spell:groupCooldown(2 * 1000, 2 * 1000)
 spell:needLearn(false)
 spell:vocation("druid;true", "elder druid;true")
 spell:register()
+

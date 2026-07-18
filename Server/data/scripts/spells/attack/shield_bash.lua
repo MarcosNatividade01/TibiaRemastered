@@ -9,7 +9,6 @@
 
 local DEBUFF_DURATION = 10000 -- 10s
 local DEBUFF_DAMAGEDEALT = 50 -- target deals 50% damage (= -50%) while debuffed
-local OFFENSIVE_SPELL_DAMAGE_MULTIPLIER = 1.15
 local BASE_POWER = 55
 
 -- Shield defense for the current cast is stashed here by onCastSpell so the
@@ -48,8 +47,8 @@ function onGetFormulaValues(player, skill, attack, factor, basePower)
 	local defense = castShieldDefense
 
 	-- Damage scales with shield defense + shielding skill, on top of the base power.
-	local min = (calculateBaseDamageHealing(level) + BASE_POWER + (defense * 1.5) + (shieldingSkill * 0.6)) * OFFENSIVE_SPELL_DAMAGE_MULTIPLIER
-	local max = (calculateBaseDamageHealing(level) + BASE_POWER + (defense * 2.5) + (shieldingSkill * 1.0)) * OFFENSIVE_SPELL_DAMAGE_MULTIPLIER
+	local min = (calculateBaseDamageHealing(level) + BASE_POWER + (defense * 1.5) + (shieldingSkill * 0.6))
+	local max = (calculateBaseDamageHealing(level) + BASE_POWER + (defense * 2.5) + (shieldingSkill * 1.0))
 	return -min, -max
 end
 
@@ -107,3 +106,4 @@ spell:groupCooldown(2 * 1000)
 spell:needLearn(false)
 spell:vocation("knight;true", "elite knight;true")
 spell:register()
+

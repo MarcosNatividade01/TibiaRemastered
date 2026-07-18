@@ -1,5 +1,4 @@
 local combat = Combat()
-local OFFENSIVE_SPELL_DAMAGE_MULTIPLIER = 1.15
 local BASE_POWER = 40
 
 combat:setParameter(COMBAT_PARAM_TYPE, COMBAT_PHYSICALDAMAGE)
@@ -9,7 +8,7 @@ combat:setParameter(COMBAT_PARAM_BLOCKARMOR, 1)
 combat:setArea(createCombatArea(AREA_CIRCLE2X2))
 
 function onGetFormulaValues(player, skill, attack, factor, basePower)
-	local avg = spellSkillDamage(BASE_POWER, player:getLevel(), skill, attack) * OFFENSIVE_SPELL_DAMAGE_MULTIPLIER
+	local avg = spellSkillDamage(BASE_POWER, player:getLevel(), skill, attack)
 	return -math.floor(avg * 0.9), -math.ceil(avg * 1.1)
 end
 
@@ -39,3 +38,4 @@ spell:cooldown(4 * 1000)
 spell:groupCooldown(2 * 1000)
 spell:vocation("paladin;true", "royal paladin;true")
 spell:register()
+

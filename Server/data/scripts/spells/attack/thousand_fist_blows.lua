@@ -8,7 +8,6 @@
 -- Builder: grants 1 harmony per cast (creature:addHarmony(1)).
 
 local AREA = AREA_CIRCLE3X3
-local OFFENSIVE_SPELL_DAMAGE_MULTIPLIER = 1.15
 local BASE_POWER = 62
 
 local combatPhysical = Combat()
@@ -29,7 +28,7 @@ combatEarth:setArea(createCombatArea(AREA))
 function onGetFormulaValues(player, skill, weaponDamage, attackFactor, basePower)
 	local attackValue = calculateAttackValue(player, skill, weaponDamage)
 	local spellFactor = 0.8
-	local total = calculateMonkSpellDamage(player, skill, weaponDamage, BASE_POWER, spellFactor) * OFFENSIVE_SPELL_DAMAGE_MULTIPLIER
+	local total = calculateMonkSpellDamage(player, skill, weaponDamage, BASE_POWER, spellFactor)
 	return -total * 0.9, -total * 1.1
 end
 
@@ -85,3 +84,4 @@ spell:cooldown(12 * 1000)
 spell:groupCooldown(2 * 1000)
 spell:vocation("monk;true", "exalted monk;true")
 spell:register()
+

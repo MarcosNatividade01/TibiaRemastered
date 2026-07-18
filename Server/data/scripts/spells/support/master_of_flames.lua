@@ -26,11 +26,11 @@ end
 
 spell:name("Master of Flames")
 spell:words("uteta flam")
-spell:group("support")
+spell:group("support", 11)
 spell:vocation("sorcerer;true", "master sorcerer;true")
 spell:id(304)
 spell:cooldown(30 * 1000)
-spell:groupCooldown(2 * 1000)
+spell:groupCooldown(2 * 1000, 30 * 1000)
 spell:level(20)
 spell:mana(400)
 spell:needLearn(false)
@@ -39,3 +39,4 @@ spell:isAggressive(false)
 spell:isPremium(true)
 
 spell:register()
+

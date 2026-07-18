@@ -1,5 +1,4 @@
 local combat = Combat()
-local OFFENSIVE_SPELL_DAMAGE_MULTIPLIER = 1.15
 local BASE_POWER = 130
 
 combat:setParameter(COMBAT_PARAM_TYPE, COMBAT_HOLYDAMAGE)
@@ -9,8 +8,8 @@ combat:setArea(createCombatArea(AREA_CIRCLE2X2))
 
 function onGetFormulaValues(player, level, maglevel, basePower)
 	local min, max = calculateMagicSpellDamage(level, maglevel, BASE_POWER)
-	min = min * OFFENSIVE_SPELL_DAMAGE_MULTIPLIER
-	max = max * OFFENSIVE_SPELL_DAMAGE_MULTIPLIER
+	min = min
+	max = max
 	return -min, -max
 end
 
@@ -39,3 +38,4 @@ spell:cooldown(4 * 1000)
 spell:groupCooldown(2 * 1000)
 spell:vocation("paladin;true", "royal paladin;true")
 spell:register()
+

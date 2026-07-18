@@ -26,11 +26,11 @@ end
 
 spell:name("Divine Defiance")
 spell:words("utori hur")
-spell:group("support")
+spell:group("support", 11)
 spell:vocation("paladin;true", "royal paladin;true")
 spell:id(314)
 spell:cooldown(2 * 1000)
-spell:groupCooldown(2 * 1000)
+spell:groupCooldown(2 * 1000, 2 * 1000)
 spell:level(100)
 spell:mana(200)
 spell:needLearn(false)
@@ -39,3 +39,4 @@ spell:isAggressive(false)
 spell:isPremium(true)
 
 spell:register()
+
