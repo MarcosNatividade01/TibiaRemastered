@@ -2,6 +2,13 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.33-test] - Baseline operacional maxima 15.24
+
+- Criada baseline `Docs/TIBIA_15_24_100_PERCENT_BASELINE.md` com criterio honesto para `FULL_OPERATIONAL`, `PARTIAL_OPERATIONAL` e bloqueios de engine/protocolo/client.
+- Adicionada suíte `Scripts/Test-15_24-FullOperational.ps1`, cobrindo boot real, validação pre-publish, QA mínimo, sistemas estruturais, login/lista de personagens, Offline, Multiplayer, proxy remoto, updater, balanceamento, multiplicadores e preservação de contas/personagens.
+- Confirmado carregamento de itens com Weapon Proficiency no boot, schema/persistência dos sistemas 15.24 e preservação de Targuna sem alterar mapa ou banco real.
+- Mantido resultado honesto como `MAXIMUM_SAFE_15_24_COMPLETENESS`: ainda falta prova automatizada de UI/packets client para declarar 100% operacional em Weapon Proficiency, Wheel of Destiny e Animus Mastery.
+
 ## [0.1.32-test] - Auditoria estrutural 15.24
 
 - Auditados Forge, Prey, Bestiary, Bosstiary, Charms, Imbuements, Weapon Proficiency, Reward, Wheel e Animus Mastery contra o runtime atual e o upstream local 15.24.
