@@ -2,6 +2,15 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.31-test] - Complementacao acelerada 15.24
+
+- Adicionados conteudos ausentes de baixo e medio risco da auditoria 15.24: 11 monsters, Adrian, 5 spells de monster/quest, 16 spells de jogador, 36 item definitions e 6 equipamentos/ammo.
+- Integrado spawn de Adrian no mundo principal e mantida Newhaven como implementacao custom existente, sem duplicar scripts de quest.
+- Adaptadas spells novas para a API runtime atual, preservando o bonus Remastered de +15% em spells ofensivas e sem alterar runas ofensivas +30%.
+- Corrigidos conflitos de item IDs `43786..43790` conforme base upstream 15.24.
+- Mantidos como adiados os sistemas complexos que exigem mudancas estruturais de engine/client: Forge, Prey, Bestiary, Bosstiary, Charms, Imbuements, Weapon Proficiency, Reward, Wheel e Animus Mastery.
+- Validado boot do servidor, QA minimo, preservacao de accounts/players e protecoes de update para UserData, saves, banco, logs e backups.
+
 ## [0.1.30-test] - Robustez do updater para mapa Targuna
 
 - Adicionado `Data/large-files.json` para registrar arquivos grandes montados localmente a partir de partes publicadas.

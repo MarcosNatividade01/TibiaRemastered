@@ -1,7 +1,7 @@
 {
     "name":  "TibiaRemastered",
-    "version":  "0.1.30-test",
+    "version":  "0.1.31-test",
     "channel":  "dev",
-    "releaseDate":  "2026-07-16",
+    "releaseDate":  "2026-07-18",
     "minimumLauncherVersion":  "0.1.0"
 }

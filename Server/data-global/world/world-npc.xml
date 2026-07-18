@@ -2243,6 +2243,9 @@
 	<npc centerx="31955" centery="31916" centerz="7" radius="1">
 		<npc name="Aurelia" x="0" y="0" z="7" spawntime="60" />
 	</npc>
+	<npc centerx="31934" centery="31913" centerz="7" radius="1">
+		<npc name="Adrian" x="0" y="0" z="7" spawntime="60" />
+	</npc>
 	<npc centerx="31941" centery="31920" centerz="7" radius="1">
 		<npc name="Lizzie" x="0" y="0" z="7" spawntime="60" />
 	</npc>

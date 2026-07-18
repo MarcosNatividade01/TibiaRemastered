@@ -75137,7 +75137,27 @@
 	<item id="43134" name="stairs">
 		<attribute key="floorchange" value="south" />
 	</item>
-	<item fromid="43786" toid="43790" name="spore reservoir"/>
+	<!-- Tibia 15.24 Complement Package 1: split conflicting 43786..43790 range to upstream definitions -->
+	<item id="43786" article="a" name="rotten mushroom">
+		<attribute key="primarytype" value="quest items" />
+		<attribute key="weight" value="100" />
+	</item>
+	<item id="43787" article="a" name="rotten mushroom">
+		<attribute key="primarytype" value="quest items" />
+		<attribute key="weight" value="100" />
+	</item>
+	<item id="43788" article="a" name="rotten mushroom">
+		<attribute key="primarytype" value="quest items" />
+		<attribute key="weight" value="100" />
+	</item>
+	<item id="43789" article="a" name="rotten mushroom">
+		<attribute key="primarytype" value="quest items" />
+		<attribute key="weight" value="100" />
+	</item>
+	<item id="43790" article="a" name="rotten mushroom">
+		<attribute key="primarytype" value="quest items" />
+		<attribute key="weight" value="100" />
+	</item>
 	<item id="43294" article="a" name="spore tracks" >
 		<attribute key="primarytype" value="magicfield"/>
 		<attribute key="duration" value="3"/>
@@ -87438,5 +87458,172 @@
 	<item id="53167" article="a" name="sail pass">
 		<attribute key="weight" value="10" />
 		<attribute key="description" value="A pass that grants passage by sail." />
+	</item>
+	<!-- Tibia 15.24 Complement Package 1: missing upstream item definitions -->
+	<item id="43501" article="a" name="the essence of Murcion">
+		<attribute key="description" value="This is the rotten essence of Murcion. It can be consumed to imbue yourself with it." />
+	</item>
+	<item id="43502" article="a" name="the essence of Ichgahal">
+		<attribute key="description" value="This is the rotten essence of Ichgahal. It can be consumed to imbue yourself with it." />
+	</item>
+	<item id="43503" article="a" name="the essence of Vemiath">
+		<attribute key="description" value="This is the rotten essence of Vemiath. It can be consumed to imbue yourself with it." />
+	</item>
+	<item id="43504" article="a" name="the essence of Chagorz">
+		<attribute key="description" value="This is the rotten essence of Chagorz. It can be consumed to imbue yourself with it." />
+	</item>
+	<item id="43744" article="a" name="rotten mushroom">
+		<attribute key="primarytype" value="quest items" />
+		<attribute key="weight" value="100" />
+	</item>
+	<item id="43792" article="a" name="rotten crystal">
+		<attribute key="primarytype" value="quest items" />
+		<attribute key="weight" value="100" />
+	</item>
+	<item id="43793" article="a" name="broken rotten crystal">
+		<attribute key="primarytype" value="quest items" />
+		<attribute key="weight" value="100" />
+		<attribute key="decayTo" value="43792" />
+		<attribute key="duration" value="3" />
+	</item>
+	<item id="43794" article="a" name="rotten crystal">
+		<attribute key="primarytype" value="quest items" />
+		<attribute key="weight" value="100" />
+	</item>
+	<item id="43795" article="a" name="broken rotten crystal">
+		<attribute key="primarytype" value="quest items" />
+		<attribute key="weight" value="100" />
+		<attribute key="decayTo" value="43794" />
+		<attribute key="duration" value="3" />
+	</item>
+	<item id="43796" article="a" name="rotten crystal">
+		<attribute key="primarytype" value="quest items" />
+		<attribute key="weight" value="100" />
+	</item>
+	<item id="43797" article="a" name="broken rotten crystal">
+		<attribute key="primarytype" value="quest items" />
+		<attribute key="weight" value="100" />
+		<attribute key="decayTo" value="43796" />
+		<attribute key="duration" value="3" />
+	</item>
+	<item id="43798" article="a" name="rotten crystal">
+		<attribute key="primarytype" value="quest items" />
+		<attribute key="weight" value="100" />
+	</item>
+	<item id="43799" article="a" name="broken rotten crystal">
+		<attribute key="primarytype" value="quest items" />
+		<attribute key="weight" value="100" />
+		<attribute key="decayTo" value="43798" />
+		<attribute key="duration" value="3" />
+	</item>
+	<item id="43800" article="a" name="rotten crystal">
+		<attribute key="primarytype" value="quest items" />
+		<attribute key="weight" value="100" />
+	</item>
+	<item id="43801" article="a" name="broken rotten crystal">
+		<attribute key="primarytype" value="quest items" />
+		<attribute key="weight" value="100" />
+		<attribute key="decayTo" value="43800" />
+		<attribute key="duration" value="3" />
+	</item>
+	<item id="43854" article="a" name="tainted heart" plural="tainted hearts">
+		<attribute key="primarytype" value="creature products" />
+		<attribute key="weight" value="100" />
+	</item>
+	<item id="43855" article="a" name="darklight heart" plural="darklight hearts">
+		<attribute key="primarytype" value="creature products" />
+		<attribute key="weight" value="100" />
+	</item>
+	<item id="52964" article="a" name="charred mask">
+		<attribute key="slotType" value="head" />
+		<attribute key="weight" value="800" />
+		<attribute key="description" value="A mask scorched by infernal flames." />
+	</item>
+	<item id="53002" article="a" name="gold tooth">
+		<attribute key="primarytype" value="creature products" />
+		<attribute key="weight" value="10" />
+	</item>
+	<item id="53003" article="a" name="lizard tail">
+		<attribute key="primarytype" value="creature products" />
+		<attribute key="weight" value="55" />
+	</item>
+	<item id="53004" article="an" name="infernoid ember">
+		<attribute key="primarytype" value="creature products" />
+		<attribute key="description" value="A glowing ember pulsing with infernal heat." />
+		<attribute key="weight" value="80" />
+	</item>
+	<item id="53005" article="a" name="sailor's burn cure">
+		<attribute key="primarytype" value="creature products" />
+		<attribute key="description" value="An ointment sailors use to soothe burns." />
+		<attribute key="weight" value="90" />
+	</item>
+	<item id="53073" article="a" name="bunch of turnips">
+		<attribute key="description" value="A bunch of fresh turnips. A certain lonely ram might enjoy these." />
+		<attribute key="weight" value="200" />
+	</item>
+	<item id="53162" article="an" name="superior mana potion">
+		<attribute key="primarytype" value="liquids" />
+		<attribute key="description" value="This potion can only be consumed by paladins, monks, sorcerers and druids of level 100 or higher." />
+		<attribute key="weight" value="310" />
+	</item>
+	<item id="53163" article="an" name="distilled superior mana potion">
+		<attribute key="primarytype" value="liquids" />
+		<attribute key="description" value="This potion can only be consumed by players of level 130 or higher." />
+		<attribute key="weight" value="310" />
+	</item>
+	<item id="53164" article="an" name="distilled ultimate mana potion">
+		<attribute key="primarytype" value="liquids" />
+		<attribute key="description" value="This potion can only be consumed by players of level 200 or higher." />
+		<attribute key="weight" value="310" />
+	</item>
+	<item id="53168" article="a" name="shatterstorm arrow">
+		<attribute key="primarytype" value="ammunition" />
+		<attribute key="weaponType" value="ammunition" />
+		<attribute key="ammotype" value="arrow" />
+		<attribute key="shootType" value="shatterstormarrow" />
+		<attribute key="maxhitchance" value="100" />
+		<attribute key="attack" value="27" />
+		<attribute key="weight" value="80" />
+	</item>
+	<item id="53169" article="a" name="firestorm arrow">
+		<attribute key="primarytype" value="ammunition" />
+		<attribute key="weaponType" value="ammunition" />
+		<attribute key="ammotype" value="arrow" />
+		<attribute key="shootType" value="firestormarrow" />
+		<attribute key="maxhitchance" value="100" />
+		<attribute key="attack" value="21" />
+		<attribute key="weight" value="80" />
+	</item>
+	<item id="53170" article="a" name="terrastorm arrow">
+		<attribute key="primarytype" value="ammunition" />
+		<attribute key="weaponType" value="ammunition" />
+		<attribute key="ammotype" value="arrow" />
+		<attribute key="shootType" value="terrastormarrow" />
+		<attribute key="maxhitchance" value="100" />
+		<attribute key="attack" value="21" />
+		<attribute key="weight" value="80" />
+	</item>
+	<item id="53171" article="a" name="froststorm arrow">
+		<attribute key="primarytype" value="ammunition" />
+		<attribute key="weaponType" value="ammunition" />
+		<attribute key="ammotype" value="arrow" />
+		<attribute key="shootType" value="froststormarrow" />
+		<attribute key="maxhitchance" value="100" />
+		<attribute key="attack" value="21" />
+		<attribute key="weight" value="80" />
+	</item>
+	<item id="53172" article="a" name="thunderstorm arrow">
+		<attribute key="primarytype" value="ammunition" />
+		<attribute key="weaponType" value="ammunition" />
+		<attribute key="ammotype" value="arrow" />
+		<attribute key="shootType" value="thunderstormarrow" />
+		<attribute key="maxhitchance" value="100" />
+		<attribute key="attack" value="21" />
+		<attribute key="weight" value="80" />
+	</item>
+	<item id="54266" article="a" name="lesser proficiency catalyst">
+		<attribute key="primarytype" value="valuables" />
+		<attribute key="description" value="A catalyst used to enhance proficiencies." />
+		<attribute key="weight" value="100" />
 	</item>
 </items>
