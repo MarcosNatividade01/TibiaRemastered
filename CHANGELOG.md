@@ -2,6 +2,14 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.32-test] - Auditoria estrutural 15.24
+
+- Auditados Forge, Prey, Bestiary, Bosstiary, Charms, Imbuements, Weapon Proficiency, Reward, Wheel e Animus Mastery contra o runtime atual e o upstream local 15.24.
+- Confirmado banco real em `db_version=63`, com tabelas e colunas estruturais presentes para os sistemas auditados, sem executar migrations destrutivas.
+- Adicionada suíte `Scripts/Test-StructuralSystems15_24.ps1` para validar flags, arquivos, XML/JSON, schema e contagens de accounts/players.
+- Preservadas customizacoes Remastered: Forge sem custo de dust, imbuements com materiais reduzidos, Bestiary acelerado, proficiencies ajustadas, XP 8x, Skills 3x, Magic Level 3x, Attack Speed 1.3x, spells +15% e runas +30%.
+- Mantidas como alto risco quaisquer trocas profundas de binario/protocolo/client para Wheel, Animus Mastery e Weapon Proficiency alem do suporte ja existente no runtime 15.24.
+
 ## [0.1.31-test] - Complementacao acelerada 15.24
 
 - Adicionados conteudos ausentes de baixo e medio risco da auditoria 15.24: 11 monsters, Adrian, 5 spells de monster/quest, 16 spells de jogador, 36 item definitions e 6 equipamentos/ammo.
