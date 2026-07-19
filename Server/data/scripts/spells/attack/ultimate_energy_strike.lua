@@ -1,44 +1,20 @@
-local function strikeFormula(level, maglevel, basePower)
-	local min, max = calculateMagicSpellDamage(level, maglevel, basePower)
+local combat = Combat()
+combat:setParameter(COMBAT_PARAM_TYPE, COMBAT_ENERGYDAMAGE)
+combat:setParameter(COMBAT_PARAM_EFFECT, CONST_ME_ENERGYAREA)
+combat:setParameter(COMBAT_PARAM_DISTANCEEFFECT, CONST_ANI_ENERGY)
+
+function onGetFormulaValues(player, level, maglevel)
+	local min = (level / 5) + (maglevel * 4.5) + 35
+	local max = (level / 5) + (maglevel * 7.3) + 55
 	return -min, -max
 end
 
-function onGetFormulaValues(player, level, maglevel, basePower)
-	return strikeFormula(level, maglevel, basePower)
-end
-function onGetFormulaValuesFlames(player, level, maglevel, basePower)
-	return strikeFormula(level, maglevel, basePower)
-end
-function onGetFormulaValuesDecay(player, level, maglevel, basePower)
-	return strikeFormula(level, maglevel, basePower)
-end
-
-local function createStrikeCombat(combatType, effect, missile, callbackName)
-	local c = Combat()
-	c:setParameter(COMBAT_PARAM_TYPE, combatType)
-	c:setParameter(COMBAT_PARAM_EFFECT, effect)
-	c:setParameter(COMBAT_PARAM_DISTANCEEFFECT, missile)
-	c:setCallback(CALLBACK_PARAM_LEVELMAGICVALUE, callbackName)
-	return c
-end
-
-local combatEnergy = createStrikeCombat(COMBAT_ENERGYDAMAGE, CONST_ME_ENERGYAREA, CONST_ANI_ENERGY, "onGetFormulaValues")
-local combatFlames = createStrikeCombat(COMBAT_FIREDAMAGE, 329, 4, "onGetFormulaValuesFlames")
-local combatDecay = createStrikeCombat(COMBAT_DEATHDAMAGE, 330, 11, "onGetFormulaValuesDecay")
+combat:setCallback(CALLBACK_PARAM_LEVELMAGICVALUE, "onGetFormulaValues")
 
 local spell = Spell("instant")
 
 function spell.onCastSpell(creature, var)
-	local player = creature:getPlayer()
-	if player then
-		local stance = player.getElementalStance and player:getElementalStance() or STANCE_NONE
-		if stance == STANCE_MASTER_OF_FLAMES then
-			return combatFlames:execute(creature, var)
-		elseif stance == STANCE_MASTER_OF_DECAY then
-			return combatDecay:execute(creature, var)
-		end
-	end
-	return combatEnergy:execute(creature, var)
+	return combat:execute(creature, var)
 end
 
 spell:group("attack", "ultimatestrikes")
@@ -50,11 +26,11 @@ spell:impactSound(SOUND_EFFECT_TYPE_SPELL_ULTIMATE_ENERGY_STRIKE)
 spell:level(100)
 spell:mana(100)
 spell:isPremium(true)
-spell:range(7)
+spell:range(3)
 spell:needCasterTargetOrDirection(true)
 spell:blockWalls(true)
 spell:cooldown(30 * 1000)
 spell:groupCooldown(2 * 1000, 30 * 1000)
+
 spell:vocation("sorcerer;true", "master sorcerer;true")
 spell:register()
-

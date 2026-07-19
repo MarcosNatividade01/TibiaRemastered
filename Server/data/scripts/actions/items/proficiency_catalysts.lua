@@ -1,7 +1,14 @@
 local config = {
-	[51588] = { gainWeaponProficiencyExperience = 25000 },
-	[51589] = { gainWeaponProficiencyExperience = 100000 },
+	[51588] = { baseWeaponProficiencyExperience = 25000 },
+	[51589] = { baseWeaponProficiencyExperience = 100000 },
 }
+
+local function getWeaponProficiencyExperience(baseExperience)
+	if Remastered and Remastered.Balance and Remastered.Balance.applyWeaponProficiencyExperience then
+		return Remastered.Balance.applyWeaponProficiencyExperience(baseExperience)
+	end
+	return baseExperience
+end
 
 local proficiencyCatalysts = Action()
 
@@ -21,7 +28,7 @@ function proficiencyCatalysts.onUse(player, item, fromPosition, target, toPositi
 			return false
 		end
 
-		player:sendWeaponProficiencyExperience(target.itemid, configData.gainWeaponProficiencyExperience)
+		player:sendWeaponProficiencyExperience(target.itemid, getWeaponProficiencyExperience(configData.baseWeaponProficiencyExperience))
 
 		item:remove(1)
 		return true

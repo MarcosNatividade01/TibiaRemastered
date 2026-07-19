@@ -1,11 +1,8 @@
--- Death Echo (exevo mort ora) - Sorcerer attack spell, Vocation Adjustment
+-- Death Echo (exevo mort ora) - Sorcerer attack spell.
 -- Hits a 5x5 area at the target position for DEATH damage, then after a 1s
 -- delay the SAME area is struck again for 50% of the initial damage.
 -- Crosshair / target mode: needPosition(true) + setArea, the server resolves the
 -- target position (modeled on divine_grenade.lua's position-variant recast).
--- A Master Sorcerer's elemental stance reshapes it: Master of Flames -> fire (eff 323),
--- Master of Thunder -> energy (eff 322), Decay/none -> base death (eff 321). The echo
--- keeps the element chosen at cast time (passed through addEvent).
 
 -- 5x5 square area centered on the target tile (3 = center reference)
 local BASE_POWER = 85
@@ -21,8 +18,8 @@ local DEATH_ECHO_AREA = {
 -- Base power 85. Formula mirrors the project's death-AoE idioms (great_death_beam
 -- / death_strike) scaled to an 85 base spell.
 function onGetDeathEchoValues(player, level, maglevel)
-	local min = ((calculateBaseDamageHealing(level)) + (maglevel * 2.4) + (BASE_POWER * 0.1))
-	local max = ((calculateBaseDamageHealing(level)) + (maglevel * 3.6) + (BASE_POWER * 0.1))
+	local min = (calculateBaseDamageHealing(level)) + (maglevel * 2.4) + (BASE_POWER * 0.1)
+	local max = (calculateBaseDamageHealing(level)) + (maglevel * 3.6) + (BASE_POWER * 0.1)
 	return -min, -max
 end
 
@@ -33,35 +30,23 @@ function onGetDeathEchoEchoValues(player, level, maglevel)
 	return -min, -max
 end
 
--- First (immediate) hit - 5x5 area, full damage. One Combat, retuned to the cast-time element.
+-- First (immediate) hit - 5x5 area, full death damage.
 local combatMain = Combat()
 combatMain:setParameter(COMBAT_PARAM_TYPE, COMBAT_DEATHDAMAGE)
-combatMain:setParameter(COMBAT_PARAM_EFFECT, 321)
+combatMain:setParameter(COMBAT_PARAM_EFFECT, CONST_ME_MORTAREA)
 combatMain:setArea(createCombatArea(DEATH_ECHO_AREA))
 combatMain:setCallback(CALLBACK_PARAM_LEVELMAGICVALUE, "onGetDeathEchoValues")
 
 -- Second (echo) hit - same 5x5 area, 50% damage.
 local combatEcho = Combat()
 combatEcho:setParameter(COMBAT_PARAM_TYPE, COMBAT_DEATHDAMAGE)
-combatEcho:setParameter(COMBAT_PARAM_EFFECT, 321)
+combatEcho:setParameter(COMBAT_PARAM_EFFECT, CONST_ME_MORTAREA)
 combatEcho:setArea(createCombatArea(DEATH_ECHO_AREA))
 combatEcho:setCallback(CALLBACK_PARAM_LEVELMAGICVALUE, "onGetDeathEchoEchoValues")
 
--- Vocation Adjustment: pick element (type + impact effect) from the caster's active elemental stance.
-local function elementForStance(player)
-	local stance = player.getElementalStance and player:getElementalStance() or STANCE_NONE
-	if stance == STANCE_MASTER_OF_FLAMES then
-		return COMBAT_FIREDAMAGE, 323
-	elseif stance == STANCE_MASTER_OF_THUNDER then
-		return COMBAT_ENERGYDAMAGE, 322
-	end
-	return COMBAT_DEATHDAMAGE, 321
-end
-
 -- Re-hit the SAME area at the stored position after the delay (position variant,
--- modeled on divine_grenade.lua's explodeGrenade). combatType/effect = the element chosen at cast time
--- (echoStrike runs to completion before any other Lua event, so retuning the shared Combat here is safe).
-local function echoStrike(position, playerId, combatType, effect)
+-- modeled on divine_grenade.lua's explodeGrenade).
+local function echoStrike(position, playerId)
 	local tile = Tile(position)
 	if not tile then
 		return
@@ -71,9 +56,6 @@ local function echoStrike(position, playerId, combatType, effect)
 	if not player then
 		return
 	end
-
-	combatEcho:setParameter(COMBAT_PARAM_TYPE, combatType)
-	combatEcho:setParameter(COMBAT_PARAM_EFFECT, effect)
 
 	local var = {}
 	var.instantName = "Death Echo"
@@ -89,15 +71,8 @@ function spell.onCastSpell(creature, var)
 	-- needPosition: the engine set var to the clicked tile (cursor/crosshair). Cast the 5x5
 	-- area there, then re-strike the same tile after 1s for the echo.
 	local center = var:getPosition()
-	local player = creature:getPlayer()
-	local combatType, effect = COMBAT_DEATHDAMAGE, 321
-	if player then
-		combatType, effect = elementForStance(player)
-	end
-	combatMain:setParameter(COMBAT_PARAM_TYPE, combatType)
-	combatMain:setParameter(COMBAT_PARAM_EFFECT, effect)
 	combatMain:execute(creature, var)
-	addEvent(echoStrike, 1000, center, creature:getId(), combatType, effect)
+	addEvent(echoStrike, 1000, center, creature:getId())
 	return true
 end
 
@@ -116,4 +91,3 @@ spell:groupCooldown(2 * 1000)
 spell:needLearn(false)
 spell:vocation("sorcerer;true", "master sorcerer;true")
 spell:register()
-

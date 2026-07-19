@@ -2,6 +2,16 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.36-test] - Hotfix spells, broker e proficiency
+
+- Removidas dependencias de Stance Protocol experimental das player spells tradicionais em producao, preservando os sandboxes `UpstreamTesting/` para evolucao futura.
+- Corrigida `Death Echo` para usar efeitos compativeis com o runtime 15.24 e manter cooldown/groupCooldown, mana, alvo e cast em producao.
+- Adicionado `Scripts/Test-PlayerSpellsRuntimeCast.ps1` para validar caminhos de cast, mana, cooldown, dano central e ausencia de APIs stance nas spells tradicionais.
+- Movido `Gold Token Broker` para o tile imediatamente ao lado da Yana em `32201,32304,6`, mantendo Yana em `32200,32304,6`.
+- Adicionado `Scripts/Test-GoldTokenBrokerYana.ps1` para validar posicao lado a lado, Gold Token ID `22721`, preco `200000` e compra multipla via trade.
+- Ajustada Weapon Proficiency para requisito efetivo de 1/3 da baseline: `rateWeaponProficiency = 3`, multiplicadores centrais e catalisadores usando ganho 3x sem alterar progresso salvo, perks ou recompensas.
+- Adicionado `Scripts/Test-WeaponProficiencyBalance.ps1` para validar a regra 1/3, exemplos antes/depois, catalisadores e preservacao server-side.
+
 ## [0.1.35-test] - Mega gameplay update autonomo
 
 - Corrigidas regressões de player spells causadas por chamadas experimentais de Stance Protocol no runtime principal, preservando o trabalho de `UpstreamTesting/` sem promover client/protocolo 15.25.

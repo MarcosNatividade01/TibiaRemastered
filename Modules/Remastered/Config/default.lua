@@ -16,6 +16,8 @@ return {
 		bestiaryRequiredKillsMultiplier = 0.50,
 		bestiaryCompletionRewardMultiplier = 4.0,
 		charmCostMultiplier = 0.50,
+		weaponProficiencyRequirementMultiplier = 1.0 / 3.0,
+		weaponProficiencyExperienceMultiplier = 3.0,
 		bossTiers = {
 			weak = { difficultyMultiplier = 0.85 },
 			medium = { difficultyMultiplier = 0.80 },

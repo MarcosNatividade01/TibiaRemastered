@@ -63,6 +63,14 @@ function Balance.getCharmCostMultiplier()
 	return sanitizeRate(Remastered.Config.get("balance.charmCostMultiplier", 1.0))
 end
 
+function Balance.getWeaponProficiencyRequirementMultiplier()
+	return sanitizeRate(Remastered.Config.get("balance.weaponProficiencyRequirementMultiplier", 1.0))
+end
+
+function Balance.getWeaponProficiencyExperienceMultiplier()
+	return sanitizeRate(Remastered.Config.get("balance.weaponProficiencyExperienceMultiplier", 1.0))
+end
+
 function Balance.applyBountyReward(value)
 	return math.floor((tonumber(value) or 0) * Balance.getBountyRewardMultiplier() + 0.5)
 end
@@ -77,6 +85,14 @@ end
 
 function Balance.applyCharmCost(value)
 	return math.floor((tonumber(value) or 0) * Balance.getCharmCostMultiplier() + 0.5)
+end
+
+function Balance.applyWeaponProficiencyRequirement(value)
+	return math.max(1, math.floor((tonumber(value) or 0) * Balance.getWeaponProficiencyRequirementMultiplier() + 0.5))
+end
+
+function Balance.applyWeaponProficiencyExperience(value)
+	return math.max(1, math.floor((tonumber(value) or 0) * Balance.getWeaponProficiencyExperienceMultiplier() + 0.5))
 end
 
 function Balance.getBossTier(monster)
