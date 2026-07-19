@@ -49,7 +49,7 @@ combatEcho:setCallback(CALLBACK_PARAM_LEVELMAGICVALUE, "onGetDeathEchoEchoValues
 
 -- Vocation Adjustment: pick element (type + impact effect) from the caster's active elemental stance.
 local function elementForStance(player)
-	local stance = player:getElementalStance()
+	local stance = player.getElementalStance and player:getElementalStance() or STANCE_NONE
 	if stance == STANCE_MASTER_OF_FLAMES then
 		return COMBAT_FIREDAMAGE, 323
 	elseif stance == STANCE_MASTER_OF_THUNDER then

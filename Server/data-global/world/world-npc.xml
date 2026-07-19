@@ -48,6 +48,9 @@
 	<npc centerx="32697" centery="31718" centerz="2" radius="1">
 		<npc name="Edala" x="0" y="0" z="2" spawntime="60" />
 	</npc>
+	<npc centerx="32396" centery="32042" centerz="7" radius="1">
+		<npc name="Gold Token Broker" x="1" y="0" z="7" spawntime="60" direction="2" />
+	</npc>
 	<npc centerx="33268" centery="31835" centerz="2" radius="1">
 		<npc name="Sinclair" x="0" y="0" z="2" spawntime="60" />
 	</npc>

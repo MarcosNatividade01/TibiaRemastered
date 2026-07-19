@@ -45,7 +45,7 @@ flankCombat:setArea(createCombatArea({ { 1, 0, 1 }, { 1, 0, 1 }, { 1, 0, 1 }, { 
 -- Master of Flames -> fire (eff 329), Master of Decay -> death (eff 330), Thunder/none -> base energy.
 local function applyStanceElement(player)
 	local combatType, effect = COMBAT_ENERGYDAMAGE, CONST_ME_ENERGYHIT
-	local stance = player:getElementalStance()
+	local stance = player.getElementalStance and player:getElementalStance() or STANCE_NONE
 	if stance == STANCE_MASTER_OF_FLAMES then
 		combatType, effect = COMBAT_FIREDAMAGE, 329
 	elseif stance == STANCE_MASTER_OF_DECAY then

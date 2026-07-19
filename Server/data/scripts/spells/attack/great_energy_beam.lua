@@ -43,7 +43,7 @@ local flankCombat = createCombat(FLANK_AREA, "onGetFormulaValuesBeamFlank")
 -- cast (single-threaded: setParameter happens immediately before execute).
 local function applyStanceElement(player)
 	local combatType, effect = COMBAT_ENERGYDAMAGE, CONST_ME_ENERGYAREA
-	local stance = player:getElementalStance()
+	local stance = player.getElementalStance and player:getElementalStance() or STANCE_NONE
 	if stance == STANCE_MASTER_OF_FLAMES then
 		combatType, effect = COMBAT_FIREDAMAGE, 329
 	elseif stance == STANCE_MASTER_OF_DECAY then

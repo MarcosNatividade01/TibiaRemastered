@@ -2,6 +2,18 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.35-test] - Mega gameplay update autonomo
+
+- Corrigidas regressões de player spells causadas por chamadas experimentais de Stance Protocol no runtime principal, preservando o trabalho de `UpstreamTesting/` sem promover client/protocolo 15.25.
+- Adicionado `Scripts/Test-AllPlayerSpells.ps1` para validar registro, cobertura por vocação, palavras duplicadas e guards de stance, com `PLAYER_SPELLS_REGRESSION = PASS`.
+- Centralizado o balanceamento Remastered para Bounty Hunts +40%, Bestiary com kills -50%, recompensa final 4x, Charms -50% e tiers de bosses.
+- Aplicado balanceamento central de bosses em HP e dano ofensivo sem alterar loot, recompensas, storages, cooldowns, fases ou summons.
+- Removida composição obrigatória por vocação das alavancas de Desert Dungeon e Elemental Spheres, mantendo requisitos de itens, acesso e limite técnico de participantes.
+- Adicionado NPC `Gold Token Broker` na Adventurers' Guild, com outfit visual de Rashid e venda de Gold Token por 200.000 gold.
+- Adicionado calendário persistente de Global Events por data/hora real e `Scripts/Test-GlobalEventCalendar.ps1`.
+- Auditados assets do client 15.24 sem importar placeholders ou assets 15.25 incompatíveis; relatório em `Docs/MISSING_ASSETS_AUDIT.md`.
+- Atualizados testes estruturais e de gameplay para cobrir bounty, bestiary, charms, bosses, NPC, assets e calendário.
+
 ## [0.1.34-test] - Posturas e spells por vocacao 15.24
 
 - Auditadas todas as spells e posturas por vocacao contra `Upstream/CrystalLatest` 15.24, com relatorio em `Docs/TIBIA_15_24_VOCATION_SPELLS_AND_STANCES_AUDIT.md`.

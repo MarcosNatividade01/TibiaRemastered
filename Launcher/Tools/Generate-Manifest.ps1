@@ -34,6 +34,7 @@ function Convert-ToRelativePath([string]$Base, [string]$Path) {
 }
 
 function Test-Ignored([string]$Relative) {
+    if ($Relative -ieq 'Server/data-global/npc/gold_token_broker.lua') { return $false }
     if ($Relative -ieq 'Client/conf/clientoptions.json') { return $true }
     if ($Relative.StartsWith('Client/cache/', [System.StringComparison]::OrdinalIgnoreCase)) { return $true }
     if ($Relative.StartsWith('Client/screenshots/', [System.StringComparison]::OrdinalIgnoreCase)) { return $true }
@@ -185,7 +186,7 @@ $publishablePaths = Get-GitPublishablePathSet $Root
 $filterByGit = ($publishablePaths.Count -gt 0)
 
 $files = @()
-Get-ChildItem -Path $Root -File -Recurse | ForEach-Object {
+Get-ChildItem -Path $Root -File -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
     $rel = Convert-ToRelativePath -Base $Root -Path $_.FullName
     if (Test-Ignored $rel) { return }
     if ($filterByGit -and -not $publishablePaths.Contains($rel)) { return }

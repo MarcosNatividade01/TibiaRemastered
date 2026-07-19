@@ -42,7 +42,7 @@ function Invoke-MySqlText {
 $config = Read-Text 'Server\config.lua'
 Add-Check 'Forge custom dust preserved' ($config -match 'forgeFusionDustCost\s*=\s*0' -and $config -match 'forgeTransferDustCost\s*=\s*0') 'Fusion/transfer dust costs remain zero.'
 Add-Check 'Prey enabled' ($config -match 'preySystemEnabled\s*=\s*true') 'Prey system flag is enabled.'
-Add-Check 'Bestiary accelerated' ($config -match 'bestiaryKillMultiplier\s*=\s*[3-9]') 'Bestiary kill multiplier is configured above upstream baseline.'
+Add-Check 'Bestiary required kills reduced by 50 percent' ($config -match 'bestiaryKillMultiplier\s*=\s*2(?:\D|$)') 'Bestiary kill multiplier is exactly 2, which halves required kills.'
 Add-Check 'Wheel enabled' ($config -match 'wheelSystemEnabled\s*=\s*true') 'Wheel of Destiny server flag is enabled.'
 Add-Check 'Animus configured' ($config -match 'animusMasteryMaxMonsterXpMultiplier\s*=' -and $config -match 'animusMasteryMonsterXpMultiplier\s*=') 'Animus Mastery config keys are present.'
 

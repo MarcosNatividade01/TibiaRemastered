@@ -15,13 +15,13 @@ local spell = Spell("instant")
 
 function spell.onCastSpell(creature, var)
 	local player = creature:getPlayer()
-	if player and player:getStance() == STANCE_BLOOD_RAGE then
+	if player and player.getStance and player:getStance() == STANCE_BLOOD_RAGE then
 		player:removeCondition(CONDITION_ATTRIBUTES, CONDITIONID_COMBAT, AttrSubId_BloodRageProtector)
 		player:setStance(STANCE_NONE)
 		player:getPosition():sendMagicEffect(CONST_ME_POFF)
 		return true
 	end
-	if player then
+	if player and player.setStance and STANCE_BLOOD_RAGE then
 		player:setStance(STANCE_BLOOD_RAGE)
 	end
 	return combat:execute(creature, var)
@@ -29,12 +29,12 @@ end
 
 spell:name("Blood Rage")
 spell:words("utito tempo")
-spell:group("support", 11)
+spell:group("support")
 spell:vocation("knight;true", "elite knight;true")
 spell:castSound(SOUND_EFFECT_TYPE_SPELL_BLOOD_RAGE)
 spell:id(133)
 spell:cooldown(2 * 1000)
-spell:groupCooldown(2 * 1000, 2 * 1000)
+spell:groupCooldown(2 * 1000)
 spell:level(60)
 spell:mana(290)
 spell:needLearn(false)
@@ -43,4 +43,3 @@ spell:isAggressive(false)
 spell:isPremium(true)
 
 spell:register()
-

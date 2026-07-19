@@ -13,26 +13,26 @@ local spell = Spell("instant")
 
 function spell.onCastSpell(creature, variant)
 	local player = creature:getPlayer()
-	if player and player:getStance() == STANCE_SHARPSHOOTER then
+	if player and player.getStance and player:getStance() == STANCE_SHARPSHOOTER then
 		player:removeCondition(CONDITION_ATTRIBUTES, CONDITIONID_COMBAT, AttrSubId_Sharpshooter)
 		player:setStance(STANCE_NONE)
 		player:getPosition():sendMagicEffect(CONST_ME_POFF)
 		return true
 	end
-	if player then
+	if player and player.setStance and STANCE_SHARPSHOOTER then
 		player:setStance(STANCE_SHARPSHOOTER)
 	end
 	return combat:execute(creature, variant)
 end
 
 spell:name("Sharpshooter")
-spell:words("utori con")
-spell:group("support", 11)
+spell:words("utito tempo san")
+spell:group("support")
 spell:vocation("paladin;true", "royal paladin;true")
 spell:castSound(SOUND_EFFECT_TYPE_SPELL_SHARPSHOOTER)
-spell:id(313)
+spell:id(135)
 spell:cooldown(10 * 1000)
-spell:groupCooldown(2 * 1000, 10 * 1000)
+spell:groupCooldown(2 * 1000)
 spell:level(60)
 spell:mana(450)
 spell:needLearn(false)
@@ -41,4 +41,3 @@ spell:isAggressive(false)
 spell:isPremium(false)
 
 spell:register()
-

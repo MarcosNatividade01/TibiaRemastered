@@ -6,12 +6,12 @@ local spell = Spell("instant")
 
 function spell.onCastSpell(creature, variant)
 	local player = creature:getPlayer()
-	if player and player:getStance() == STANCE_EXPOSE_WEAKNESS then
+	if player and player.getStance and player:getStance() == STANCE_EXPOSE_WEAKNESS then
 		player:setStance(STANCE_NONE)
 		player:getPosition():sendMagicEffect(CONST_ME_POFF)
 		return true
 	end
-	if player then
+	if player and player.setStance and STANCE_EXPOSE_WEAKNESS then
 		player:setStance(STANCE_EXPOSE_WEAKNESS)
 	end
 	return combat:execute(creature, variant)

@@ -12,13 +12,13 @@ local spell = Spell("instant")
 
 function spell.onCastSpell(creature, variant)
 	local player = creature:getPlayer()
-	if player and player:getElementalStance() == STANCE_MASTER_OF_THUNDER then
+	if player and player.getElementalStance and player:getElementalStance() == STANCE_MASTER_OF_THUNDER then
 		player:removeCondition(CONDITION_ATTRIBUTES, CONDITIONID_COMBAT, AttrSubId_SorcererMasterOfThunder)
 		player:setElementalStance(STANCE_NONE)
 		player:getPosition():sendMagicEffect(CONST_ME_POFF)
 		return true
 	end
-	if player then
+	if player and player.setElementalStance and STANCE_MASTER_OF_THUNDER then
 		player:setElementalStance(STANCE_MASTER_OF_THUNDER)
 	end
 	return combat:execute(creature, variant)
@@ -26,11 +26,11 @@ end
 
 spell:name("Master of Thunder")
 spell:words("uteta vis")
-spell:group("support", 11)
+spell:group("support")
 spell:vocation("sorcerer;true", "master sorcerer;true")
 spell:id(305)
 spell:cooldown(30 * 1000)
-spell:groupCooldown(2 * 1000, 30 * 1000)
+spell:groupCooldown(2 * 1000)
 spell:level(20)
 spell:mana(400)
 spell:needLearn(false)
@@ -39,4 +39,3 @@ spell:isAggressive(false)
 spell:isPremium(true)
 
 spell:register()
-

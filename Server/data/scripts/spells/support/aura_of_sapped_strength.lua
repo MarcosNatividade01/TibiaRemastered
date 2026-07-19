@@ -6,12 +6,12 @@ local spell = Spell("instant")
 
 function spell.onCastSpell(creature, variant)
 	local player = creature:getPlayer()
-	if player and player:getStance() == STANCE_SAP_STRENGTH then
+	if player and player.getStance and player:getStance() == STANCE_SAP_STRENGTH then
 		player:setStance(STANCE_NONE)
 		player:getPosition():sendMagicEffect(CONST_ME_POFF)
 		return true
 	end
-	if player then
+	if player and player.setStance and STANCE_SAP_STRENGTH then
 		player:setStance(STANCE_SAP_STRENGTH)
 	end
 	return combat:execute(creature, variant)

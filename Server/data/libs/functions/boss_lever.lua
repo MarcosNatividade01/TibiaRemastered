@@ -238,6 +238,9 @@ function BossLever:onUse(player)
 			if not monster then
 				return true
 			end
+			if Remastered and Remastered.Balance and Remastered.Balance.applyBossHealth then
+				Remastered.Balance.applyBossHealth(monster)
+			end
 			monster:registerEvent("BossLeverOnDeath")
 		end
 		lever:teleportPlayers()

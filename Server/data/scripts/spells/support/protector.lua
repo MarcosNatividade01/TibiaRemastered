@@ -15,13 +15,13 @@ local spell = Spell("instant")
 
 function spell.onCastSpell(creature, variant)
 	local player = creature:getPlayer()
-	if player and player:getStance() == STANCE_PROTECTOR then
+	if player and player.getStance and player:getStance() == STANCE_PROTECTOR then
 		player:removeCondition(CONDITION_ATTRIBUTES, CONDITIONID_COMBAT, AttrSubId_BloodRageProtector)
 		player:setStance(STANCE_NONE)
 		player:getPosition():sendMagicEffect(CONST_ME_POFF)
 		return true
 	end
-	if player then
+	if player and player.setStance and STANCE_PROTECTOR then
 		player:setStance(STANCE_PROTECTOR)
 	end
 	return combat:execute(creature, variant)
@@ -29,12 +29,12 @@ end
 
 spell:name("Protector")
 spell:words("utamo tempo")
-spell:group("support", 11)
+spell:group("support")
 spell:vocation("knight;true", "elite knight;true")
 spell:castSound(SOUND_EFFECT_TYPE_SPELL_PROTECTOR)
 spell:id(132)
 spell:cooldown(2 * 1000)
-spell:groupCooldown(2 * 1000, 2 * 1000)
+spell:groupCooldown(2 * 1000)
 spell:level(55)
 spell:mana(200)
 spell:needLearn(false)
@@ -43,4 +43,3 @@ spell:isAggressive(false)
 spell:isPremium(true)
 
 spell:register()
-

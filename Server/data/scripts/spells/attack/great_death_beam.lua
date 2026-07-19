@@ -65,7 +65,7 @@ end
 -- Same formula/area per element, so retune the element on every grade+flank Combat each cast.
 local function applyStanceElement(player)
 	local combatType, effect = COMBAT_DEATHDAMAGE, CONST_ME_MORTAREA
-	local stance = player:getElementalStance()
+	local stance = player.getElementalStance and player:getElementalStance() or STANCE_NONE
 	if stance == STANCE_MASTER_OF_FLAMES then
 		combatType, effect = COMBAT_FIREDAMAGE, 334
 	elseif stance == STANCE_MASTER_OF_THUNDER then

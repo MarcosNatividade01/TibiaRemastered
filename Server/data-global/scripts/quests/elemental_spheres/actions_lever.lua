@@ -45,24 +45,26 @@ function elementalSpheresLever.onUse(player, item, fromPosition, target, toPosit
 	local players = {}
 	for i = 1, #config do
 		local creature = Tile(config[i].position):getTopCreature()
-		if not creature or not creature:isPlayer() then
-			player:say("You need one player of each vocation having completed the Elemental Spheres quest and also carrying the elemental rare item.", TALKTYPE_MONSTER_SAY, false, 0, Position(33268, 31835, 10))
-			return true
-		end
+		if creature and creature:isPlayer() then
+			if creature:getItemCount(config[i].itemid) < 1 or creature:getStorageValue(Storage.Quest.U8_2.ElementalSpheres.QuestLine) < 1 then
+				player:say("Every participating player must have completed the Elemental Spheres quest and carry the matching elemental rare item.", TALKTYPE_MONSTER_SAY, false, 0, Position(33268, 31835, 10))
+				return true
+			end
 
-		local vocationId = creature:getVocation():getBaseId()
-		if vocationId ~= config[i].vocationId or creature:getItemCount(config[i].itemid) < 1 or creature:getStorageValue(Storage.Quest.U8_2.ElementalSpheres.QuestLine) < 1 then
-			player:say("You need one player of each vocation having completed the Elemental Spheres quest and also carrying the elemental rare item.", TALKTYPE_MONSTER_SAY, false, 0, Position(33268, 31835, 10))
-			return true
+			players[#players + 1] = { creature = creature, config = config[i] }
 		end
+	end
 
-		players[#players + 1] = creature
+	if #players == 0 then
+		player:say("At least one participating player must stand on an entrance tile.", TALKTYPE_MONSTER_SAY, false, 0, Position(33268, 31835, 10))
+		return true
 	end
 
 	for i = 1, #players do
-		players[i]:teleportTo(config[i].toPosition)
-		config[i].position:sendMagicEffect(CONST_ME_TELEPORT)
-		config[i].toPosition:sendMagicEffect(CONST_ME_TELEPORT)
+		local entry = players[i]
+		entry.creature:teleportTo(entry.config.toPosition)
+		entry.config.position:sendMagicEffect(CONST_ME_TELEPORT)
+		entry.config.toPosition:sendMagicEffect(CONST_ME_TELEPORT)
 	end
 
 	item:transform(item.itemid + 1)

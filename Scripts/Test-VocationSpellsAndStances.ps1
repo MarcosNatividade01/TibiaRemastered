@@ -58,6 +58,13 @@ $missing = @($upstreamRegistered | Where-Object {
     -not ($currentRegistered | Where-Object { $_.Name -eq $u.Name -and $_.Words -eq $u.Words })
 })
 
+$clientCompatibleSharpshooter = $currentRegistered | Where-Object {
+    $_.Name -eq 'Sharpshooter' -and $_.Words -eq 'utito tempo san' -and $_.Id -eq '135'
+} | Select-Object -First 1
+if ($clientCompatibleSharpshooter) {
+    $missing = @($missing | Where-Object { $_.Name -ne 'Sharpshooter' })
+}
+
 $stanceNames = @(
     'Master of Flames',
     'Master of Thunder',
@@ -74,8 +81,15 @@ $stanceEntries = @($currentRegistered | Where-Object { $stanceNames -contains $_
 foreach ($stance in $stanceNames) {
     $entry = $stanceEntries | Where-Object { $_.Name -eq $stance } | Select-Object -First 1
     Assert-True ($null -ne $entry) "Postura ausente: $stance"
-    Assert-True (($entry.Group -match 'stance') -or ($entry.Group -match '(^|,\s*)11($|\s*,)')) "Postura sem grupo stance/11: $stance"
-    Assert-True ($entry.GroupCooldown -match ',') "Postura sem cooldown de grupo secundario: $stance"
+    Assert-True ($entry.Text -match 'setStance|setElementalStance') "Postura sem runtime de stance: $stance"
+    if ($entry.Text -match 'getElementalStance|setElementalStance') {
+        Assert-True ($entry.Text -match 'player\.getElementalStance and player:getElementalStance\(\)') "Postura elemental sem guarda de compatibilidade com o binario atual: $stance"
+        Assert-True ($entry.Text -match 'player\.setElementalStance and') "Postura elemental chama setElementalStance sem guarda: $stance"
+    } else {
+        Assert-True ($entry.Text -match 'player\.getStance and player:getStance\(\)') "Postura sem guarda de compatibilidade com o binario atual: $stance"
+        Assert-True ($entry.Text -match 'player\.setStance and') "Postura chama setStance sem guarda: $stance"
+    }
+    Assert-True ($entry.Group -notmatch '(^|,\s*)11($|\s*,)') "Postura publicada com secondary group 11; risco de regressao de login no client atual: $stance"
 }
 
 $sorcererStanceAttackFiles = @(
@@ -88,6 +102,7 @@ foreach ($file in $sorcererStanceAttackFiles) {
     $entry = $current | Where-Object { $_.Relative -eq "attack/$file" } | Select-Object -First 1
     Assert-True ($null -ne $entry) "Spell ofensiva de Sorcerer ausente: $file"
     Assert-True $entry.HasElementalStance "Spell ofensiva de Sorcerer sem variante por postura: $file"
+    Assert-True ($entry.Text -match 'player\.getElementalStance and player:getElementalStance\(\)') "Spell ofensiva de Sorcerer chama getElementalStance sem guarda: $file"
 }
 
 $localMultipliers = @(Select-String -Path (Join-Path $currentRoot 'attack\*.lua') -Pattern 'OFFENSIVE_SPELL_DAMAGE_MULTIPLIER' -ErrorAction SilentlyContinue)
@@ -113,7 +128,7 @@ $vocations = @(
 $summary = foreach ($vocation in $vocations) {
     $reference = @($upstreamRegistered | Where-Object { $_.Vocations -contains $vocation })
     $present = @($currentRegistered | Where-Object { $_.Vocations -contains $vocation })
-    $stance = @($present | Where-Object { ($_.Group -match 'stance') -or ($_.Group -match '(^|,\s*)11($|\s*,)') })
+    $stance = @($present | Where-Object { ($_.Name -in $stanceNames) -and ($_.Text -match 'setStance|setElementalStance') })
     $attack = @($present | Where-Object { $_.Relative -like 'attack/*' })
     $support = @($present | Where-Object { $_.Relative -like 'support/*' })
     $healing = @($present | Where-Object { $_.Relative -like 'healing/*' })

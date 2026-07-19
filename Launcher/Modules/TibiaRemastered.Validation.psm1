@@ -64,7 +64,7 @@ function Test-TrmValidationIgnoredPath {
 function Test-TrmJsonFiles {
     param([string]$Root)
     $issues = @()
-    Get-ChildItem -Path $Root -Filter *.json -File -Recurse | ForEach-Object {
+    Get-ChildItem -Path $Root -Filter *.json -File -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
         $file = $_
         if (Test-TrmValidationIgnoredPath $file.FullName) { return }
         try { Get-Content -Path $file.FullName -Raw -Encoding UTF8 | ConvertFrom-Json | Out-Null }
