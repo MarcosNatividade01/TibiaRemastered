@@ -1,10 +1,7 @@
 local Balance = {}
 
 local function isEnabled()
-	if Remastered.Features.isEnabled("enable_remastered_balance") then
-		return true
-	end
-	return Remastered.Features.isEnabled("remasteredBalance")
+	return Remastered.Features.isEnabled("enable_remastered_balance")
 end
 
 local function sanitizeRate(value)
@@ -51,6 +48,10 @@ function Balance.getBountyRewardMultiplier()
 	return sanitizeRate(Remastered.Config.get("balance.bountyRewardMultiplier", 1.0))
 end
 
+function Balance.getPlayerSpellCooldownMultiplier()
+	return sanitizeRate(Remastered.Config.get("balance.playerSpellCooldownMultiplier", 1.0))
+end
+
 function Balance.getBestiaryRequiredKillsMultiplier()
 	return sanitizeRate(Remastered.Config.get("balance.bestiaryRequiredKillsMultiplier", 1.0))
 end
@@ -61,6 +62,14 @@ end
 
 function Balance.getCharmCostMultiplier()
 	return sanitizeRate(Remastered.Config.get("balance.charmCostMultiplier", 1.0))
+end
+
+function Balance.getHuntingTaskShopPriceMultiplier()
+	return sanitizeRate(Remastered.Config.get("balance.huntingTaskShopPriceMultiplier", 1.0))
+end
+
+function Balance.isBossCooldownDisabled()
+	return Remastered.Config.get("balance.bossCooldownDisabled", true) == true
 end
 
 function Balance.getWeaponProficiencyRequirementMultiplier()
@@ -84,7 +93,28 @@ function Balance.applyBestiaryCompletionReward(value)
 end
 
 function Balance.applyCharmCost(value)
-	return math.floor((tonumber(value) or 0) * Balance.getCharmCostMultiplier() + 0.5)
+	return math.max(1, math.floor((tonumber(value) or 0) * Balance.getCharmCostMultiplier() + 0.5))
+end
+
+function Balance.applyHuntingTaskShopPrice(value)
+	return math.max(1, math.floor((tonumber(value) or 0) * Balance.getHuntingTaskShopPriceMultiplier() + 0.5))
+end
+
+function Balance.applyPlayerSpellCooldown(value)
+	local cooldown = tonumber(value) or 0
+	if cooldown <= 0 then
+		return cooldown
+	end
+	local scaled = math.floor(cooldown * Balance.getPlayerSpellCooldownMultiplier() + 0.5)
+	return math.max(500, scaled)
+end
+
+function Balance.applyPlayerSpellCooldowns(...)
+	local values = { ... }
+	for i = 1, #values do
+		values[i] = Balance.applyPlayerSpellCooldown(values[i])
+	end
+	return unpack(values)
 end
 
 function Balance.applyWeaponProficiencyRequirement(value)
@@ -110,10 +140,10 @@ function Balance.getBossTier(monster)
 	end
 
 	if name:find("goshnar", 1, true) or name:find("ferumbras", 1, true) or name:find("world devourer", 1, true) or name:find("arbaziloth", 1, true) then
-		return "endgame"
+		return "strong"
 	end
 	if maxHealth >= 1000000 or name:find("primal", 1, true) or name:find("rotten", 1, true) then
-		return "endgame"
+		return "strong"
 	end
 	if not isBoss and maxHealth < 100000 then
 		return nil
@@ -144,11 +174,38 @@ function Balance.applyBossHealth(monster)
 		return false
 	end
 	local current = monster:getHealth()
+	local scaleStorage = Storage and Storage.RemasteredBossHealthScaled or nil
+	if scaleStorage and monster.getStorageValue and monster.setStorageValue and monster:getStorageValue(scaleStorage) == 1 then
+		return false
+	end
 	local scaled = math.max(1, math.floor(monster:getMaxHealth() * multiplier + 0.5))
 	monster:setMaxHealth(scaled)
 	if monster.addHealth and current > scaled then
 		monster:addHealth(scaled - current)
 	end
+	if scaleStorage and monster.setStorageValue then
+		monster:setStorageValue(scaleStorage, 1)
+	end
+	return true
+end
+
+function Balance.installGameCreateMonsterHook()
+	if Balance._gameCreateMonsterHookInstalled then
+		return true
+	end
+	if not Game or not Game.createMonster then
+		return false
+	end
+
+	local originalCreateMonster = Game.createMonster
+	Game.createMonster = function(...)
+		local monster = originalCreateMonster(...)
+		if monster and Remastered and Remastered.Balance and Remastered.Balance.applyBossHealth then
+			Remastered.Balance.applyBossHealth(monster)
+		end
+		return monster
+	end
+	Balance._gameCreateMonsterHookInstalled = true
 	return true
 end
 

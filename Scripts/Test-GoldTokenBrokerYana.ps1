@@ -52,7 +52,8 @@ $brokerScript = Get-Content -LiteralPath $brokerPath -Raw
 Assert-True ($brokerScript -match 'local internalNpcName\s*=\s*"Gold Token Broker"') 'Nome interno do Broker incorreto.'
 Assert-True ($brokerScript -match 'lookType\s*=\s*146') 'Broker nao usa visual base do Rashid.'
 Assert-True ($brokerScript -match 'clientId\s*=\s*22721') 'Gold Token clientId/item ID incorreto.'
-Assert-True ($brokerScript -match 'buy\s*=\s*200000') 'Preco unitario do Gold Token incorreto.'
+Assert-True ($brokerScript -match 'clientId\s*=\s*22721,\s*buy\s*=\s*100000') 'Preco unitario do Gold Token incorreto.'
+Assert-True ($brokerScript -match 'clientId\s*=\s*22516,\s*buy\s*=\s*50000') 'Preco unitario do Silver Token incorreto.'
 Assert-True ($brokerScript -match 'npc:openShopWindow\(creature\)') 'Trade window nao abre no dialogo.'
 Assert-True ($brokerScript -match 'npc:sellItem\(player,\s*itemId,\s*amount') 'Compra multipla nao usa amount no sellItem.'
 Assert-True ($brokerScript -notmatch '22720|22722') 'Script referencia ID vizinho suspeito de Gold Token.'
@@ -64,9 +65,9 @@ Assert-True ($brokerScript -notmatch '22720|22722') 'Script referencia ID vizinh
     broker = $broker
     distance = $distance
     goldTokenId = 22721
-    unitPrice = 200000
+    unitPrice = 100000
     multiplePurchaseExamples = @(
-        [pscustomobject]@{ amount = 1; totalCost = 200000 },
-        [pscustomobject]@{ amount = 10; totalCost = 2000000 }
+        [pscustomobject]@{ amount = 1; totalCost = 100000 },
+        [pscustomobject]@{ amount = 10; totalCost = 1000000 }
     )
 } | ConvertTo-Json -Depth 5

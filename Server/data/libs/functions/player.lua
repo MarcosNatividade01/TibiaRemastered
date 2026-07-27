@@ -665,6 +665,9 @@ local function bossKVScope(bossNameOrId)
 end
 
 function Player:getBossCooldown(bossNameOrId)
+	if Remastered and Remastered.Balance and Remastered.Balance.isBossCooldownDisabled and Remastered.Balance.isBossCooldownDisabled() then
+		return 0
+	end
 	local scope = bossKVScope(bossNameOrId)
 	if not scope then
 		return false
@@ -673,6 +676,10 @@ function Player:getBossCooldown(bossNameOrId)
 end
 
 function Player:setBossCooldown(bossNameOrId, time)
+	if Remastered and Remastered.Balance and Remastered.Balance.isBossCooldownDisabled and Remastered.Balance.isBossCooldownDisabled() then
+		self:sendBosstiaryCooldownTimer()
+		return true
+	end
 	local scope = bossKVScope(bossNameOrId)
 	if not scope then
 		return false

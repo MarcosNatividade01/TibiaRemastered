@@ -25,7 +25,6 @@ PrivateDatabase/
 Client/conf/clientoptions.json
 Client/cache/
 Client/characterdata/
-Client/minimap/
 Client/screenshots/
 accounts/
 Accounts/

@@ -21,8 +21,8 @@ function Scale-DamageRange {
     )
 }
 
-Assert-True ($balanceConfig -match 'spellDamageMultiplier\s*=\s*1\.15') 'Multiplicador central de spell nao e 1.15.'
-Assert-True ($balanceConfig -match 'offensiveRuneDamageMultiplier\s*=\s*1\.30') 'Multiplicador central de runa nao e 1.30.'
+Assert-True ($balanceConfig -match 'spellDamageMultiplier\s*=\s*1\.65') 'Multiplicador central de spell nao e 1.65.'
+Assert-True ($balanceConfig -match 'offensiveRuneDamageMultiplier\s*=\s*1\.45') 'Multiplicador central de runa nao e 1.45.'
 Assert-True ($balanceApi -match 'getSpellDamageMultiplier') 'API central de spell ausente.'
 Assert-True ($balanceApi -match 'getOffensiveRuneDamageMultiplier') 'API central de runa ausente.'
 Assert-True ($playerEvent -match 'Remastered\.Balance\.getSpellDamageMultiplier\(\)') 'Player:onCombat nao consulta o multiplicador central de spell.'
@@ -53,10 +53,10 @@ foreach ($case in $spellCases) {
     foreach ($vocation in ($case.Vocation -split ' / ')) {
         Assert-True ($source -match [regex]::Escape(('"' + $vocation.ToLowerInvariant() + ';true"'))) "$vocation nao esta registrado em $($case.Name)."
     }
-    $scaled = Scale-DamageRange -Minimum $case.BaseMin -Maximum $case.BaseMax -Multiplier 1.15
+    $scaled = Scale-DamageRange -Minimum $case.BaseMin -Maximum $case.BaseMax -Multiplier 1.65
     $results += [pscustomobject]@{
         Vocation=$case.Vocation; Ability=$case.Name; Type='Spell'; BaseDamage=('{0:N2}-{1:N2}' -f $case.BaseMin,$case.BaseMax)
-        Multiplier='1.15'; FinalDamage=('{0}-{1}' -f $scaled[0],$scaled[1]); Result='PASS'
+        Multiplier='1.65'; FinalDamage=('{0}-{1}' -f $scaled[0],$scaled[1]); Result='PASS'
     }
 }
 
@@ -65,11 +65,11 @@ $runeSource = Get-Content -LiteralPath $runePath -Raw
 Assert-True ($runeSource -match 'Spell\("rune"\)') 'Sudden Death nao e uma runa real registrada.'
 $runeMin = ($level/5)+($magicLevel*4.605)+28
 $runeMax = ($level/5)+($magicLevel*7.395)+46
-$runeScaled = Scale-DamageRange -Minimum $runeMin -Maximum $runeMax -Multiplier 1.30
+$runeScaled = Scale-DamageRange -Minimum $runeMin -Maximum $runeMax -Multiplier 1.45
 foreach ($vocation in @('Sorcerer / Master Sorcerer','Druid / Elder Druid','Knight / Elite Knight','Paladin / Royal Paladin','Monk / Exalted Monk')) {
     $results += [pscustomobject]@{
         Vocation=$vocation; Ability='Sudden Death Rune'; Type='Rune'; BaseDamage=('{0:N2}-{1:N2}' -f $runeMin,$runeMax)
-        Multiplier='1.30'; FinalDamage=('{0}-{1}' -f $runeScaled[0],$runeScaled[1]); Result='PASS'
+        Multiplier='1.45'; FinalDamage=('{0}-{1}' -f $runeScaled[0],$runeScaled[1]); Result='PASS'
     }
 }
 

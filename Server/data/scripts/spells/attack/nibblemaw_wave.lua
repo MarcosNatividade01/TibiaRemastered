@@ -21,7 +21,7 @@ end
 
 spell:name("nibblemaw wave")
 spell:words("###9701")
-spell:cooldown("2000")
+spell:cooldown(Remastered.Balance.applyPlayerSpellCooldown("2000"))
 spell:isAggressive(true)
 spell:blockWalls(true)
 spell:needDirection(true)

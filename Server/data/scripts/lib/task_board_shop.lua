@@ -30,6 +30,13 @@
 		price              (number)  required  - Cost in Hunting Task Points
 ]]
 
+local function remasteredHuntingTaskShopPrice(price)
+	if Remastered and Remastered.Balance and Remastered.Balance.applyHuntingTaskShopPrice then
+		return Remastered.Balance.applyHuntingTaskShopPrice(price)
+	end
+	return math.max(1, math.floor((tonumber(price) or 0) * 0.40 + 0.5))
+end
+
 HUNT_TASK_SHOP_OFFERS = {
 	-- ========================================================================
 	-- Outfits (type 2)
@@ -41,7 +48,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		description = "The newest fashion from Walter Jaeger.",
 		looktypeOrItemId = 1907,
 		addon = 0,
-		price = 100000,
+		price = remasteredHuntingTaskShopPrice(100000),
 	},
 	-- Feral Trapper (Addon 1)
 	{
@@ -50,7 +57,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		description = "Spice up your outfit for long hunts.",
 		looktypeOrItemId = 1907,
 		addon = 1,
-		price = 35000,
+		price = remasteredHuntingTaskShopPrice(35000),
 	},
 	-- Feral Trapper (Addon 2)
 	{
@@ -59,7 +66,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		description = "Spice up your outfit for long hunts.",
 		looktypeOrItemId = 1907,
 		addon = 2,
-		price = 35000,
+		price = remasteredHuntingTaskShopPrice(35000),
 	},
 	-- Falconer (Base Outfit)
 	{
@@ -68,7 +75,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		description = "Show off your hunting skills wearing this fashionable outfit.",
 		looktypeOrItemId = 1282,
 		addon = 0,
-		price = 100000,
+		price = remasteredHuntingTaskShopPrice(100000),
 	},
 	-- Falconer (Addon 1)
 	{
@@ -77,7 +84,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		description = "Boar-ed running around without a helmet?",
 		looktypeOrItemId = 1282,
 		addon = 1,
-		price = 35000,
+		price = remasteredHuntingTaskShopPrice(35000),
 	},
 	-- Falconer (Addon 2)
 	{
@@ -86,7 +93,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		description = "Pro: Fal Con: None.",
 		looktypeOrItemId = 1282,
 		addon = 2,
-		price = 35000,
+		price = remasteredHuntingTaskShopPrice(35000),
 	},
 
 	-- ========================================================================
@@ -98,7 +105,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		name = "Tidal Seawater Predator (Mount)",
 		description = "Swim through a sea of prey.",
 		looktypeOrItemId = 1908,
-		price = 145000,
+		price = remasteredHuntingTaskShopPrice(145000),
 	},
 	-- Ashen Coast Predator
 	{
@@ -106,7 +113,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		name = "Ashen Coast Predator (Mount)",
 		description = "Swim through a sea of prey.",
 		looktypeOrItemId = 1909,
-		price = 145000,
+		price = remasteredHuntingTaskShopPrice(145000),
 	},
 	-- Crimson Bay Predator
 	{
@@ -114,7 +121,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		name = "Crimson Bay Predator (Mount)",
 		description = "Swim through a sea of prey.",
 		looktypeOrItemId = 1910,
-		price = 145000,
+		price = remasteredHuntingTaskShopPrice(145000),
 	},
 	-- Antelope
 	{
@@ -122,7 +129,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		name = "Antelope (Mount)",
 		description = "A true hunters loyal companion.",
 		looktypeOrItemId = 1281,
-		price = 145000,
+		price = remasteredHuntingTaskShopPrice(145000),
 	},
 
 	-- ========================================================================
@@ -134,7 +141,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		name = "Falcon Pet",
 		description = "A pet decorative purposes.",
 		looktypeOrItemId = 36753,
-		price = 135000,
+		price = remasteredHuntingTaskShopPrice(135000),
 	},
 	-- Cerberus Champion Puppy
 	{
@@ -142,7 +149,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		name = "Cerberus Champion Puppy",
 		description = "A pet decorative purposes.",
 		looktypeOrItemId = 31465,
-		price = 75000,
+		price = remasteredHuntingTaskShopPrice(75000),
 	},
 	-- Hellflayer Trophy
 	{
@@ -150,7 +157,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		name = "Hellflayer Trophy",
 		description = "A trophy from Walter Jaeger, commemorating your mastery in the wilds.",
 		looktypeOrItemId = 32753,
-		price = 80000,
+		price = remasteredHuntingTaskShopPrice(80000),
 	},
 	-- Golden Hunter Trophy
 	{
@@ -158,7 +165,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		name = "Golden Hunter Trophy",
 		description = "A trophy from Walter Jaeger, commemorating your mastery in the wilds.",
 		looktypeOrItemId = 32756,
-		price = 80000,
+		price = remasteredHuntingTaskShopPrice(80000),
 	},
 	-- Brachiodemon Trophy
 	{
@@ -166,7 +173,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		name = "Brachiodemon Trophy",
 		description = "A trophy from Walter Jaeger, commemorating your mastery in the wilds.",
 		looktypeOrItemId = 36748,
-		price = 80000,
+		price = remasteredHuntingTaskShopPrice(80000),
 	},
 	-- Many Faces Trophy
 	{
@@ -174,7 +181,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		name = "Many Faces Trophy",
 		description = "A trophy from Walter Jaeger, commemorating your mastery in the wilds.",
 		looktypeOrItemId = 36749,
-		price = 50000,
+		price = remasteredHuntingTaskShopPrice(50000),
 	},
 	-- Sea Serpent Trophy
 	{
@@ -182,7 +189,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		name = "Sea Serpent Trophy",
 		description = "A trophy from Walter Jaeger, commemorating your mastery in the wilds.",
 		looktypeOrItemId = 32752,
-		price = 15000,
+		price = remasteredHuntingTaskShopPrice(15000),
 	},
 	-- Silver Hunter Trophy
 	{
@@ -190,7 +197,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		name = "Silver Hunter Trophy",
 		description = "A trophy from Walter Jaeger, commemorating your mastery in the wilds.",
 		looktypeOrItemId = 32755,
-		price = 15000,
+		price = remasteredHuntingTaskShopPrice(15000),
 	},
 	-- Bronze Hunter Trophy
 	{
@@ -198,7 +205,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		name = "Bronze Hunter Trophy",
 		description = "A trophy from Walter Jaeger, commemorating your mastery in the wilds.",
 		looktypeOrItemId = 32754,
-		price = 3000,
+		price = remasteredHuntingTaskShopPrice(3000),
 	},
 	-- Gozzler Trophy
 	{
@@ -206,7 +213,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		name = "Gozzler Trophy",
 		description = "A trophy from Walter Jaeger, commemorating your mastery in the wilds.",
 		looktypeOrItemId = 32751,
-		price = 3000,
+		price = remasteredHuntingTaskShopPrice(3000),
 	},
 	-- Demon Doll
 	{
@@ -214,7 +221,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		name = "Demon Doll",
 		description = "A doll for skilled hunters, honouring your proven prowess in battle.",
 		looktypeOrItemId = 32918,
-		price = 37500,
+		price = remasteredHuntingTaskShopPrice(37500),
 	},
 	-- Vexclaw Doll
 	{
@@ -222,7 +229,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		name = "Vexclaw Doll",
 		description = "A doll for skilled hunters, honouring your proven prowess in battle.",
 		looktypeOrItemId = 32943,
-		price = 37500,
+		price = remasteredHuntingTaskShopPrice(37500),
 	},
 
 	-- ========================================================================
@@ -235,7 +242,7 @@ HUNT_TASK_SHOP_OFFERS = {
 		description = "A bed carved from the bones of your fallen foes.",
 		looktypeOrItemId = 32795,
 		itemId2 = 32796,
-		price = 35000,
+		price = remasteredHuntingTaskShopPrice(35000),
 	},
 
 	-- ========================================================================
@@ -244,7 +251,7 @@ HUNT_TASK_SHOP_OFFERS = {
 	-- [24] Bonus Promotion Points
 	{
 		offerType = 4,
-		price = 100,
+		price = remasteredHuntingTaskShopPrice(100),
 	},
 
 	-- ========================================================================

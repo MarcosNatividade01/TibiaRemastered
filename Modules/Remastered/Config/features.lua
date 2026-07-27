@@ -1,5 +1,4 @@
 return {
-	remasteredBalance = false,
 	enable_remastered_balance = true,
 	enable_admin_balance_tests = true,
 	remasteredEvents = false,

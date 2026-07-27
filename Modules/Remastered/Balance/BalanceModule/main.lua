@@ -4,14 +4,16 @@ local BalanceModule = {
 }
 
 function BalanceModule.initialize(self, remastered)
+	local createMonsterHook = remastered.Balance.installGameCreateMonsterHook and remastered.Balance.installGameCreateMonsterHook()
 	remastered.Utilities.log(string.format(
-		"%s initialized: exp x%s skill x%s loot x%s spell x%s rune x%s",
+		"%s initialized: exp x%s skill x%s loot x%s spell x%s rune x%s bossCreateHook=%s",
 		self.id,
 		tostring(remastered.Balance.getExperienceRate()),
 		tostring(remastered.Balance.getSkillRate()),
 		tostring(remastered.Balance.getLootRate()),
 		tostring(remastered.Balance.getSpellDamageMultiplier()),
-		tostring(remastered.Balance.getOffensiveRuneDamageMultiplier())
+		tostring(remastered.Balance.getOffensiveRuneDamageMultiplier()),
+		tostring(createMonsterHook == true)
 	))
 	return true
 end

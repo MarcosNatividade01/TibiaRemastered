@@ -33,11 +33,13 @@ function leverTheRavager.onUse(player, item, fromPosition, target, toPosition, i
 		local storePlayers = {}
 		for i = 1, #setting.playerPositions do
 			local creature = Tile(setting.playerPositions[i]):getTopCreature()
-			if not creature or not creature:isPlayer() then
-				player:sendCancelMessage("You need 4 players to fight with The Ravager.")
-				return true
+			if creature and creature:isPlayer() then
+				storePlayers[#storePlayers + 1] = creature
 			end
-			storePlayers[#storePlayers + 1] = creature
+		end
+		if #storePlayers < 1 then
+			player:sendCancelMessage("You need at least one qualified player to fight with The Ravager.")
+			return true
 		end
 
 		for i = 1, #setting.canopicJarPositions do

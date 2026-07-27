@@ -17,19 +17,19 @@ $npcPath = Join-Path $root 'Server\data-global\npc\gold_token_broker.lua'
 $npcSpawnPath = Join-Path $root 'Server\data-global\world\world-npc.xml'
 $assetsAuditPath = Join-Path $root 'Docs\MISSING_ASSETS_AUDIT.md'
 
-Assert-True ($serverConfig -match 'bountyTasksExpMultiplier\s*=\s*1\.4') 'Bounty XP nao esta em +40%.'
-Assert-True ($serverConfig -match 'bountyTasksPointsMultiplier\s*=\s*1\.4') 'Bounty points nao esta em +40%.'
-Assert-True ($balanceConfig -match 'bountyRewardMultiplier\s*=\s*1\.40') 'Multiplicador central de bounty ausente.'
+Assert-True ($serverConfig -match 'bountyTasksExpMultiplier\s*=\s*5\.0') 'Bounty XP nao esta em x5.'
+Assert-True ($serverConfig -match 'bountyTasksPointsMultiplier\s*=\s*5\.0') 'Bounty points nao esta em x5.'
+Assert-True ($balanceConfig -match 'bountyRewardMultiplier\s*=\s*5\.00') 'Multiplicador central de bounty x5 ausente.'
 
 Assert-True ($serverConfig -match 'bestiaryKillMultiplier\s*=\s*2') 'Bestiary nao esta configurado para 50% das kills.'
 Assert-True ($serverConfig -match 'bestiaryRateCharmShopPrice\s*=\s*0\.5') 'Charm shop nao esta configurado para -50%.'
 Assert-True ($balanceConfig -match 'bestiaryCompletionRewardMultiplier\s*=\s*4\.0') 'Bestiary reward 4x ausente.'
 Assert-True ($balanceConfig -match 'charmCostMultiplier\s*=\s*0\.50') 'Charm cost -50% ausente.'
 
-Assert-True ($balanceConfig -match 'weak\s*=\s*{\s*difficultyMultiplier\s*=\s*0\.85') 'Boss tier weak -15% ausente.'
-Assert-True ($balanceConfig -match 'medium\s*=\s*{\s*difficultyMultiplier\s*=\s*0\.80') 'Boss tier medium -20% ausente.'
-Assert-True ($balanceConfig -match 'strong\s*=\s*{\s*difficultyMultiplier\s*=\s*0\.70') 'Boss tier strong -30% ausente.'
-Assert-True ($balanceConfig -match 'endgame\s*=\s*{\s*difficultyMultiplier\s*=\s*0\.50') 'Boss tier endgame -50% ausente.'
+Assert-True ($balanceConfig -match 'weak\s*=\s*{\s*difficultyMultiplier\s*=\s*0\.65') 'Boss tier weak -35% ausente.'
+Assert-True ($balanceConfig -match 'medium\s*=\s*{\s*difficultyMultiplier\s*=\s*0\.50') 'Boss tier medium -50% ausente.'
+Assert-True ($balanceConfig -match 'strong\s*=\s*{\s*difficultyMultiplier\s*=\s*0\.25') 'Boss tier strong -75% ausente.'
+Assert-True ($balanceConfig -match 'endgame\s*=\s*{\s*difficultyMultiplier\s*=\s*0\.25') 'Boss tier endgame -75% ausente.'
 Assert-True ($balanceApi -match 'applyBossHealth') 'Aplicacao central de HP de boss ausente.'
 Assert-True ($balanceApi -match 'scaleBossDamage') 'Aplicacao central de dano de boss ausente.'
 Assert-True ($balanceApi -match 'isRewardBoss') 'Dano de boss nao verifica reward/bosstiary.'
@@ -46,7 +46,8 @@ $npc = Get-Content -LiteralPath $npcPath -Raw
 $npcSpawn = Get-Content -LiteralPath $npcSpawnPath -Raw
 Assert-True ($npc -match 'lookType\s*=\s*146') 'NPC nao usa visual do Rashid.'
 Assert-True ($npc -match 'clientId\s*=\s*22721') 'Gold Token ID incorreto.'
-Assert-True ($npc -match 'buy\s*=\s*200000') 'Preco do Gold Token incorreto.'
+Assert-True ($npc -match 'clientId\s*=\s*22721,\s*buy\s*=\s*100000') 'Preco do Gold Token incorreto.'
+Assert-True ($npc -match 'clientId\s*=\s*22516,\s*buy\s*=\s*50000') 'Preco do Silver Token incorreto.'
 Assert-True ($npcSpawn -match 'Gold Token Broker') 'Spawn do NPC nao registrado.'
 
 Assert-True (Test-Path -LiteralPath $assetsAuditPath) 'Auditoria de assets ausente.'
@@ -55,10 +56,11 @@ Assert-True ($assetsAudit -match 'BLOCKED_BY_CLIENT_VERSION') 'Assets bloqueados
 
 [pscustomobject]@{
     status = 'MEGA_GAMEPLAY_STATIC = PASS'
-    bountyRewardMultiplier = 1.40
+    bountyRewardMultiplier = 5.00
     bestiaryRequiredKillsMultiplier = 0.50
     bestiaryCompletionRewardMultiplier = 4.0
     charmCostMultiplier = 0.50
     goldTokenId = 22721
-    goldTokenPrice = 200000
+    goldTokenPrice = 100000
+    silverTokenPrice = 50000
 } | ConvertTo-Json -Depth 4

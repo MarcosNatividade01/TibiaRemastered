@@ -25,15 +25,16 @@ npcConfig.flags = {
 npcConfig.voices = {
 	interval = 15000,
 	chance = 50,
-	{ text = "Gold tokens for serious adventurers." },
+	{ text = "Gold and silver tokens for serious adventurers." },
 }
 
 npcConfig.shop = {
-	{ name = "gold token", clientId = 22721, buy = 200000 },
+	{ name = "gold token", clientId = 22721, buy = 100000 },
+	{ name = "silver token", clientId = 22516, buy = 50000 },
 }
 
 npcType.onBuyItem = function(npc, player, itemId, subType, amount, ignore, inBackpacks, totalCost)
-	if itemId ~= 22721 then
+	if itemId ~= 22721 and itemId ~= 22516 then
 		return
 	end
 	npc:sellItem(player, itemId, amount, subType, 0, ignore, inBackpacks)
@@ -74,9 +75,9 @@ local function creatureSayCallback(npc, creature, type, message)
 		return false
 	end
 
-	if MsgContains(message, "trade") or MsgContains(message, "token") or MsgContains(message, "gold token") then
+	if MsgContains(message, "trade") or MsgContains(message, "token") or MsgContains(message, "gold token") or MsgContains(message, "silver token") then
 		npc:openShopWindow(creature)
-		npcHandler:say("I sell gold tokens for 200000 gold each.", npc, creature)
+		npcHandler:say("I sell gold tokens for 100000 gold each and silver tokens for 50000 gold each.", npc, creature)
 	end
 	return true
 end

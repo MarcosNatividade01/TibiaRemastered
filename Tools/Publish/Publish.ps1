@@ -139,7 +139,6 @@ function Assert-SafetyRules {
         'tmp/',
         'temp/',
         'Client/characterdata/',
-        'Client/minimap/',
         'Client/screenshots/',
         'Client/bin/Qt6WebEngineCore.dll',
         'Client/bin/Qt6WebEngineCore.dll.part*',
@@ -410,7 +409,6 @@ function Remove-ForbiddenTrackedFiles {
     $paths = @(
         'Config/launcher-config.json',
         'Client/characterdata',
-        'Client/minimap',
         'Client/screenshots',
         'Client/bin/Qt6WebEngineCore.dll',
         'Client/bin/Qt6WebEngineCore.dll.part1',
@@ -426,7 +424,7 @@ function Remove-ForbiddenTrackedFiles {
 function Assert-NoForbiddenInGitStatus {
     Write-Step 'Verificando se arquivos proibidos seriam publicados'
     $status = Invoke-Git -Arguments @('status','--porcelain') -AllowFailure
-    $forbiddenRegex = '(^|\s)(UserData/|Logs/|Backup/|Backups/|Saves/|Save/|tmp/|temp/|Reports/|Config/launcher-config\.json|Client/characterdata/|Client/minimap/|Client/screenshots/|Client/bin/Qt6WebEngineCore\.dll(\.part[0-9]+)?|Server/data-global/world/world\.otbm|.*\.(db|sqlite|sqlite3|dump|bak|backup|log|token|key|pem|p12|pfx|crt))'
+    $forbiddenRegex = '(^|\s)(UserData/|Logs/|Backup/|Backups/|Saves/|Save/|tmp/|temp/|Reports/|Config/launcher-config\.json|Client/characterdata/|Client/screenshots/|Client/bin/Qt6WebEngineCore\.dll(\.part[0-9]+)?|Server/data-global/world/world\.otbm|.*\.(db|sqlite|sqlite3|dump|bak|backup|log|token|key|pem|p12|pfx|crt))'
     $bad = @($status.Output -split "`r?`n" | Where-Object {
         $_ -match $forbiddenRegex -and $_ -notmatch '^\s*D\s+'
     })

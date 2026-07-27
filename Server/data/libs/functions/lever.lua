@@ -182,6 +182,9 @@ end
 ---@param value number
 ---@return nil
 function Lever.setCooldownAllPlayers(self, bossName, value)
+	if Remastered and Remastered.Balance and Remastered.Balance.isBossCooldownDisabled and Remastered.Balance.isBossCooldownDisabled() then
+		return true
+	end
 	local info = self:getInfoPositions()
 	if not info then
 		error("Necessary information from players")
@@ -199,6 +202,9 @@ function Lever.setCooldownAllPlayers(self, bossName, value)
 end
 
 function Lever.canUseLever(self, player, bossName, timeToFightAgain)
+	if Remastered and Remastered.Balance and Remastered.Balance.isBossCooldownDisabled and Remastered.Balance.isBossCooldownDisabled() then
+		return true
+	end
 	local info = self:getInfoPositions()
 	for _, v in pairs(info) do
 		local newPlayer = v.creature

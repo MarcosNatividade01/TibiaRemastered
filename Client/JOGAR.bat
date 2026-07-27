@@ -14,13 +14,6 @@ if errorlevel 1 (
     exit /b 1
 )
 
-set "MINIMAP_DIR=%LOCALAPPDATA%\Tibia\packages\Tibia\minimap"
-if not exist "%MINIMAP_DIR%" mkdir "%MINIMAP_DIR%"
-
-copy /Y "minimap\minimapmarkers.bin" "%MINIMAP_DIR%\" >nul 2>nul
-copy /Y "minimap\Minimap_Color_*.png" "%MINIMAP_DIR%\" >nul 2>nul
-copy /Y "minimap\Minimap_WaypointCost_*.png" "%MINIMAP_DIR%\" >nul 2>nul
-
 start "" "%~dp0bin\client-local.exe"
 endlocal
 exit /b 0

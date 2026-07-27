@@ -61,20 +61,20 @@ setmetatable(BossLever, {
 			name = boss.name:lower(),
 			encounter = config.encounter,
 			bossPosition = boss.position,
-			timeToFightAgain = config.timeToFightAgain or configManager.getNumber(configKeys.BOSS_DEFAULT_TIME_TO_FIGHT_AGAIN),
+			timeToFightAgain = 0,
 			timeToDefeat = config.timeToDefeat or configManager.getNumber(configKeys.BOSS_DEFAULT_TIME_TO_DEFEAT),
 			timeAfterKill = config.timeAfterKill or 60,
 			requiredLevel = config.requiredLevel or 0,
 			createBoss = boss.createFunction,
 			disabled = config.disabled,
-			minPlayers = config.minPlayers or 1,
+			minPlayers = 1,
 			playerPositions = config.playerPositions,
 			onUseExtra = config.onUseExtra or function() end,
 			exitTeleporter = config.exitTeleporter,
 			exit = config.exit,
 			area = config.specPos,
 			monsters = config.monsters or {},
-			disableCooldown = config.disableCooldown,
+			disableCooldown = true,
 			_position = nil,
 			_uid = nil,
 			_aid = nil,
@@ -128,6 +128,9 @@ end
 ---@param time number
 ---@return boolean
 function BossLever:setLastEncounterTime(time)
+	if self.disableCooldown or (Remastered and Remastered.Balance and Remastered.Balance.isBossCooldownDisabled and Remastered.Balance.isBossCooldownDisabled()) then
+		return true
+	end
 	local info = self.lever:getInfoPositions()
 	if not info then
 		logger.error("BossLever:setLastEncounterTime - lever:getInfoPositions() returned nil")
@@ -226,7 +229,10 @@ function BossLever:onUse(player)
 	if lever:checkConditions() then
 		zone:removeMonsters()
 		for _, monster in pairs(self.monsters) do
-			Game.createMonster(monster.name, monster.pos, true, true)
+			local created = Game.createMonster(monster.name, monster.pos, true, true)
+			if created and Remastered and Remastered.Balance and Remastered.Balance.applyBossHealth then
+				Remastered.Balance.applyBossHealth(created)
+			end
 		end
 		if self.createBoss then
 			if not self.createBoss() then
@@ -244,13 +250,17 @@ function BossLever:onUse(player)
 			monster:registerEvent("BossLeverOnDeath")
 		end
 		lever:teleportPlayers()
-		lever:setCooldownAllPlayers(self.name, os.time() + self.timeToFightAgain)
+		if self.timeToFightAgain > 0 then
+			lever:setCooldownAllPlayers(self.name, os.time() + self.timeToFightAgain)
+		end
 		if self.encounter then
 			local encounter = Encounter(self.encounter)
 			encounter:reset()
 			encounter:start()
 		end
-		self:setLastEncounterTime(os.time() + self.timeToFightAgain)
+		if self.timeToFightAgain > 0 then
+			self:setLastEncounterTime(os.time() + self.timeToFightAgain)
+		end
 		if self.timeoutEvent then
 			stopEvent(self.timeoutEvent)
 			self.timeoutEvent = nil

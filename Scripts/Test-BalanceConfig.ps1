@@ -31,8 +31,8 @@ Assert-True ($invalidAttackSpeeds.Count -eq 0) ('Vocations sem ataque 1.3x: ' + 
 
 $playerCombat = Get-Content (Join-Path $ProjectRoot 'Server\data\events\scripts\player.lua') -Raw
 $balanceApi = Get-Content (Join-Path $ProjectRoot 'Modules\Remastered\Balance\api.lua') -Raw
-Assert-True ($balance -match 'spellDamageMultiplier\s*=\s*1\.15\s*,') 'Spell damage precisa ser 1.15.'
-Assert-True ($balance -match 'offensiveRuneDamageMultiplier\s*=\s*1\.30\s*,') 'Rune damage precisa ser 1.30.'
+Assert-True ($balance -match 'spellDamageMultiplier\s*=\s*1\.65\s*,') 'Spell damage precisa ser 1.65.'
+Assert-True ($balance -match 'offensiveRuneDamageMultiplier\s*=\s*1\.45\s*,') 'Rune damage precisa ser 1.45.'
 Assert-True ($balanceApi -match 'getSpellDamageMultiplier') 'API central de spell damage ausente.'
 Assert-True ($balanceApi -match 'getOffensiveRuneDamageMultiplier') 'API central de rune damage ausente.'
 Assert-True ($playerCombat -match 'itemType:isRune\(\)') 'Runas precisam ser identificadas por ItemType:isRune().'
@@ -40,19 +40,19 @@ Assert-True ($playerCombat -match 'damage < 0 and combatType ~= COMBAT_HEALING')
 Assert-True ($playerCombat -notmatch 'SOLO_(?:SPELL|RUNE)_DAMAGE_MULTIPLIER') 'Multiplicador local duplicado encontrado.'
 
 $controlledBaseDamage = 1000
-$spellDamage = [math]::Floor($controlledBaseDamage * 1.15)
-$runeDamage = [math]::Floor($controlledBaseDamage * 1.30)
-Assert-True ($spellDamage -eq 1150) 'Teste numerico de spell 1.15 falhou.'
-Assert-True ($runeDamage -eq 1300) 'Teste numerico de rune 1.30 falhou.'
+$spellDamage = [math]::Floor($controlledBaseDamage * 1.65)
+$runeDamage = [math]::Floor($controlledBaseDamage * 1.45)
+Assert-True ($spellDamage -eq 1650) 'Teste numerico de spell 1.65 falhou.'
+Assert-True ($runeDamage -eq 1450) 'Teste numerico de rune 1.45 falhou.'
 $damageCases = @(
-    [pscustomobject]@{vocation='Sorcerer'; type='fire'; base=200; spell=230; rune=260},
-    [pscustomobject]@{vocation='Druid'; type='ice'; base=400; spell=460; rune=520},
-    [pscustomobject]@{vocation='Paladin'; type='holy'; base=1000; spell=1150; rune=1300}
+    [pscustomobject]@{vocation='Sorcerer'; type='fire'; base=200; spell=330; rune=290},
+    [pscustomobject]@{vocation='Druid'; type='ice'; base=400; spell=660; rune=580},
+    [pscustomobject]@{vocation='Paladin'; type='holy'; base=1000; spell=1650; rune=1450}
 )
 foreach ($case in $damageCases) {
-    Assert-True ([math]::Abs([math]::Floor(-$case.base * 1.15)) -eq $case.spell) "Spell numerica falhou: $($case.vocation)/$($case.type)."
-    Assert-True ([math]::Abs([math]::Floor(-$case.base * 1.30)) -eq $case.rune) "Rune numerica falhou: $($case.vocation)/$($case.type)."
+    Assert-True ([math]::Abs([math]::Floor(-$case.base * 1.65)) -eq $case.spell) "Spell numerica falhou: $($case.vocation)/$($case.type)."
+    Assert-True ([math]::Abs([math]::Floor(-$case.base * 1.45)) -eq $case.rune) "Rune numerica falhou: $($case.vocation)/$($case.type)."
 }
 Assert-True ([math]::Floor(500 * 1.0) -eq 500) 'Cura, melee, distance, wand/rod devem permanecer 1x.'
 
-[pscustomobject]@{status='passed'; experienceEffective=8; skillsEffective=3; magicEffective=3; attackIntervalMs=1538; attackSpeedMultiplier=[math]::Round(2000/1538,4); spellBaseDamage=$controlledBaseDamage; spellFinalDamage=$spellDamage; spellDamageMultiplier=1.15; runeBaseDamage=$controlledBaseDamage; runeFinalDamage=$runeDamage; offensiveRuneDamageMultiplier=1.30; damageCases=$damageCases; healingUnchanged=$true; basicWeaponsUnchanged=$true; duplicateMultipliers=$false; vocationsValidated=$allVocations.Count} | ConvertTo-Json -Depth 5
+[pscustomObject]@{status='passed'; experienceEffective=8; skillsEffective=3; magicEffective=3; attackIntervalMs=1538; attackSpeedMultiplier=[math]::Round(2000/1538,4); spellBaseDamage=$controlledBaseDamage; spellFinalDamage=$spellDamage; spellDamageMultiplier=1.65; runeBaseDamage=$controlledBaseDamage; runeFinalDamage=$runeDamage; offensiveRuneDamageMultiplier=1.45; damageCases=$damageCases; healingUnchanged=$true; basicWeaponsUnchanged=$true; duplicateMultipliers=$false; vocationsValidated=$allVocations.Count} | ConvertTo-Json -Depth 5

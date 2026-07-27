@@ -73,7 +73,8 @@ function Ichgahalaction.onUse(player, item, fromPosition, target, toPosition, is
 		for x = 32974, 32978 do
 			local playerTile = Tile(Position(x, 32333, 15)):getTopCreature()
 			if playerTile and playerTile:isPlayer() then
-				if playerTile:getGroup():getId() <= 5 and playerTile:getStorageValue(888904) > os.time() then
+				local bossCooldownDisabled = Remastered and Remastered.Balance and Remastered.Balance.isBossCooldownDisabled()
+				if not bossCooldownDisabled and playerTile:getGroup():getId() <= 5 and playerTile:getStorageValue(888904) > os.time() then
 					player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You or a member in your team have to wait to face Ichgahal again!")
 					return true
 				end
@@ -107,7 +108,8 @@ function Ichgahalaction.onUse(player, item, fromPosition, target, toPosition, is
 				playerTile:teleportTo(config.newPos)
 				playerTile:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 
-				if playerTile:getGroup():getId() < 5 then
+				local bossCooldownDisabled = Remastered and Remastered.Balance and Remastered.Balance.isBossCooldownDisabled()
+				if not bossCooldownDisabled and playerTile:getGroup():getId() < 5 then
 					playerTile:setStorageValue(888904, os.time() + 20 * 60 * 60)
 				end
 

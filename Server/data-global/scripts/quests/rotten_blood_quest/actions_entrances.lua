@@ -70,6 +70,9 @@ function bakragoreEntrance.onUse(player, item, fromPosition, target, toPosition,
 	local now, text = os.time(), ""
 	for _, bossName in pairs({ "murcion", "chagorz", "ichgahal", "vemiath" }) do
 		local cooldown = player:kv():scoped("rotten-blood-quest"):scoped(bossName):get("cooldown") or 0
+		if Remastered and Remastered.Balance and Remastered.Balance.isBossCooldownDisabled() then
+			cooldown = now + 1
+		end
 		if cooldown <= now then
 			text = text .. "\n" .. bossName:titleCase()
 		end

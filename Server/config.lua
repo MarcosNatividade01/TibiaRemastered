@@ -159,8 +159,8 @@ taskHuntingFreeRerollTime = 20 * 60 * 60
 -- Bounty Tasks system
 -- NOTE: bountyTasksFreeRerollTime: Time in seconds that players will have to wait to get a free bounty tasks reroll.
 bountyTasksEnabled = true
-bountyTasksExpMultiplier = 1.4
-bountyTasksPointsMultiplier = 1.4
+bountyTasksExpMultiplier = 5.0
+bountyTasksPointsMultiplier = 5.0
 bountyTasksRerollMultiplier = 1
 bountyTasksKillMultiplier = 1
 bountyTasksFreeRerollTime = 20 * 60 * 60

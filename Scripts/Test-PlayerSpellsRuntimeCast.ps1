@@ -79,8 +79,8 @@ foreach ($case in $affected) {
 
 $balanceConfig = Get-Content -LiteralPath $balanceConfigPath -Raw
 $playerEvent = Get-Content -LiteralPath $playerEventPath -Raw
-Assert-True ($balanceConfig -match 'spellDamageMultiplier\s*=\s*1\.15') 'Multiplicador ofensivo de spell 1.15 ausente.'
-Assert-True ($balanceConfig -match 'offensiveRuneDamageMultiplier\s*=\s*1\.30') 'Multiplicador ofensivo de runa 1.30 ausente.'
+Assert-True ($balanceConfig -match 'spellDamageMultiplier\s*=\s*1\.65') 'Multiplicador ofensivo de spell 1.65 ausente.'
+Assert-True ($balanceConfig -match 'offensiveRuneDamageMultiplier\s*=\s*1\.45') 'Multiplicador ofensivo de runa 1.45 ausente.'
 Assert-True ($playerEvent -match 'getSpellDamageMultiplier\(\)') 'Player:onCombat nao aplica multiplicador central de spell.'
 Assert-True ($playerEvent -match 'getOffensiveRuneDamageMultiplier\(\)') 'Player:onCombat nao aplica multiplicador central de runa.'
 
@@ -90,7 +90,7 @@ Assert-True ($playerEvent -match 'getOffensiveRuneDamageMultiplier\(\)') 'Player
     traditionalSpellFilesAudited = $traditionalFiles.Count
     stanceApiLeaks = 0
     results = $results
-    offensiveSpellDamageMultiplier = 1.15
-    offensiveRuneDamageMultiplier = 1.30
+    offensiveSpellDamageMultiplier = 1.65
+    offensiveRuneDamageMultiplier = 1.45
     note = 'Runtime-facing cast paths are validated from server scripts; unsupported stance protocol is isolated from traditional production spells.'
 } | ConvertTo-Json -Depth 6

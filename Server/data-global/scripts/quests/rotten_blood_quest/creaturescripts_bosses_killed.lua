@@ -10,7 +10,9 @@ function bossesRottenBlood.onDeath(creature)
 		local kv = player:kv():scoped("rotten-blood-quest")
 		local cooldown = kv:scoped(bossName):get("cooldown") or 0
 		if cooldown <= now then
-			kv:scoped(bossName):set("cooldown", now + 20 * 60 * 60)
+			if not Remastered or not Remastered.Balance or not Remastered.Balance.isBossCooldownDisabled() then
+				kv:scoped(bossName):set("cooldown", now + 20 * 60 * 60)
+			end
 			kv:set("taints", math.min(((kv:get("taints") or 0) + 1), 4))
 			logger.info("taints: {}", kv:get("taints"))
 		end

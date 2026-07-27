@@ -2,6 +2,18 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.37-test] - Gameplay rebalance e update do launcher
+
+- Centralizado o balanceamento Remastered em runtime: spells ofensivas de jogadores `1.65x`, runas ofensivas `1.45x`, cooldowns de spells `0.50x`, Bounty Tasks `5x`, Bestiary `4x`, Charms `0.50x` e Hunting Tasks Shop `0.40x`.
+- Atualizado o `Gold Token Broker` ao lado da Yana para vender Gold Token `22721` por `100000` gold e Silver Token `22516` por `50000` gold, preservando compra multipla.
+- Flexibilizadas alavancas de bosses para aceitar de 1 jogador ate o limite original da sala, preservando acesso, level, itens, storages e sala ocupada.
+- Neutralizados cooldowns pessoais de bosses no `BossLever`, helpers centrais e lockouts especificos encontrados em scripts customizados, mantendo o bloqueio apenas enquanto a sala estiver em uso.
+- Aplicada reducao central auditavel de HP e dano para bosses fracos, medios e fortes: `0.65`, `0.50` e `0.25`, com hook em `Game.createMonster` e dano em `Creature:onDrainHealth`.
+- Incluidos os arquivos de minimap no pacote de update e sincronizacao de primeiro uso/atualizacao do client, preservando marcadores pessoais quando possivel.
+- Auditados assets da Store contra `assets.json`; ofertas com asset visual ausente continuam registradas para validacao manual, sem importar sprites sem fonte licenciada.
+- Investigado o movimento de 1 SQM por toque: o cliente operacional 15.24 usa binario pre-compilado e nao contem fonte de movimento editavel neste pacote; a pendencia foi isolada para nao bloquear a publicacao das alteracoes server-side e launcher.
+- Adicionados e atualizados testes PowerShell para multiplicadores, bosses, broker, Bestiary, Charms, Bounty, Hunting Shop, minimap, Store, personagens por conta e movimento.
+
 ## [0.1.36-test] - Hotfix spells, broker e proficiency
 
 - Removidas dependencias de Stance Protocol experimental das player spells tradicionais em producao, preservando os sandboxes `UpstreamTesting/` para evolucao futura.

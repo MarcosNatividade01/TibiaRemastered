@@ -39,8 +39,8 @@ spell:words("uteta res dru")
 spell:level(300)
 spell:mana(2200)
 spell:isPremium(true)
-spell:cooldown(2 * 60 * 60 * 1000) -- Default cooldown = 2 hours
-spell:groupCooldown(2 * 1000)
+spell:cooldown(Remastered.Balance.applyPlayerSpellCooldown(2 * 60 * 60 * 1000)) -- Default cooldown = 2 hours
+spell:groupCooldown(Remastered.Balance.applyPlayerSpellCooldowns(2 * 1000))
 spell:vocation("druid;true", "elder druid;true")
 spell:hasParams(true)
 spell:isAggressive(false)

@@ -77,6 +77,7 @@ Reserved player action storage key ranges (const.h)
 
 Storage = {
 	-- General storages
+	RemasteredBossHealthScaled = 990000001,
 	Dragonfetish = 30003,
 	EdronRopeQuest = 30004,
 	OrcKingGreeting = 30006,

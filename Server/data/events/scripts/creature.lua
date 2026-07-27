@@ -109,7 +109,7 @@ function Creature:onDrainHealth(attacker, typePrimary, damagePrimary, typeSecond
 		return typePrimary, damagePrimary, typeSecondary, damageSecondary, colorPrimary, colorSecondary
 	end
 
-	if self:isPlayer() and Remastered and Remastered.Balance and Remastered.Balance.scaleBossDamage then
+	if Remastered and Remastered.Balance and Remastered.Balance.scaleBossDamage then
 		damagePrimary = Remastered.Balance.scaleBossDamage(attacker, damagePrimary)
 		damageSecondary = Remastered.Balance.scaleBossDamage(attacker, damageSecondary)
 	end

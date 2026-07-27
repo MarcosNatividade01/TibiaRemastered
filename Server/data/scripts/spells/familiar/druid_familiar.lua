@@ -12,8 +12,8 @@ spell:words("utevo gran res dru")
 spell:castSound(SOUND_EFFECT_TYPE_SPELL_SUMMON_DRUID_FAMILIAR)
 spell:level(200)
 spell:mana(3000)
-spell:cooldown(0) -- calculated in CreateFamiliarSpell
-spell:groupCooldown(2 * 1000)
+spell:cooldown(Remastered.Balance.applyPlayerSpellCooldown(0)) -- calculated in CreateFamiliarSpell
+spell:groupCooldown(Remastered.Balance.applyPlayerSpellCooldowns(2 * 1000))
 spell:needLearn(false)
 spell:isAggressive(false)
 spell:vocation("druid;true", "elder druid;true")
