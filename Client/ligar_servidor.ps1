@@ -1,6 +1,7 @@
 $ErrorActionPreference = 'Stop'
 
-$serverRoot = 'C:\otserv'
+$projectRoot = Split-Path -Parent $PSScriptRoot
+$serverRoot = Join-Path $projectRoot 'Server'
 $serverExe = Join-Path $serverRoot 'crystalserver.exe'
 $schemaSql = Join-Path $serverRoot 'schema.sql'
 $mysqlExe = 'C:\xampp\mysql\bin\mysqld.exe'
@@ -93,7 +94,8 @@ function Ensure-Database {
 
     if (-not $tableCheck) {
         Write-Host 'Importando schema inicial do servidor...'
-        & $mysqlClient -uroot otserv -e "source C:/otserv/schema.sql"
+        $schemaPath = ($schemaSql -replace '\\', '/')
+        & $mysqlClient -uroot otserv -e "source $schemaPath"
         if ($LASTEXITCODE -ne 0) {
             throw 'Falha ao importar schema.sql.'
         }

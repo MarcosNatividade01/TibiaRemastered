@@ -6,13 +6,20 @@ local BalanceModule = {
 function BalanceModule.initialize(self, remastered)
 	local createMonsterHook = remastered.Balance.installGameCreateMonsterHook and remastered.Balance.installGameCreateMonsterHook()
 	remastered.Utilities.log(string.format(
-		"%s initialized: exp x%s skill x%s loot x%s spell x%s rune x%s bossCreateHook=%s",
+		"%s initialized: version=%s build=%s commit=%s core=%s datapack=%s exp x%s skill x%s loot x%s spell x%s rune x%s spellCooldown x%s bossCooldownDisabled=%s bossCreateHook=%s",
 		self.id,
+		tostring(remastered.Core.getVersion()),
+		tostring(remastered.Config.get("build.label", "unknown")),
+		tostring(remastered.Config.get("build.commit", "unknown")),
+		tostring(CORE_DIRECTORY or "unknown"),
+		tostring(DATA_DIRECTORY or "unknown"),
 		tostring(remastered.Balance.getExperienceRate()),
 		tostring(remastered.Balance.getSkillRate()),
 		tostring(remastered.Balance.getLootRate()),
 		tostring(remastered.Balance.getSpellDamageMultiplier()),
 		tostring(remastered.Balance.getOffensiveRuneDamageMultiplier()),
+		tostring(remastered.Balance.getPlayerSpellCooldownMultiplier()),
+		tostring(remastered.Balance.isBossCooldownDisabled()),
 		tostring(createMonsterHook == true)
 	))
 	return true

@@ -1,7 +1,11 @@
 return {
-	version = "0.1.0",
+	version = "0.1.38-test",
 	environment = "local",
 	debug = false,
+	build = {
+		commit = "e947289f66618424c491bf51557ae1ade54c48ea",
+		label = "0.1.38-runtime-fix",
+	},
 
 	balance = {
 		-- Rates efetivos em Server/data/stages.lua; camada neutra evita duplicacao.

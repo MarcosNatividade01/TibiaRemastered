@@ -2,6 +2,14 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.38-test] - Runtime fix do servidor ativo
+
+- Corrigido o problema em que `0.1.37-test` estava publicada, mas nao aparecia no jogo porque o processo `crystalserver.exe` real continuava iniciado antes do commit e precisava ser reiniciado.
+- Corrigido `Client/ligar_servidor.ps1`, que apontava para `C:\otserv`; agora ele resolve o servidor pelo pacote atual (`../Server`) para evitar iniciar uma instalacao externa ou inexistente.
+- Adicionada identificacao runtime permanente no log Remastered: versao, build, commit, core, datapack ativo e multiplicadores carregados.
+- Expandido o teste administrativo runtime para mostrar spell `1.65`, runa `1.45`, cooldown de spell `0.5`, boss cooldown, Bestiary, Charms, Bounty e Hunting Shop dentro do processo do servidor.
+- Confirmado em runtime que o servidor ativo usa `Server/crystalserver.exe`, datapack `data-global`, portas `7171/7172` e `Modules/Remastered/Config/default.lua`.
+
 ## [0.1.37-test] - Gameplay rebalance e update do launcher
 
 - Centralizado o balanceamento Remastered em runtime: spells ofensivas de jogadores `1.65x`, runas ofensivas `1.45x`, cooldowns de spells `0.50x`, Bounty Tasks `5x`, Bestiary `4x`, Charms `0.50x` e Hunting Tasks Shop `0.40x`.

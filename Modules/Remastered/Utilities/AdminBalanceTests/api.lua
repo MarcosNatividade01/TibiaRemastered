@@ -102,6 +102,27 @@ local function multiplier(kind)
 	if kind == "loot" and api.getLootRate then
 		return api.getLootRate()
 	end
+	if kind == "spell" and api.getSpellDamageMultiplier then
+		return api.getSpellDamageMultiplier()
+	end
+	if kind == "rune" and api.getOffensiveRuneDamageMultiplier then
+		return api.getOffensiveRuneDamageMultiplier()
+	end
+	if kind == "spellCooldown" and api.getPlayerSpellCooldownMultiplier then
+		return api.getPlayerSpellCooldownMultiplier()
+	end
+	if kind == "bounty" and api.getBountyRewardMultiplier then
+		return api.getBountyRewardMultiplier()
+	end
+	if kind == "bestiary" and api.getBestiaryCompletionRewardMultiplier then
+		return api.getBestiaryCompletionRewardMultiplier()
+	end
+	if kind == "charm" and api.getCharmCostMultiplier then
+		return api.getCharmCostMultiplier()
+	end
+	if kind == "huntingShop" and api.getHuntingTaskShopPriceMultiplier then
+		return api.getHuntingTaskShopPriceMultiplier()
+	end
 	return 1.0
 end
 
@@ -245,6 +266,14 @@ function AdminBalanceTests.testBalance(player)
 		"XP Rate: x" .. tostring(multiplier("xp")),
 		"Skill Rate: x" .. tostring(multiplier("skill")),
 		"Loot Rate: x" .. tostring(multiplier("loot")),
+		"Player spell damage: x" .. tostring(multiplier("spell")),
+		"Offensive rune damage: x" .. tostring(multiplier("rune")),
+		"Player spell cooldown: x" .. tostring(multiplier("spellCooldown")),
+		"Boss cooldown disabled: " .. tostring(balance() and balance().isBossCooldownDisabled and balance().isBossCooldownDisabled() == true),
+		"Bestiary completion reward: x" .. tostring(multiplier("bestiary")),
+		"Charm cost: x" .. tostring(multiplier("charm")),
+		"Bounty reward: x" .. tostring(multiplier("bounty")),
+		"Hunting task shop price: x" .. tostring(multiplier("huntingShop")),
 		"Multiplier source: Remastered.Balance API",
 		"Config: " .. tostring(AdminBalanceTests._metadata.configPath),
 		"Feature flags: " .. tostring(AdminBalanceTests._metadata.featurePath),
