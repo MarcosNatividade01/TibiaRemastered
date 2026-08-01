@@ -2,6 +2,12 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.41-test] - Descricoes bilingues da Yana
+
+- Adicionadas descricoes bilingues aos menus clicaveis da NPC Yana.
+- Mantidas keywords curtas no dialogo NPC tradicional para reduzir risco de crash no client.
+- Preservados precos, Gold Token ID, efeitos, duracao, materiais, compatibilidade e persistencia dos imbuements.
+
 ## [0.1.40-test] - Hotfix Santo Agostinho e Yana clicavel
 
 - Restaurado seletivamente o personagem Santo Agostinho a partir do backup `YanaImbuements_20260801_103611`, sem restaurar o banco inteiro e sem alterar contas ou outros personagens.
