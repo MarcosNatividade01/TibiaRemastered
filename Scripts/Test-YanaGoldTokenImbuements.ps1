@@ -9,7 +9,11 @@ Assert-Equal ($yana -match "basic = 1, intricate = 2, powerful = 3") $true "Yana
 Assert-Equal ($yana -match "applyImbuementScrollToItem") $true "Yana native imbuement API"
 Assert-Equal ($yana -match "player:removeItem\(goldTokenId, state.price\)") $true "Yana token removal"
 Assert-Equal ($yana.IndexOf("player:applyImbuementScrollToItem") -lt $yana.IndexOf("player:removeItem(goldTokenId, state.price)")) $true "Yana removes tokens after native apply"
-Assert-Equal ($yana -notmatch "addDialogOptions") $true "Yana avoids client dialog options"
+Assert-Equal ($yana -match "addDialogOptions") $true "Yana exposes dialog options"
+Assert-Equal ($yana -match "\{Skills\}") $true "Yana clickable categories"
+Assert-Equal ($yana -match "\{Basic\}.*\{Intricate\}.*\{Powerful\}") $true "Yana clickable tiers"
+Assert-Equal ($yana -match "\{Helmet\}.*\{Armor\}.*\{Left\}.*\{Right\}.*\{Boots\}.*\{Backpack\}") $true "Yana clickable item slots"
+Assert-Equal ($yana -match "\{Yes\}.*\{No\}") $true "Yana clickable confirmation"
 
 foreach ($entry in $ExpectedScrolls.GetEnumerator()) {
 	$name = $entry.Key

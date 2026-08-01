@@ -39,12 +39,12 @@ npcType.onCheckItem = function(npc, player, clientId, subType) end
 
 local goldTokenId = 22721
 local tierPrices = { basic = 1, intricate = 2, powerful = 3 }
-local menuText = "I can imbue your equipped items using Gold Tokens. Say skill, elemental damage, elemental protection or support."
+local menuText = "Choose a category: {Skills}, {Elemental Damage}, {Elemental Protection} or {Support}."
 local categoryTexts = {
-	skill = "Skill imbuements: bash, blockade, chop, epiphany, precision, punch, slash.",
-	["elemental damage"] = "Elemental damage imbuements: electrify, frost, reap, scorch, venom.",
-	["elemental protection"] = "Elemental protection imbuements: cloud fabric, demon presence, dragon hide, lich shroud, quara scale, snake skin.",
-	support = "Support imbuements: featherweight, strike, swiftness, vampirism, vibrancy, void.",
+	skills = "Choose a skill imbuement: {Blockade}, {Chop}, {Epiphany}, {Precision}, {Slash}, {Bash} or {Punch}.",
+	["elemental damage"] = "Choose an elemental damage imbuement: {Electrify}, {Scorch}, {Venom}, {Frost} or {Reap}.",
+	["elemental protection"] = "Choose an elemental protection imbuement: {Cloud Fabric}, {Dragon Hide}, {Snake Skin}, {Lich Shroud}, {Demon Presence} or {Quara Scale}.",
+	support = "Choose a support imbuement: {Strike}, {Void}, {Vampirism}, {Swiftness}, {Featherweight} or {Vibrancy}.",
 }
 
 local imbuements = {
@@ -92,6 +92,33 @@ local slotNames = {
 }
 local playerState = {}
 
+local tierEffects = {
+	bash = { basic = "+2 Club Fighting", intricate = "+3 Club Fighting", powerful = "+6 Club Fighting" },
+	blockade = { basic = "+2 Shielding", intricate = "+3 Shielding", powerful = "+6 Shielding" },
+	chop = { basic = "+2 Axe Fighting", intricate = "+3 Axe Fighting", powerful = "+6 Axe Fighting" },
+	epiphany = { basic = "+2 Magic Level", intricate = "+3 Magic Level", powerful = "+6 Magic Level" },
+	precision = { basic = "+2 Distance Fighting", intricate = "+3 Distance Fighting", powerful = "+6 Distance Fighting" },
+	punch = { basic = "+2 Fist Fighting", intricate = "+3 Fist Fighting", powerful = "+6 Fist Fighting" },
+	slash = { basic = "+2 Sword Fighting", intricate = "+3 Sword Fighting", powerful = "+6 Sword Fighting" },
+	electrify = { basic = "15% Energy conversion", intricate = "38% Energy conversion", powerful = "75% Energy conversion" },
+	frost = { basic = "15% Ice conversion", intricate = "38% Ice conversion", powerful = "75% Ice conversion" },
+	reap = { basic = "15% Death conversion", intricate = "38% Death conversion", powerful = "75% Death conversion" },
+	scorch = { basic = "15% Fire conversion", intricate = "38% Fire conversion", powerful = "75% Fire conversion" },
+	venom = { basic = "15% Earth conversion", intricate = "38% Earth conversion", powerful = "75% Earth conversion" },
+	["cloud fabric"] = { basic = "5% Energy Protection", intricate = "12% Energy Protection", powerful = "23% Energy Protection" },
+	["demon presence"] = { basic = "5% Holy Protection", intricate = "12% Holy Protection", powerful = "23% Holy Protection" },
+	["dragon hide"] = { basic = "5% Fire Protection", intricate = "12% Fire Protection", powerful = "23% Fire Protection" },
+	["lich shroud"] = { basic = "3% Death Protection", intricate = "8% Death Protection", powerful = "15% Death Protection" },
+	["quara scale"] = { basic = "5% Ice Protection", intricate = "12% Ice Protection", powerful = "23% Ice Protection" },
+	["snake skin"] = { basic = "5% Earth Protection", intricate = "12% Earth Protection", powerful = "23% Earth Protection" },
+	featherweight = { basic = "5% Capacity", intricate = "12% Capacity", powerful = "23% Capacity" },
+	strike = { basic = "15% critical chance and 22.5% critical damage", intricate = "15% critical chance and 37.5% critical damage", powerful = "15% critical chance and 75% critical damage" },
+	swiftness = { basic = "+15 Speed", intricate = "+23 Speed", powerful = "+45 Speed" },
+	vampirism = { basic = "7.5% Life Leech", intricate = "15% Life Leech", powerful = "37.5% Life Leech" },
+	vibrancy = { basic = "23% paralysis removal chance", intricate = "38% paralysis removal chance", powerful = "75% paralysis removal chance" },
+	void = { basic = "4.5% Mana Leech", intricate = "7.5% Mana Leech", powerful = "12% Mana Leech" },
+}
+
 local keywordHandler = KeywordHandler:new()
 local npcHandler = NpcHandler:new(keywordHandler)
 
@@ -111,7 +138,7 @@ local function clearState(playerId)
 end
 
 local function tierText()
-	return "Choose a tier: basic for 1 Gold Token, intricate for 2 Gold Tokens or powerful for 3 Gold Tokens."
+	return "Choose level: {Basic}, {Intricate} or {Powerful}."
 end
 
 local function itemName(item)
@@ -153,6 +180,7 @@ end
 
 local function greetCallback(npc, creature)
 	clearState(creature:getId())
+	npcHandler:setTopic(creature:getId(), 1)
 	return true
 end
 
@@ -190,13 +218,16 @@ local function creatureSayCallback(npc, creature, type, message)
 	end
 
 	if npcHandler:getTopic(playerId) == 1 then
+		if msg == "skill" then
+			msg = "skills"
+		end
 		if categoryTexts[msg] then
 			npcHandler:say(categoryTexts[msg], npc, creature)
 			return true
 		end
 		local imbuement = imbuements[msg]
 		if imbuement then
-			playerState[playerId] = { imbuement = imbuement }
+			playerState[playerId] = { imbuement = imbuement, imbuementKey = msg }
 			npcHandler:setTopic(playerId, 2)
 			npcHandler:say("You chose " .. imbuement.name .. ". " .. tierText(), npc, creature)
 			return true
@@ -214,7 +245,8 @@ local function creatureSayCallback(npc, creature, type, message)
 			state.price = price
 			state.scrollId = state.imbuement.scrolls[msg]
 			npcHandler:setTopic(playerId, 3)
-			npcHandler:say("Which equipped item should I imbue? Say helmet, armor, left, right, boots or backpack.", npc, creature)
+			local effectText = tierEffects[state.imbuementKey] and tierEffects[state.imbuementKey][msg] or "imbuement effect"
+			npcHandler:say(state.tierName .. " " .. state.imbuement.name .. "\n" .. effectText .. "\nPrice: " .. state.price .. " Gold Token" .. (state.price == 1 and "" or "s") .. ".\nChoose item: {Helmet}, {Armor}, {Left}, {Right}, {Boots} or {Backpack}.", npc, creature)
 			return true
 		end
 		npcHandler:say(tierText(), npc, creature)
@@ -232,10 +264,10 @@ local function creatureSayCallback(npc, creature, type, message)
 			end
 			state.slot = slot
 			npcHandler:setTopic(playerId, 4)
-			npcHandler:say("Do you want to apply " .. state.tierName .. " " .. state.imbuement.name .. " to your " .. itemName(item) .. " for " .. state.price .. " Gold Token" .. (state.price == 1 and "" or "s") .. "?", npc, creature)
+			npcHandler:say("Apply " .. state.tierName .. " " .. state.imbuement.name .. " to your " .. itemName(item) .. " for " .. state.price .. " Gold Token" .. (state.price == 1 and "" or "s") .. "? {Yes} or {No}.", npc, creature)
 			return true
 		end
-		npcHandler:say("Say helmet, armor, left, right, boots or backpack.", npc, creature)
+		npcHandler:say("Choose item: {Helmet}, {Armor}, {Left}, {Right}, {Boots} or {Backpack}.", npc, creature)
 		return true
 	end
 
@@ -260,9 +292,10 @@ npcHandler:setCallback(CALLBACK_SET_INTERACTION, onAddFocus)
 npcHandler:setCallback(CALLBACK_REMOVE_INTERACTION, onReleaseFocus)
 npcHandler:setCallback(CALLBACK_GREET, greetCallback)
 npcHandler:setCallback(CALLBACK_MESSAGE_DEFAULT, creatureSayCallback)
-npcHandler:setMessage(MESSAGE_GREET, "Hello |PLAYERNAME|. I can trade equipment for tokens or imbue your equipment using Gold Tokens.")
+npcHandler:setMessage(MESSAGE_GREET, "Hello |PLAYERNAME|. I can trade equipment for {tokens} or imbue your equipment using Gold Tokens. " .. menuText)
 npcHandler:setMessage(MESSAGE_WALKAWAY, "See you later.")
 npcHandler:setMessage(MESSAGE_FAREWELL, "See you later.")
 npcHandler:addModule(FocusModule:new(), npcConfig.name, true, true, false)
 
+npcType:addDialogOptions("skills", "elemental damage", "elemental protection", "support", "tokens", "bye")
 npcType:register(npcConfig)

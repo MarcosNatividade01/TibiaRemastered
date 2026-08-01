@@ -2,6 +2,13 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.40-test] - Hotfix Santo Agostinho e Yana clicavel
+
+- Restaurado seletivamente o personagem Santo Agostinho a partir do backup `YanaImbuements_20260801_103611`, sem restaurar o banco inteiro e sem alterar contas ou outros personagens.
+- Convertida a NPC Yana novamente para o fluxo clicavel por categorias, imbuement, tier, slot equipado e confirmacao.
+- Mantidos os novos imbuements por Gold Tokens e os bonus aumentados em 50% publicados na versao anterior.
+- Atualizado o teste da Yana para validar categorias, tiers, slots e confirmacao clicaveis.
+
 ## [0.1.39-test] - Yana imbuements por Gold Tokens
 
 - Expandida a NPC Yana para aplicar imbuements diretamente por Gold Tokens, mantendo o shop de equipamentos por tokens.
@@ -402,7 +409,6 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Criada a estrutura inicial do repositorio.
 - Adicionados arquivos base para README, roadmap, ideias, versao e manifest.
 - Adicionado `.gitignore` para proteger dados reais e arquivos sensiveis.
-
 
 
 
