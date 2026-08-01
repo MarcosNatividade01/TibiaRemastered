@@ -2,6 +2,15 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.39-test] - Yana imbuements por Gold Tokens
+
+- Expandida a NPC Yana para aplicar imbuements diretamente por Gold Tokens, mantendo o shop de equipamentos por tokens.
+- Adicionados scrolls Basic para todos os imbuements e registrado o fluxo nativo de aplicacao por scroll para preservar compatibilidade, slots, duracao, persistencia e bloqueio de duplicidade.
+- Corrigidos Strike, Vibrancy e os materiais oficiais do sistema normal de imbuements; Yana usa Gold Tokens e shrine continua usando materiais.
+- Aumentados em 50% os bonus de todos os imbuements, com arredondamento para cima em valores inteiros.
+- Removidas opcoes clicaveis da Yana para evitar fechamento do client ao conversar com a NPC; o fluxo agora usa texto simples.
+- Adicionados testes PowerShell para Yana, valores, conversao elemental, protecoes, suporte, compatibilidade, persistencia, duracao e duplicidade.
+
 ## [0.1.38-test] - Runtime fix do servidor ativo
 
 - Corrigido o problema em que `0.1.37-test` estava publicada, mas nao aparecia no jogo porque o processo `crystalserver.exe` real continuava iniciado antes do commit e precisava ser reiniciado.
@@ -393,7 +402,6 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Criada a estrutura inicial do repositorio.
 - Adicionados arquivos base para README, roadmap, ideias, versao e manifest.
 - Adicionado `.gitignore` para proteger dados reais e arquivos sensiveis.
-
 
 
 

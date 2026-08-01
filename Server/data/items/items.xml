@@ -74004,6 +74004,10 @@
 	<item id="40434" name="stairs">
 		<attribute key="floorchange" value="south" />
 	</item>
+	<item id="40529" article="a" name="gold-brocaded cloth">
+		<attribute key="primarytype" value="creature products" />
+		<attribute key="weight" value="50" />
+	</item>
 	<item id="40530" name="broken macuahuitl">
 		<attribute key="primarytype" value="creature products" />
 		<attribute key="description" value="This macuahuitl was a once legendary obsidian sword wielded by the ancient Iks" />
@@ -85314,6 +85318,102 @@
 	</item>
 	<item id="51443" name="etcher">
 		<attribute key="weight" value="150" />
+	</item>
+	<item id="51800" article="a" name="basic strike scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51801" article="a" name="basic reap scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51802" article="a" name="basic venom scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51803" article="a" name="basic electrify scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51804" article="a" name="basic scorch scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51805" article="a" name="basic frost scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51806" article="a" name="basic lich shroud scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51807" article="a" name="basic snake skin scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51808" article="a" name="basic cloud fabric scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51809" article="a" name="basic dragon hide scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51810" article="a" name="basic demon presence scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51811" article="a" name="basic quara scale scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51812" article="a" name="basic vampirism scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51813" article="a" name="basic void scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51814" article="a" name="basic chop scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51815" article="a" name="basic bash scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51816" article="a" name="basic precision scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51817" article="a" name="basic punch scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51818" article="a" name="basic epiphany scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51819" article="a" name="basic blockade scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51820" article="a" name="basic slash scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51821" article="a" name="basic swiftness scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51822" article="a" name="basic featherweight scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
+	</item>
+	<item id="51823" article="a" name="basic vibrancy scroll">
+		<attribute key="primarytype" value="documents and papers" />
+		<attribute key="weight" value="250" />
 	</item>
 	<item id="51444" article="a" name="powerful bash scroll">
 		<attribute key="primarytype" value="documents and papers" />
