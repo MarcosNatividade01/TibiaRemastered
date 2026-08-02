@@ -1,4 +1,5 @@
 local internalNpcName = "Yana"
+local yanaHotfixVersion = "0.1.42-test"
 local npcType = Game.createNpcType(internalNpcName)
 local npcConfig = {}
 
@@ -39,6 +40,14 @@ npcType.onCheckItem = function(npc, player, clientId, subType) end
 
 local goldTokenId = 22721
 local tierPrices = { basic = 1, intricate = 2, powerful = 3 }
+local STATES = {
+	CATEGORY = "CATEGORY",
+	IMBUEMENT = "IMBUEMENT",
+	TIER = "TIER",
+	CONFIRM = "CONFIRM",
+	APPLY = "APPLY",
+}
+
 local menuText = "Choose a category:\n{Skills} - Skills / Habilidades\n{Elemental Damage} - Elemental Damage / Dano Elemental\n{Elemental Protection} - Elemental Protection / Protecao Elemental\n{Support} - Support / Suporte."
 local categoryTexts = {
 	skills = "Choose a skill imbuement:\n{Blockade} - Shielding / Defesa com Escudo\n{Chop} - Axe Fighting / Machado\n{Epiphany} - Magic Level / Nivel Magico\n{Precision} - Distance Fighting / Distancia\n{Slash} - Sword Fighting / Espada\n{Bash} - Club Fighting / Clava\n{Punch} - Fist Fighting / Combate com Punhos\n{Back} - Voltar.",
@@ -74,14 +83,21 @@ local imbuements = {
 	void = { name = "Void", scrolls = { basic = 51813, intricate = 51747, powerful = 51467 } },
 }
 
-local slotAliases = {
-	head = CONST_SLOT_HEAD, helmet = CONST_SLOT_HEAD, helm = CONST_SLOT_HEAD,
-	armor = CONST_SLOT_ARMOR, armour = CONST_SLOT_ARMOR, chest = CONST_SLOT_ARMOR,
-	left = CONST_SLOT_LEFT, weapon = CONST_SLOT_LEFT, mainhand = CONST_SLOT_LEFT, main = CONST_SLOT_LEFT,
-	right = CONST_SLOT_RIGHT, shield = CONST_SLOT_RIGHT, spellbook = CONST_SLOT_RIGHT, offhand = CONST_SLOT_RIGHT,
-	boots = CONST_SLOT_FEET, feet = CONST_SLOT_FEET,
-	backpack = CONST_SLOT_BACKPACK, bp = CONST_SLOT_BACKPACK,
+local categories = {
+	skills = { "blockade", "chop", "epiphany", "precision", "slash", "bash", "punch" },
+	["elemental damage"] = { "reap", "electrify", "venom", "frost", "scorch" },
+	["elemental protection"] = { "cloud fabric", "demon presence", "dragon hide", "lich shroud", "quara scale", "snake skin" },
+	support = { "featherweight", "strike", "swiftness", "vampirism", "vibrancy", "void" },
 }
+
+local imbuementCategories = {}
+for categoryKey, keys in pairs(categories) do
+	for _, imbuementKey in ipairs(keys) do
+		imbuementCategories[imbuementKey] = categoryKey
+	end
+end
+
+local slotOrder = { CONST_SLOT_HEAD, CONST_SLOT_ARMOR, CONST_SLOT_LEFT, CONST_SLOT_RIGHT, CONST_SLOT_FEET, CONST_SLOT_BACKPACK }
 local slotNames = {
 	[CONST_SLOT_HEAD] = "helmet",
 	[CONST_SLOT_ARMOR] = "armor",
@@ -91,6 +107,7 @@ local slotNames = {
 	[CONST_SLOT_BACKPACK] = "backpack",
 }
 local playerState = {}
+local yanaDebugClicks = false
 
 local tierEffects = {
 	bash = { basic = "+1 Club Fighting / Clava", intricate = "+2 Club Fighting / Clava", powerful = "+4 Club Fighting / Clava" },
@@ -137,6 +154,121 @@ local function clearState(playerId)
 	npcHandler:setTopic(playerId, 0)
 end
 
+local function newState()
+	return {
+		state = STATES.CATEGORY,
+		category = nil,
+		imbuement = nil,
+		imbuementKey = nil,
+		tier = nil,
+		tierName = nil,
+		item = nil,
+		tokenCost = nil,
+		price = nil,
+		scrollId = nil,
+	}
+end
+
+local function stripAccents(text)
+	text = text:gsub("[áàâãä]", "a"):gsub("[ÁÀÂÃÄ]", "a")
+	text = text:gsub("[éèêë]", "e"):gsub("[ÉÈÊË]", "e")
+	text = text:gsub("[íìîï]", "i"):gsub("[ÍÌÎÏ]", "i")
+	text = text:gsub("[óòôõö]", "o"):gsub("[ÓÒÔÕÖ]", "o")
+	text = text:gsub("[úùûü]", "u"):gsub("[ÚÙÛÜ]", "u")
+	text = text:gsub("[ç]", "c"):gsub("[Ç]", "c")
+	return text
+end
+
+local aliases = {
+	skill = "skills",
+	["skill increase"] = "skills",
+	["habilidades"] = "skills",
+	["elemental damage"] = "elemental damage",
+	["dano elemental"] = "elemental damage",
+	["elemental protection"] = "elemental protection",
+	["protecao elemental"] = "elemental protection",
+	["support"] = "support",
+	["suporte"] = "support",
+	["basico"] = "basic",
+	["intrincado"] = "intricate",
+	["poderoso"] = "powerful",
+	["sim"] = "yes",
+	["nao"] = "no",
+	["voltar"] = "back",
+	["cancel"] = "no",
+	["cancelar"] = "no",
+	["life leech"] = "vampirism",
+	["roubo de vida"] = "vampirism",
+	["mana leech"] = "void",
+	["roubo de mana"] = "void",
+	["death protection"] = "lich shroud",
+	["protecao contra morte"] = "lich shroud",
+}
+
+local function canonicalize(message)
+	local msg = stripAccents((message or ""):lower())
+	msg = msg:gsub("[{}]", " ")
+	msg = msg:gsub("%s+", " ")
+	msg = msg:gsub("^%s+", ""):gsub("%s+$", "")
+	if aliases[msg] then
+		return aliases[msg]
+	end
+	if categoryTexts[msg] or imbuements[msg] or tierPrices[msg] or msg == "yes" or msg == "no" or msg == "back" then
+		return msg
+	end
+	for key in pairs(categoryTexts) do
+		if msg:find(key, 1, true) then
+			return key
+		end
+	end
+	for key in pairs(imbuements) do
+		if msg:find(key, 1, true) then
+			return key
+		end
+	end
+	for key, canonical in pairs(aliases) do
+		if msg:find(key, 1, true) then
+			return canonical
+		end
+	end
+	for key in pairs(tierPrices) do
+		if msg:find(key, 1, true) then
+			return key
+		end
+	end
+	if msg:find("yes", 1, true) then
+		return "yes"
+	elseif msg:find("no", 1, true) then
+		return "no"
+	elseif msg:find("back", 1, true) then
+		return "back"
+	end
+	return msg
+end
+
+local function logClick(playerId, rawMessage, normalizedMessage, previousState, state, handler, nextState, response)
+	if not yanaDebugClicks then
+		return
+	end
+	logger.info("[YanaClick] playerId={} raw='{}' normalized='{}' state='{}' category='{}' imbuement='{}' tier='{}' handler='{}' nextState='{}' response='{}'",
+		playerId,
+		rawMessage or "",
+		normalizedMessage or "",
+		previousState or "",
+		(state and state.category) or "",
+		(state and state.imbuementKey) or "",
+		(state and state.tier) or "",
+		handler or "",
+		nextState or "",
+		response or "")
+end
+
+local function sayAndLog(npc, creature, playerId, rawMessage, normalizedMessage, previousState, state, handler, response)
+	npcHandler:say(response, npc, creature)
+	logClick(playerId, rawMessage, normalizedMessage, previousState, state, handler, state and state.state or nil, response)
+	return true
+end
+
 local function tierText(imbuementKey)
 	local effects = tierEffects[imbuementKey] or {}
 	return "Choose level:\n{Basic} - " .. (effects.basic or "Basic") .. " - 1 Gold Token\n{Intricate} - " .. (effects.intricate or "Intricate") .. " - 2 Gold Tokens\n{Powerful} - " .. (effects.powerful or "Powerful") .. " - 3 Gold Tokens\n{Back} - Voltar."
@@ -146,14 +278,7 @@ local function itemName(item)
 	return item and ItemType(item:getId()):getName() or "item"
 end
 
-local function applyGoldTokenImbuement(player, state)
-	local item = player:getSlotItem(state.slot)
-	if not item then
-		return false, "You are not wearing an item in your " .. slotNames[state.slot] .. " slot."
-	end
-	if not item.getImbuementSlot or item:getImbuementSlot() <= 0 then
-		return false, "That item is not imbuable."
-	end
+local function tryApplyGoldTokenImbuement(player, state, item)
 	if player:getItemCount(goldTokenId) < state.price then
 		return false, "You need " .. state.price .. " Gold Token" .. (state.price == 1 and "" or "s") .. " for that imbuement."
 	end
@@ -168,7 +293,7 @@ local function applyGoldTokenImbuement(player, state)
 	local scrollCountAfter = player:getItemCount(state.scrollId)
 	if scrollCountAfter > scrollCountBefore then
 		player:removeItem(state.scrollId, scrollCountAfter - scrollCountBefore)
-		return false, "I could not apply that imbuement to your " .. itemName(item) .. ". Check item compatibility, free slots and duplicate imbuements."
+		return false, "not compatible"
 	end
 
 	if not player:removeItem(goldTokenId, state.price) then
@@ -179,9 +304,38 @@ local function applyGoldTokenImbuement(player, state)
 	return true, "Your " .. itemName(item) .. " has been imbued with " .. state.tierName .. " " .. state.imbuement.name .. "."
 end
 
+local function applyGoldTokenImbuement(player, state)
+	if player:getItemCount(goldTokenId) < state.price then
+		return false, "You need " .. state.price .. " Gold Token" .. (state.price == 1 and "" or "s") .. " for that imbuement."
+	end
+
+	local triedItem = false
+	for _, slot in ipairs(slotOrder) do
+		local item = player:getSlotItem(slot)
+		if item and item.getImbuementSlot and item:getImbuementSlot() > 0 then
+			triedItem = true
+			state.slot = slot
+			state.item = item
+			local success, resultMessage = tryApplyGoldTokenImbuement(player, state, item)
+			if success then
+				return true, resultMessage
+			end
+			if resultMessage ~= "not compatible" then
+				return false, resultMessage
+			end
+		end
+	end
+
+	if triedItem then
+		return false, "I could not apply that imbuement to any equipped item. Check item compatibility, free slots and duplicate imbuements."
+	end
+	return false, "You are not wearing an imbuable item."
+end
+
 local function greetCallback(npc, creature)
-	clearState(creature:getId())
-	npcHandler:setTopic(creature:getId(), 1)
+	local playerId = creature:getId()
+	playerState[playerId] = newState()
+	npcHandler:setTopic(playerId, 1)
 	return true
 end
 
@@ -192,108 +346,112 @@ local function creatureSayCallback(npc, creature, type, message)
 		return false
 	end
 
-	local msg = message:lower()
-	if MsgContains(msg, "back") then
-		playerState[playerId] = {}
-		npcHandler:setTopic(playerId, 1)
-		npcHandler:say(menuText, npc, creature)
-		return true
+	local msg = canonicalize(message)
+	local state = playerState[playerId]
+	local previousState = state and state.state or nil
+
+	if msg == "information" then
+		return sayAndLog(npc, creature, playerId, message, msg, previousState, state, "information", "Tokens are small objects made of metal or other materials. I can trade equipment for them, or imbue your equipped items with them.")
 	end
-	if MsgContains(msg, "cancel") or MsgContains(msg, "no") then
-		clearState(playerId)
-		npcHandler:say("Very well. No Gold Tokens were used.", npc, creature)
-		return true
+	if msg == "worth" then
+		return sayAndLog(npc, creature, playerId, message, msg, previousState, state, "worth", "Disrupt the Heart of Destruction, fell the World Devourer to prove your worth and you will be granted the power to imbue powerful equipment.")
 	end
-	if MsgContains(msg, "information") then
-		npcHandler:say("Tokens are small objects made of metal or other materials. I can trade equipment for them, or imbue your equipped items with them.", npc, creature)
-		return true
-	end
-	if MsgContains(msg, "worth") then
-		npcHandler:say("Disrupt the Heart of Destruction, fell the World Devourer to prove your worth and you will be granted the power to imbue powerful equipment.", npc, creature)
-		return true
-	end
-	if MsgContains(msg, "tokens") then
+	if msg == "tokens" then
 		npc:openShopWindow(creature)
-		npcHandler:say("If you have any Gold Tokens with you, let's have a look! These are my equipment offers.", npc, creature)
-		return true
+		return sayAndLog(npc, creature, playerId, message, msg, previousState, state, "tokens", "If you have any Gold Tokens with you, let's have a look! These are my equipment offers.")
 	end
+
 	if MsgContains(msg, "trade") or MsgContains(msg, "imbue") or MsgContains(msg, "imbuement") then
-		playerState[playerId] = {}
+		state = newState()
+		playerState[playerId] = state
 		npcHandler:setTopic(playerId, 1)
-		npcHandler:say(menuText, npc, creature)
-		return true
+		return sayAndLog(npc, creature, playerId, message, msg, previousState, state, "start", menuText)
 	end
 
-	if npcHandler:getTopic(playerId) == 1 then
-		if msg == "skill" then
-			msg = "skills"
-		end
-		if categoryTexts[msg] then
-			npcHandler:say(categoryTexts[msg], npc, creature)
-			return true
-		end
-		local imbuement = imbuements[msg]
-		if imbuement then
-			playerState[playerId] = { imbuement = imbuement, imbuementKey = msg }
-			npcHandler:setTopic(playerId, 2)
-			npcHandler:say("You chose " .. imbuement.name .. ". " .. tierText(msg), npc, creature)
-			return true
-		end
-		npcHandler:say(menuText, npc, creature)
-		return true
+	if not state then
+		state = newState()
+		playerState[playerId] = state
 	end
 
-	if npcHandler:getTopic(playerId) == 2 then
-		local state = playerState[playerId]
+	if msg == "back" then
+		if state.state == STATES.CONFIRM then
+			state.state = STATES.TIER
+			state.tier = nil
+			state.tierName = nil
+			state.price = nil
+			state.tokenCost = nil
+			state.scrollId = nil
+			return sayAndLog(npc, creature, playerId, message, msg, previousState, state, "back-confirm", tierText(state.imbuementKey))
+		elseif state.state == STATES.TIER then
+			state.state = STATES.IMBUEMENT
+			state.imbuement = nil
+			state.imbuementKey = nil
+			return sayAndLog(npc, creature, playerId, message, msg, previousState, state, "back-tier", categoryTexts[state.category] or menuText)
+		elseif state.state == STATES.IMBUEMENT then
+			state.state = STATES.CATEGORY
+			state.category = nil
+			return sayAndLog(npc, creature, playerId, message, msg, previousState, state, "back-imbuement", menuText)
+		end
+		state.state = STATES.CATEGORY
+		return sayAndLog(npc, creature, playerId, message, msg, previousState, state, "back-category", menuText)
+	end
+
+	if state.state == STATES.CONFIRM then
+		if msg == "yes" then
+			state.state = STATES.APPLY
+			local success, resultMessage = applyGoldTokenImbuement(player, state)
+			clearState(playerId)
+			logClick(playerId, message, msg, previousState, state, "confirm-yes", nil, resultMessage)
+			npcHandler:say(resultMessage, npc, creature)
+			return true
+		elseif msg == "no" then
+			state.state = STATES.TIER
+			state.tier = nil
+			state.tierName = nil
+			state.price = nil
+			state.tokenCost = nil
+			state.scrollId = nil
+			return sayAndLog(npc, creature, playerId, message, msg, previousState, state, "confirm-no", "Very well. No Gold Tokens were used. " .. tierText(state.imbuementKey))
+		end
+		return sayAndLog(npc, creature, playerId, message, msg, previousState, state, "confirm-repeat", "Please confirm: {Yes} - Sim {No} - Nao {Back} - Voltar.")
+	end
+
+	if state.state == STATES.TIER then
 		local price = tierPrices[msg]
-		if state and price and state.imbuement.scrolls[msg] then
+		if price and state.imbuement and state.imbuement.scrolls[msg] then
 			state.tier = msg
 			state.tierName = msg:gsub("^%l", string.upper)
 			state.price = price
+			state.tokenCost = price
 			state.scrollId = state.imbuement.scrolls[msg]
-			npcHandler:setTopic(playerId, 3)
+			state.state = STATES.CONFIRM
 			local effectText = tierEffects[state.imbuementKey] and tierEffects[state.imbuementKey][msg] or "imbuement effect"
-			npcHandler:say(state.tierName .. " " .. state.imbuement.name .. " grants " .. effectText .. " and costs " .. state.price .. " Gold Token" .. (state.price == 1 and "" or "s") .. ".\nChoose item: {Helmet}, {Armor}, {Left}, {Right}, {Boots}, {Backpack} or {Back}.", npc, creature)
-			return true
+			local response = state.tierName .. " " .. state.imbuement.name .. "\nEffect: " .. effectText .. "\nPrice: " .. state.price .. " Gold Token" .. (state.price == 1 and "" or "s") .. ".\nCompatible item: I will use the first equipped item accepted by the imbuement system with a free slot.\nApply this imbuement? {Yes} - Sim {No} - Nao {Back} - Voltar."
+			return sayAndLog(npc, creature, playerId, message, msg, previousState, state, "tier", response)
 		end
-		npcHandler:say(tierText(state and state.imbuementKey), npc, creature)
-		return true
+		return sayAndLog(npc, creature, playerId, message, msg, previousState, state, "tier-repeat", tierText(state.imbuementKey))
 	end
 
-	if npcHandler:getTopic(playerId) == 3 then
-		local state = playerState[playerId]
-		local slot = slotAliases[msg]
-		if state and slot then
-			local item = player:getSlotItem(slot)
-			if not item then
-				npcHandler:say("You are not wearing an item in your " .. slotNames[slot] .. " slot.", npc, creature)
-				return true
-			end
-			state.slot = slot
-			npcHandler:setTopic(playerId, 4)
-			local effectText = tierEffects[state.imbuementKey] and tierEffects[state.imbuementKey][state.tier] or "imbuement effect"
-			npcHandler:say(state.tierName .. " " .. state.imbuement.name .. " grants " .. effectText .. " and costs " .. state.price .. " Gold Token" .. (state.price == 1 and "" or "s") .. ". Apply it to your " .. itemName(item) .. "? {Yes} - Sim {No} - Nao.", npc, creature)
-			return true
+	if state.state == STATES.IMBUEMENT then
+		local imbuement = imbuements[msg]
+		if imbuement and imbuementCategories[msg] == state.category then
+			state.imbuement = imbuement
+			state.imbuementKey = msg
+			state.state = STATES.TIER
+			return sayAndLog(npc, creature, playerId, message, msg, previousState, state, "imbuement", "You chose " .. imbuement.name .. ". " .. tierText(msg))
 		end
-		npcHandler:say("Choose item: {Helmet}, {Armor}, {Left}, {Right}, {Boots}, {Backpack} or {Back}.", npc, creature)
-		return true
+		return sayAndLog(npc, creature, playerId, message, msg, previousState, state, "imbuement-repeat", categoryTexts[state.category] or menuText)
 	end
 
-	if npcHandler:getTopic(playerId) == 4 and MsgContains(msg, "yes") then
-		local state = playerState[playerId]
-		if not state then
-			clearState(playerId)
-			npcHandler:say("Please choose an imbuement again.", npc, creature)
-			return true
+	if state.state == STATES.CATEGORY then
+		if categoryTexts[msg] then
+			state.category = msg
+			state.state = STATES.IMBUEMENT
+			return sayAndLog(npc, creature, playerId, message, msg, previousState, state, "category", categoryTexts[msg])
 		end
-		local success, resultMessage = applyGoldTokenImbuement(player, state)
-		clearState(playerId)
-		npcHandler:say(resultMessage, npc, creature)
-		return true
 	end
 
-	npcHandler:say(menuText, npc, creature)
-	return true
+	return sayAndLog(npc, creature, playerId, message, msg, previousState, state, "category-repeat", menuText)
 end
 
 npcHandler:setCallback(CALLBACK_SET_INTERACTION, onAddFocus)
@@ -303,6 +461,7 @@ npcHandler:setCallback(CALLBACK_MESSAGE_DEFAULT, creatureSayCallback)
 npcHandler:setMessage(MESSAGE_GREET, "Hello |PLAYERNAME|. I can trade equipment for {tokens} or imbue your equipment using Gold Tokens. " .. menuText)
 npcHandler:setMessage(MESSAGE_WALKAWAY, "See you later.")
 npcHandler:setMessage(MESSAGE_FAREWELL, "See you later.")
+logger.info("[YanaHotfix] version={} npc={} script={} loadedAt={}", yanaHotfixVersion, internalNpcName, debug.getinfo(1, "S").source, os.date("%Y-%m-%d %H:%M:%S"))
 npcHandler:addModule(FocusModule:new(), npcConfig.name, true, true, false)
 
 npcType:register(npcConfig)

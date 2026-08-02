@@ -2,6 +2,12 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.42-test] - Yana 100% clicavel
+
+- Corrigido o fluxo clicavel da NPC Yana com estado isolado por jogador para categoria, imbuement, tier e confirmacao.
+- Normalizadas keywords clicadas e aliases bilingues para evitar que o client envie texto visual e quebre o avanco do dialogo.
+- Preservados Gold Token ID, precos, scrolls, efeitos, duracao, compatibilidade, slots, persistencia e a chamada real de aplicacao por scroll.
+
 ## [0.1.41-test] - Descricoes bilingues da Yana
 
 - Adicionadas descricoes bilingues aos menus clicaveis da NPC Yana.
