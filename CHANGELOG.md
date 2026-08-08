@@ -2,6 +2,11 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.43-test] - Reparo de login local
+
+- Adicionado `Scripts/Repair-LocalLoginAccount.ps1` para recriar ou corrigir com seguranca uma conta local no banco `otserv`, gerar hash SHA1 compativel, garantir personagem ativo e testar `/login.php` sem expor sessionkey.
+- Corrigida a conta local solicitada no banco em execucao, com personagem sorcerer ativo retornando na lista do client.
+
 ## [0.1.42-test] - Yana 100% clicavel
 
 - Corrigido o fluxo clicavel da NPC Yana com estado isolado por jogador para categoria, imbuement, tier e confirmacao.
