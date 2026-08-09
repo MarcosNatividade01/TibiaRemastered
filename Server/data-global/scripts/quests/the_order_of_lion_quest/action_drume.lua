@@ -140,4 +140,10 @@ function drumeAction.onUse(player, item, fromPosition, target, toPosition, isHot
 end
 
 drumeAction:aid(59601)
+drumeAction:position(Position(32456, 32508, 6))
+drumeAction:position(Position(32457, 32508, 6))
+drumeAction:position(Position(32458, 32508, 6))
+drumeAction:position(Position(32459, 32508, 6))
+drumeAction:position(Position(32460, 32508, 6))
+drumeAction:position(Position(32461, 32508, 6))
 drumeAction:register()

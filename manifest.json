@@ -1,6 +1,6 @@
 {
     "version":  "0.1.46-test",
-    "generatedAt":  "2026-08-09T12:50:09",
+    "generatedAt":  "2026-08-09T12:57:37",
     "hashAlgorithm":  "SHA256",
     "files":  [
                   {
@@ -13,9 +13,9 @@
                   },
                   {
                       "path":  "CHANGELOG.md",
-                      "sha256":  "ab9f100ce9d2d3f5f543f47e24bb0e02cab3e66d7973b2c4d4ba01c6ab0c03d4",
-                      "size":  38593,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/CHANGELOG.md?v=0.1.46-test\u0026sha=ab9f100ce9d2d3f5f543f47e24bb0e02cab3e66d7973b2c4d4ba01c6ab0c03d4",
+                      "sha256":  "14bf51e4daf289e9e122efa7bc564c3348205849437b7c0d4233941447ead450",
+                      "size":  38739,
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/CHANGELOG.md?v=0.1.46-test\u0026sha=14bf51e4daf289e9e122efa7bc564c3348205849437b7c0d4233941447ead450",
                       "overwrite":  true,
                       "category":  "CHANGELOG.md"
                   },
@@ -177093,9 +177093,9 @@
                   },
                   {
                       "path":  "Server/data-global/scripts/quests/the_order_of_lion_quest/action_drume.lua",
-                      "sha256":  "23dfbea85710b049df8087d339ebf2cf0032db501d72d0d1a1f5bb3758567363",
-                      "size":  4785,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data-global/scripts/quests/the_order_of_lion_quest/action_drume.lua?v=0.1.46-test\u0026sha=23dfbea85710b049df8087d339ebf2cf0032db501d72d0d1a1f5bb3758567363",
+                      "sha256":  "2ae5565ec2637ef80cfaf6161b4b0bdfaab365334d3ecc8a8e18be726719c881",
+                      "size":  5073,
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data-global/scripts/quests/the_order_of_lion_quest/action_drume.lua?v=0.1.46-test\u0026sha=2ae5565ec2637ef80cfaf6161b4b0bdfaab365334d3ecc8a8e18be726719c881",
                       "overwrite":  true,
                       "category":  "Server"
                   },
