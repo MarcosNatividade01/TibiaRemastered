@@ -16,7 +16,8 @@ function entrance.onStepIn(creature, item, position, fromPosition)
 		return true
 	end
 
-	if player:getLevel() < 150 then
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	if not questAccessUnlocked and player:getLevel() < 150 then
 		player:teleportTo(fromPosition)
 		player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You need to be at least level 150 to enter.")
@@ -33,7 +34,7 @@ function entrance.onStepIn(creature, item, position, fromPosition)
 	end
 
 	if item:getActionId() == 24837 then
-		if complete then
+		if questAccessUnlocked or complete then
 			player:teleportTo(Position(33275, 32390, 9))
 			player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 			return true
@@ -43,7 +44,7 @@ function entrance.onStepIn(creature, item, position, fromPosition)
 			return true
 		end
 	elseif item:getActionId() == 24838 then
-		if player:getStorageValue(Storage.Quest.U10_90.FerumbrasAscension.Access) < 1 then
+		if not questAccessUnlocked and player:getStorageValue(Storage.Quest.U10_90.FerumbrasAscension.Access) < 1 then
 			player:teleportTo(Position(33275, 32390, 8))
 			player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 			player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "This portal is not yet strong enough to breach the destination dimension.")

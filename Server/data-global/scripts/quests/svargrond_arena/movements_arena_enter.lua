@@ -6,7 +6,11 @@ function arenaEnter.onStepIn(creature, item, position, fromPosition)
 		return true
 	end
 
+	local bossAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isBossAccessUnlocked and Remastered.Gameplay.isBossAccessUnlocked()
 	local pitId = player:getStorageValue(Storage.Quest.U8_0.BarbarianArena.PitDoor)
+	if bossAccessUnlocked and (pitId < 1 or pitId > 10) then
+		pitId = 1
+	end
 	if pitId < 1 or pitId > 10 then
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You cannot enter without Halvar's permission.")
 		player:teleportTo(fromPosition, true)
@@ -14,6 +18,9 @@ function arenaEnter.onStepIn(creature, item, position, fromPosition)
 	end
 
 	local arenaId = player:getStorageValue(Storage.Quest.U8_0.BarbarianArena.Arena)
+	if bossAccessUnlocked and not ARENA[arenaId] then
+		arenaId = 1
+	end
 	if not (PITS[pitId] and ARENA[arenaId]) then
 		player:teleportTo(fromPosition, true)
 		return true

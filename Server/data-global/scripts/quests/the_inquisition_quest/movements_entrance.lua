@@ -29,7 +29,8 @@ function entrance.onStepIn(creature, item, position, fromPosition)
 		return true
 	end
 
-	if hasTouchedOneThrone(player) and player:getLevel() >= 100 and player:getStorageValue(Storage.Quest.U8_2.TheInquisitionQuest.Questline) >= 20 then
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	if questAccessUnlocked or (hasTouchedOneThrone(player) and player:getLevel() >= 100 and player:getStorageValue(Storage.Quest.U8_2.TheInquisitionQuest.Questline) >= 20) then
 		for i = 1, #config do
 			local cfg = config[i]
 			if Position(cfg.position.x, cfg.position.y, cfg.position.z) == player:getPosition() then

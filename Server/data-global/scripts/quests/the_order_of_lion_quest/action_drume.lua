@@ -36,11 +36,13 @@ end
 
 local drumeAction = Action()
 function drumeAction.onUse(player, item, fromPosition, target, toPosition, isHotkey)
+	local bossAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isBossAccessUnlocked and Remastered.Gameplay.isBossAccessUnlocked()
+
 	if player:getPosition() ~= config.firstPlayerPosition then
 		return false
 	end
 
-	if player:getStorageValue(Storage.Quest.U12_40.TheOrderOfTheLion.KesarMission) < 4 then
+	if not bossAccessUnlocked and player:getStorageValue(Storage.Quest.U12_40.TheOrderOfTheLion.KesarMission) < 4 then
 		return true
 	end
 
@@ -68,13 +70,13 @@ function drumeAction.onUse(player, item, fromPosition, target, toPosition, isHot
 	end
 
 	for _, pi in pairs(players) do
-		if pi:getStorageValue(Storage.Quest.U12_40.TheOrderOfTheLion.KesarMission) < 4 then
+		if not bossAccessUnlocked and pi:getStorageValue(Storage.Quest.U12_40.TheOrderOfTheLion.KesarMission) < 4 then
 			return true
 		end
 	end
 
 	for _, pi in pairs(players) do
-		if not pi:canFightBoss("Drume") then
+		if not bossAccessUnlocked and not pi:canFightBoss("Drume") then
 			player:sendCancelMessage("Someone of your team has already fought in the skirmish in the last twenty hours.")
 			player:getPosition():sendMagicEffect(CONST_ME_POFF)
 			return true

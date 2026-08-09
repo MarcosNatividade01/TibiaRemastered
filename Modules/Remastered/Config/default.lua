@@ -34,6 +34,8 @@ return {
 	},
 
 	gameplay = {
+		unlockQuestAccess = true,
+		unlockBossAccess = true,
 		globalEvents = {
 			timezone = "UTC",
 			events = {

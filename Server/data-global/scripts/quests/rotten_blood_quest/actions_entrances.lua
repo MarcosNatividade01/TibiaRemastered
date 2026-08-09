@@ -25,8 +25,9 @@ function teleportEvent.onUse(player, item, fromPosition, target, toPosition, isH
 		return false
 	end
 
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
 	local access = player:kv():scoped("rotten-blood-quest"):get("access") or 0
-	if access < 5 then
+	if not questAccessUnlocked and access < 5 then
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You should pay respect to the Bloodshade guarding this realm before entering.")
 		player:teleportTo(fromPosition, true)
 		return false
@@ -61,7 +62,8 @@ function bakragoreEntrance.onUse(player, item, fromPosition, target, toPosition,
 		return false
 	end
 
-	if player:getLevel() < 250 then
+	local bossAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isBossAccessUnlocked and Remastered.Gameplay.isBossAccessUnlocked()
+	if not bossAccessUnlocked and player:getLevel() < 250 then
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You need at least level 250 to enter.")
 		player:teleportTo(fromPosition, true)
 		return false
@@ -78,14 +80,14 @@ function bakragoreEntrance.onUse(player, item, fromPosition, target, toPosition,
 		end
 	end
 
-	if text ~= "" then
+	if not bossAccessUnlocked and text ~= "" then
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You still need to defeat: " .. text)
 		player:teleportTo(fromPosition, true)
 		return false
 	end
 
 	local taints = player:kv():scoped("rotten-blood-quest"):get("taints") or 0
-	if taints < 4 then
+	if not bossAccessUnlocked and taints < 4 then
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, string.format("You have %i taints.", taints))
 		player:teleportTo(fromPosition, true)
 		return false

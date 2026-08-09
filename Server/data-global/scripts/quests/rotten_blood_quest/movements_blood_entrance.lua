@@ -17,14 +17,15 @@ function accessBlood.onStepIn(creature, item, position, fromPosition)
 		return false
 	end
 
-	if player:getLevel() < 250 then
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	if not questAccessUnlocked and player:getLevel() < 250 then
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You need at least level 250 to enter.")
 		player:teleportTo(fromPosition, true)
 		return false
 	end
 
 	local access = player:kv():scoped("rotten-blood-quest"):get("access") or 0
-	if access < 4 then
+	if not questAccessUnlocked and access < 4 then
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You offerings to this sanguine master of this realm have been insufficient. You can not pass.")
 		player:teleportTo(config.noAccess, true)
 		player:addHealth(-getDamage(player:getHealth()), COMBAT_PHYSICALDAMAGE)

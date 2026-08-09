@@ -33,8 +33,9 @@ function bossEntrance.onStepIn(creature, item, position, fromPosition, toPositio
 		bossName = "The Duke of the Depths"
 		destination = WarzoneVI_b
 	end
+	local bossAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isBossAccessUnlocked and Remastered.Gameplay.isBossAccessUnlocked()
 	local timeLeft = player:getBossCooldown(bossName) - os.time()
-	if timeLeft > 0 then
+	if not bossAccessUnlocked and timeLeft > 0 then
 		player:teleportTo(fromPosition, true)
 		player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You have to wait " .. Game.getTimeInWords(timeLeft) .. " to face " .. bossName .. " again!")

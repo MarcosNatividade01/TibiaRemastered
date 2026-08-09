@@ -151,6 +151,7 @@ end
 ---@return boolean
 function BossLever:onUse(player)
 	local monsterName = MonsterType(self.name):getName()
+	local bossAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isBossAccessUnlocked and Remastered.Gameplay.isBossAccessUnlocked()
 	local isParticipant = false
 	for _, v in ipairs(self.playerPositions) do
 		if Position(v.pos) == player:getPosition() then
@@ -183,7 +184,7 @@ function BossLever:onUse(player)
 
 		local checkAccountType = creature:getAccountType() < ACCOUNT_TYPE_GAMEMASTER
 		local isGameTester = player:hasFlag(PlayerFlag_IsGameTester)
-		if checkAccountType and not isGameTester and creature:getLevel() < self.requiredLevel then
+		if not bossAccessUnlocked and checkAccountType and not isGameTester and creature:getLevel() < self.requiredLevel then
 			local message = "All players need to be level " .. self.requiredLevel .. " or higher."
 			creature:sendTextMessage(MESSAGE_EVENT_ADVANCE, message)
 			player:sendTextMessage(MESSAGE_EVENT_ADVANCE, message)
@@ -218,7 +219,7 @@ function BossLever:onUse(player)
 	end)
 
 	lever:checkPositions()
-	if #lever:getPlayers() < self.minPlayers then
+	if not bossAccessUnlocked and #lever:getPlayers() < self.minPlayers then
 		lever:executeOnPlayers(function(creature)
 			local message = string.format("You need %d qualified players for this challenge.", self.minPlayers)
 			creature:sendTextMessage(MESSAGE_EVENT_ADVANCE, message)

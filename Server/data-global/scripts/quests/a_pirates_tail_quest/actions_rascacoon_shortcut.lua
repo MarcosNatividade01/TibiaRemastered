@@ -9,7 +9,8 @@ function rascacoonShortcut.onUse(creature, item, position, fromPosition)
 	if not player then
 		return false
 	end
-	if player:getLevel() < 200 then
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	if not questAccessUnlocked and player:getLevel() < 200 then
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You need at least level 200 to enter.")
 		player:teleportTo(fromPosition, true)
 		player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)

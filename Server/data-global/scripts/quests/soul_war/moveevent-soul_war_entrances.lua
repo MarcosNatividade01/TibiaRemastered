@@ -15,7 +15,8 @@ function soul_war_entrances.onStepIn(creature, item, position, fromPosition)
 		return
 	end
 
-	if player:getLevel() < 250 then
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	if not questAccessUnlocked and player:getLevel() < 250 then
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You need level 250 to enter here.")
 		player:teleportTo(fromPosition, true)
 		player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
@@ -24,7 +25,7 @@ function soul_war_entrances.onStepIn(creature, item, position, fromPosition)
 
 	-- Check if player has access to teleport from Flickering Soul npc: "hi/task/yes"
 	local soulWarQuest = player:soulWarQuestKV()
-	if not soulWarQuest:get("teleport-access") then
+	if not questAccessUnlocked and not soulWarQuest:get("teleport-access") then
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "Your soul does not yet resonate with the frequency required to enter here.")
 		player:teleportTo(fromPosition, true)
 		player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
@@ -58,7 +59,8 @@ function soul_war_megalomania_entrance.onStepIn(creature, item, position, fromPo
 	end
 
 	local soulWarQuest = player:soulWarQuestKV()
-	if player:getLevel() < 250 then
+	local bossAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isBossAccessUnlocked and Remastered.Gameplay.isBossAccessUnlocked()
+	if not bossAccessUnlocked and player:getLevel() < 250 then
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You are not allowed to enter here.")
 		player:teleportTo(fromPosition, true)
 		player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
@@ -75,7 +77,7 @@ function soul_war_megalomania_entrance.onStepIn(creature, item, position, fromPo
 		end
 	end
 
-	if soulWarCount < 5 then
+	if not bossAccessUnlocked and soulWarCount < 5 then
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You still need to defeat:" .. text)
 		player:teleportTo(fromPosition, true)
 		return false
@@ -127,7 +129,8 @@ function goshnarSpiteEntrance.onStepIn(creature, item, position, fromPosition)
 
 	local soulWarQuest = player:soulWarQuestKV()
 	local killCount = soulWarQuest:get("hazardous-phantom-death") or 0
-	if killCount < 20 then
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	if not questAccessUnlocked and killCount < 20 then
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You have killed " .. killCount .. " and need to kill 20 Hazardous Phantoms")
 		player:teleportTo(fromPosition, true)
 		player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)

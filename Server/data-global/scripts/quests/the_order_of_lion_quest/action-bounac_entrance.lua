@@ -1,7 +1,8 @@
 local bounacEntrance = Action()
 function bounacEntrance.onUse(player, item, fromPosition, target, toPosition, isHotkey)
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
 	if item:getActionId() == 59602 then
-		if player:getLevel() < 250 then
+		if not questAccessUnlocked and player:getLevel() < 250 then
 			player:sendCancelMessage("You need at least level 250.")
 			toPosition:sendMagicEffect(CONST_ME_POFF)
 		else

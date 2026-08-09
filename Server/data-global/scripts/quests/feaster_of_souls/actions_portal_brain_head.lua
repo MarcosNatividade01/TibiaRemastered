@@ -99,7 +99,8 @@ function teleportBoss.onStepIn(creature, item, position, fromPosition)
 		return false
 	end
 	local player = creature
-	if player:getLevel() < config.requiredLevel then
+	local bossAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isBossAccessUnlocked and Remastered.Gameplay.isBossAccessUnlocked()
+	if not bossAccessUnlocked and player:getLevel() < config.requiredLevel then
 		player:teleportTo(config.exitPosition, true)
 		player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You need to be level " .. config.requiredLevel .. " or higher.")
@@ -118,7 +119,7 @@ function teleportBoss.onStepIn(creature, item, position, fromPosition)
 		return false
 	end
 	local timeLeft = player:getBossCooldown(config.bossName) - os.time()
-	if timeLeft > 0 then
+	if not bossAccessUnlocked and timeLeft > 0 then
 		player:teleportTo(config.exitPosition, true)
 		player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You have to wait " .. Game.getTimeInWords(timeLeft) .. " to face " .. config.bossName .. " again!")

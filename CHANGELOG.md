@@ -2,6 +2,13 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.46-test] - Desbloqueio global de quest doors e bosses
+
+- Adicionados `gameplay.unlockQuestAccess` e `gameplay.unlockBossAccess` como chaves globais Remastered para liberar portas, portais e entradas especiais sem depender de quest feita.
+- Liberadas as portas centrais de quest, level e key door, alem de handlers especiais de Dream Courts, Annihilator, Svargrond Arena, Bigfoot/Warzones, Ferumbras, Inquisition, Demon Oak, Soul War, Rotten Blood, Order of the Lion e entradas de Galthen/Pirates.
+- Flexibilizados `BossLever`, portais manuais de Feaster, Kilmaresh, Grimvale, Candia, Dangerous Depth, Soulpit, Drume e Dream Courts para ignorar level, time lock e sequencias previas quando o modo de boss global esta ativo.
+- Mantido o bloqueio de sala ocupada para evitar sobrepor lutas enquanto outro jogador ainda esta dentro do boss.
+
 ## [0.1.45-test] - Acessos de quest e bosses sem espera
 
 - Reaplicados os acessos gratuitos de quests para todos os personagens ao elevar `freeQuestStage` para 2.

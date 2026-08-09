@@ -27,7 +27,7 @@ function soulPitAction.onUse(player, item, fromPosition, target, toPosition, isH
 	end
 
 	if target and target:getId() == SoulPit.obeliskActive then
-		creature:sendTextMessage(MESSAGE_EVENT_ADVANCE, "Someone is fighting in the soulpit!")
+		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "Someone is fighting in the soulpit!")
 		return false
 	end
 	if not target or target:getId() ~= SoulPit.obeliskInactive then
@@ -46,6 +46,7 @@ function soulPitAction.onUse(player, item, fromPosition, target, toPosition, isH
 	end
 
 	local lever = Lever()
+	local bossAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isBossAccessUnlocked and Remastered.Gameplay.isBossAccessUnlocked()
 	lever:setPositions(SoulPit.playerPositions)
 	lever:setCondition(function(creature)
 		if not creature or not creature:isPlayer() then
@@ -53,7 +54,7 @@ function soulPitAction.onUse(player, item, fromPosition, target, toPosition, isH
 		end
 
 		local isAccountNormal = creature:getAccountType() < ACCOUNT_TYPE_GAMEMASTER
-		if isAccountNormal and creature:getLevel() < SoulPit.requiredLevel then
+		if not bossAccessUnlocked and isAccountNormal and creature:getLevel() < SoulPit.requiredLevel then
 			local message = string.format("All players need to be level %s or higher.", SoulPit.requiredLevel)
 			creature:sendTextMessage(MESSAGE_EVENT_ADVANCE, message)
 			return false

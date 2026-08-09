@@ -27,10 +27,22 @@ end
 
 local keyDoor = Action()
 function keyDoor.onUse(player, item, fromPosition, target, toPosition, isHotkey)
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+
 	-- It is locked msg
-	if table.contains(keyLockedDoor, item.itemid) or (table.contains(keyUnlockedDoor, item.itemid) and table.contains({ 1001, 101 }, item.actionid)) then
+	if not questAccessUnlocked and (table.contains(keyLockedDoor, item.itemid) or (table.contains(keyUnlockedDoor, item.itemid) and table.contains({ 1001, 101 }, item.actionid))) then
 		player:sendTextMessage(MESSAGE_LOOK, "It is locked.")
 		return true
+	end
+
+	if questAccessUnlocked then
+		for index, value in ipairs(KeyDoorTable) do
+			if value.lockedDoor == item.itemid or value.closedDoor == item.itemid then
+				item:transform(value.openDoor)
+				item:getPosition():sendSingleSoundEffect(SOUND_EFFECT_TYPE_ACTION_OPEN_DOOR)
+				return true
+			end
+		end
 	end
 
 	-- onUse unlocked key door
@@ -53,6 +65,16 @@ function keyDoor.onUse(player, item, fromPosition, target, toPosition, isHotkey)
 	end
 
 	-- Key use on door (locked key door)
+	if questAccessUnlocked and target and target.itemid then
+		for index, value in ipairs(KeyDoorTable) do
+			if value.lockedDoor == target.itemid or value.closedDoor == target.itemid then
+				target:transform(value.openDoor)
+				target:getPosition():sendSingleSoundEffect(SOUND_EFFECT_TYPE_ACTION_OPEN_DOOR)
+				return true
+			end
+		end
+	end
+
 	if target.actionid > 0 then
 		for index, value in ipairs(KeyDoorTable) do
 			if item.actionid ~= target.actionid and value.lockedDoor == target.itemid then

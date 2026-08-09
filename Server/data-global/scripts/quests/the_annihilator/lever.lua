@@ -24,15 +24,17 @@ local setting = {
 local lever = Action()
 
 function lever.onUse(player, item, fromPosition, target, toPosition, isHotkey)
+	local bossAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isBossAccessUnlocked and Remastered.Gameplay.isBossAccessUnlocked()
+
 	if item.itemid == 2772 then
 		-- Checks if you have the 4 players and if they have the required level
 		for i = 1, #setting.playersPositions do
 			local creature = Tile(setting.playersPositions[i].fromPos):getTopCreature()
-			if not creature then
+			if not bossAccessUnlocked and not creature then
 				player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "Four players are required to start the quest.")
 				return true
 			end
-			if creature and creature:getLevel() < setting.requiredLevel then
+			if not bossAccessUnlocked and creature and creature:getLevel() < setting.requiredLevel then
 				player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "All the players need to be level " .. setting.requiredLevel .. " or higher.")
 				return true
 			end
@@ -55,7 +57,7 @@ function lever.onUse(player, item, fromPosition, target, toPosition, isHotkey)
 			if creature and creature:isPlayer() then
 				creature:teleportTo(setting.playersPositions[i].toPos)
 				creature:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
-			else
+			elseif not bossAccessUnlocked then
 				return false
 			end
 		end
