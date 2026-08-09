@@ -1,6 +1,6 @@
 {
     "version":  "0.1.46-test",
-    "generatedAt":  "2026-08-09T13:04:30",
+    "generatedAt":  "2026-08-09T13:10:12",
     "hashAlgorithm":  "SHA256",
     "files":  [
                   {
@@ -13,9 +13,9 @@
                   },
                   {
                       "path":  "CHANGELOG.md",
-                      "sha256":  "6eb4a4a14de00f19974565a45c07345eac5bb02b5662c8cb49f226df7eff39dd",
-                      "size":  38877,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/CHANGELOG.md?v=0.1.46-test\u0026sha=6eb4a4a14de00f19974565a45c07345eac5bb02b5662c8cb49f226df7eff39dd",
+                      "sha256":  "ee474260032fa6d4175c9367fb7ff5f7c9cde5b8d7ad76255e1ba02f7b768606",
+                      "size":  39030,
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/CHANGELOG.md?v=0.1.46-test\u0026sha=ee474260032fa6d4175c9367fb7ff5f7c9cde5b8d7ad76255e1ba02f7b768606",
                       "overwrite":  true,
                       "category":  "CHANGELOG.md"
                   },
@@ -122053,9 +122053,9 @@
                   },
                   {
                       "path":  "Server/data/scripts/actions/tools/rope.lua",
-                      "sha256":  "fc6ecb8966ba4d240b3ccd927a7bb6c8f840d9a8e081e0c11d68e2c775771734",
-                      "size":  217,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data/scripts/actions/tools/rope.lua?v=0.1.46-test\u0026sha=fc6ecb8966ba4d240b3ccd927a7bb6c8f840d9a8e081e0c11d68e2c775771734",
+                      "sha256":  "f979eb3ad00a12ac6f419290011f82e08eb3290d3b447dc7bb4c8cbde4b873e8",
+                      "size":  250,
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data/scripts/actions/tools/rope.lua?v=0.1.46-test\u0026sha=f979eb3ad00a12ac6f419290011f82e08eb3290d3b447dc7bb4c8cbde4b873e8",
                       "overwrite":  true,
                       "category":  "Server"
                   },
