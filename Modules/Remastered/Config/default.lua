@@ -1,10 +1,10 @@
 return {
-	version = "0.1.38-test",
+	version = "0.1.46-test",
 	environment = "local",
 	debug = false,
 	build = {
-		commit = "e947289f66618424c491bf51557ae1ade54c48ea",
-		label = "0.1.38-runtime-fix",
+		commit = "a8e34a7229d879b44451d69bcc53fc50ab2d83e6",
+		label = "0.1.46-quest-boss-unlock",
 	},
 
 	balance = {

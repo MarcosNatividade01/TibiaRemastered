@@ -1,6 +1,6 @@
 {
     "version":  "0.1.46-test",
-    "generatedAt":  "2026-08-09T12:39:19",
+    "generatedAt":  "2026-08-09T12:42:27",
     "hashAlgorithm":  "SHA256",
     "files":  [
                   {
@@ -118997,9 +118997,9 @@
                   },
                   {
                       "path":  "Modules/Remastered/Config/default.lua",
-                      "sha256":  "2d958ac3c643d7b09ed606f110887ac1ae03c42648fa4d2fed841a236317c2d2",
-                      "size":  1864,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Modules/Remastered/Config/default.lua?v=0.1.46-test\u0026sha=2d958ac3c643d7b09ed606f110887ac1ae03c42648fa4d2fed841a236317c2d2",
+                      "sha256":  "89046f94a4f67a868931248b54501e67f8d1bb08e26c8809ab1ba52f5ebc94b1",
+                      "size":  1870,
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Modules/Remastered/Config/default.lua?v=0.1.46-test\u0026sha=89046f94a4f67a868931248b54501e67f8d1bb08e26c8809ab1ba52f5ebc94b1",
                       "overwrite":  true,
                       "category":  "Modules"
                   },
