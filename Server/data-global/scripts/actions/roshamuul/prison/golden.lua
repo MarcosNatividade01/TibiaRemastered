@@ -45,11 +45,12 @@ function golden.onUse(player, item, fromPosition, target, toPosition, isHotkey)
 		for i = 1, #playerPositions do
 			local creature = Tile(playerPositions[i].fromPos):getTopCreature()
 			if creature and creature:isPlayer() then
-				if creature:getStorageValue(setting.storage) >= os.time() then
+				local bossCooldownDisabled = Remastered and Remastered.Balance and Remastered.Balance.isBossCooldownDisabled and Remastered.Balance.isBossCooldownDisabled()
+				if not bossCooldownDisabled and creature:getStorageValue(setting.storage) >= os.time() then
 					creature:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You have faced this boss in the last " .. setting.timeToFightAgain .. " hours.")
 					return true
 				end
-				if creature:getStorageValue(setting.storage) < os.time() then
+				if bossCooldownDisabled or creature:getStorageValue(setting.storage) < os.time() then
 					creature:setStorageValue(setting.storage, os.time() + setting.timeToFightAgain * 60 * 60)
 					creature:teleportTo(playerPositions[i].toPos)
 					creature:getPosition():sendMagicEffect(CONST_ME_TELEPORT)

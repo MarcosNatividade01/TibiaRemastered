@@ -23,7 +23,7 @@ function leverLadyTenebris.onUse(player, item, fromPosition, target, toPosition,
 				local creature = tile:getTopCreature()
 				if creature and creature:isPlayer() then
 					local storage = creature:getStorageValue(Storage.Quest.U11_02.ForgottenKnowledge.LadyTenebrisKilled)
-					if storage > os.time() then
+					if not (Remastered and Remastered.Balance and Remastered.Balance.isBossCooldownDisabled and Remastered.Balance.isBossCooldownDisabled()) and storage > os.time() then
 						local remainingTime = storage - os.time()
 						player:sendTextMessage(MESSAGE_EVENT_ADVANCE, string.format("You or a party member has recently killed Lady Tenebris. You must wait must wait %s before fighting again.", formatTimeRemaining(remainingTime)))
 						return true

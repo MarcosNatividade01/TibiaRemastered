@@ -2,6 +2,12 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.45-test] - Acessos de quest e bosses sem espera
+
+- Reaplicados os acessos gratuitos de quests para todos os personagens ao elevar `freeQuestStage` para 2.
+- Mantido `bossCooldownDisabled` como regra global e removidos bloqueios de timers manuais em bosses de Forgotten Knowledge, Dream Courts e Prince Drazzak quando o modo Remastered esta ativo.
+- Zerado no banco local o marcador antigo de free quests para forcar a reaplicacao dos acessos no proximo login.
+
 ## [0.1.44-test] - Imbuements ofensivos +35%
 
 - Aumentados em 35% os efeitos de roubo de vida, roubo de mana e critico em `Server/data/XML/imbuements.xml`.

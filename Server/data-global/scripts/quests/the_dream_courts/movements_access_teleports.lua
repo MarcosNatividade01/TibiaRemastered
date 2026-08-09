@@ -76,7 +76,8 @@ function movements_acessTeleports.onStepIn(creature, item, position, fromPositio
 	local nightmareTeleport = Position(32211, 32081, 15)
 
 	if item:getPosition() == nightmareTeleport then
-		if player:getStorageValue(Storage.Quest.U12_00.TheDreamCourts.DreamScar.NightmareTimer) > os.time() then
+		local bossCooldownDisabled = Remastered and Remastered.Balance and Remastered.Balance.isBossCooldownDisabled and Remastered.Balance.isBossCooldownDisabled()
+		if not bossCooldownDisabled and player:getStorageValue(Storage.Quest.U12_00.TheDreamCourts.DreamScar.NightmareTimer) > os.time() then
 			player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You have to wait to challenge The Nightmare Beast again!")
 			player:teleportTo(fromPosition)
 		else
@@ -101,7 +102,8 @@ function movements_acessTeleports.onStepIn(creature, item, position, fromPositio
 	if iPos == dreamScarTeleport then
 		for i = 1, #dreamScar do
 			if os.date("%A") == dreamScar[i].day then
-				if player:getStorageValue(dreamScar[i].storageTimer) > os.time() then
+				local bossCooldownDisabled = Remastered and Remastered.Balance and Remastered.Balance.isBossCooldownDisabled and Remastered.Balance.isBossCooldownDisabled()
+				if not bossCooldownDisabled and player:getStorageValue(dreamScar[i].storageTimer) > os.time() then
 					player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You have to wait to challenge " .. dreamScar[i].bossName .. " again!")
 					player:teleportTo(fromPosition)
 				else

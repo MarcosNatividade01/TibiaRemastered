@@ -392,7 +392,7 @@ toggleImbuementNonAggressiveFightOnly = false
 -- toggleFreeQuest = enable/disable the system
 -- freeQuestStage = if you add more quests to the table, change this value to run freeQuest again
 toggleFreeQuest = true
-freeQuestStage = 1
+freeQuestStage = 2
 
 -- Deaths
 -- NOTE: Leave deathLosePercent as -1 if you want to use the default
