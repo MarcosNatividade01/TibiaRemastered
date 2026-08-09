@@ -18,6 +18,15 @@ local config = {
 	timeToKill = 20,
 }
 
+local function isPlayerOnStartTile(player)
+	for x = config.firstPlayerPosition.x, config.firstPlayerPosition.x + 4 do
+		if player:getPosition() == Position(x, config.firstPlayerPosition.y, config.firstPlayerPosition.z) then
+			return true
+		end
+	end
+	return false
+end
+
 local currentEvent = nil
 
 local function clearRoomDrume(centerPosition, rangeX, rangeY)
@@ -38,7 +47,8 @@ local drumeAction = Action()
 function drumeAction.onUse(player, item, fromPosition, target, toPosition, isHotkey)
 	local bossAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isBossAccessUnlocked and Remastered.Gameplay.isBossAccessUnlocked()
 
-	if player:getPosition() ~= config.firstPlayerPosition then
+	if not isPlayerOnStartTile(player) then
+		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "Stand on one of the challenge tiles before using this lever.")
 		return false
 	end
 

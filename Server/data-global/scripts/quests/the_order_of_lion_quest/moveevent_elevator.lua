@@ -4,7 +4,8 @@ function elevatorBounacUp.onStepIn(creature, item, position, fromPosition)
 	if not player then
 		return true
 	end
-	if player:getStorageValue(Storage.Quest.U12_40.TheOrderOfTheLion.BounacTrust) < 5 then
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	if not questAccessUnlocked and player:getStorageValue(Storage.Quest.U12_40.TheOrderOfTheLion.BounacTrust) < 5 then
 		player:teleportTo(fromPosition)
 		return true
 	end

@@ -7,6 +7,7 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Adicionados `gameplay.unlockQuestAccess` e `gameplay.unlockBossAccess` como chaves globais Remastered para liberar portas, portais e entradas especiais sem depender de quest feita.
 - Liberadas as portas centrais de quest, level e key door, alem de handlers especiais de Dream Courts, Annihilator, Svargrond Arena, Bigfoot/Warzones, Ferumbras, Inquisition, Demon Oak, Soul War, Rotten Blood, Order of the Lion e entradas de Galthen/Pirates.
 - Flexibilizados `BossLever`, portais manuais de Feaster, Kilmaresh, Grimvale, Candia, Dangerous Depth, Soulpit, Drume e Dream Courts para ignorar level, time lock e sequencias previas quando o modo de boss global esta ativo.
+- Corrigido o fluxo do Drume em Bounac para aceitar qualquer tile da fila da alavanca, liberar elevador/teleport e concluir a etapa ao matar Drume mesmo entrando pelo bypass global.
 - Mantido o bloqueio de sala ocupada para evitar sobrepor lutas enquanto outro jogador ainda esta dentro do boss.
 
 ## [0.1.45-test] - Acessos de quest e bosses sem espera
