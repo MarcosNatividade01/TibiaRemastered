@@ -1,6 +1,6 @@
 {
     "version":  "0.1.46-test",
-    "generatedAt":  "2026-08-09T12:57:37",
+    "generatedAt":  "2026-08-09T13:04:30",
     "hashAlgorithm":  "SHA256",
     "files":  [
                   {
@@ -13,9 +13,9 @@
                   },
                   {
                       "path":  "CHANGELOG.md",
-                      "sha256":  "14bf51e4daf289e9e122efa7bc564c3348205849437b7c0d4233941447ead450",
-                      "size":  38739,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/CHANGELOG.md?v=0.1.46-test\u0026sha=14bf51e4daf289e9e122efa7bc564c3348205849437b7c0d4233941447ead450",
+                      "sha256":  "6eb4a4a14de00f19974565a45c07345eac5bb02b5662c8cb49f226df7eff39dd",
+                      "size":  38877,
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/CHANGELOG.md?v=0.1.46-test\u0026sha=6eb4a4a14de00f19974565a45c07345eac5bb02b5662c8cb49f226df7eff39dd",
                       "overwrite":  true,
                       "category":  "CHANGELOG.md"
                   },
@@ -170213,9 +170213,9 @@
                   },
                   {
                       "path":  "Server/data-global/scripts/lib/register_actions.lua",
-                      "sha256":  "98fa999fd0738d7538bba1f9c19af1b62dc75a69e79c1de2ca8d8b0cce01a653",
-                      "size":  43060,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data-global/scripts/lib/register_actions.lua?v=0.1.46-test\u0026sha=98fa999fd0738d7538bba1f9c19af1b62dc75a69e79c1de2ca8d8b0cce01a653",
+                      "sha256":  "ad903ccf552a963c37eb7a37921e28655eee547ea6e70142d1d237c186a04403",
+                      "size":  43301,
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data-global/scripts/lib/register_actions.lua?v=0.1.46-test\u0026sha=ad903ccf552a963c37eb7a37921e28655eee547ea6e70142d1d237c186a04403",
                       "overwrite":  true,
                       "category":  "Server"
                   },
@@ -177093,9 +177093,9 @@
                   },
                   {
                       "path":  "Server/data-global/scripts/quests/the_order_of_lion_quest/action_drume.lua",
-                      "sha256":  "2ae5565ec2637ef80cfaf6161b4b0bdfaab365334d3ecc8a8e18be726719c881",
-                      "size":  5073,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data-global/scripts/quests/the_order_of_lion_quest/action_drume.lua?v=0.1.46-test\u0026sha=2ae5565ec2637ef80cfaf6161b4b0bdfaab365334d3ecc8a8e18be726719c881",
+                      "sha256":  "819589ae8620f7b0a2adea8531ad08ce06783d650a3a27a9d682a2e9aefa55c7",
+                      "size":  5363,
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data-global/scripts/quests/the_order_of_lion_quest/action_drume.lua?v=0.1.46-test\u0026sha=819589ae8620f7b0a2adea8531ad08ce06783d650a3a27a9d682a2e9aefa55c7",
                       "overwrite":  true,
                       "category":  "Server"
                   },

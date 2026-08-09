@@ -27,6 +27,13 @@ local function isPlayerOnStartTile(player)
 	return false
 end
 
+local function isDrumeUsePosition(position)
+	if not position then
+		return false
+	end
+	return position.z == 6 and position.x >= 32455 and position.x <= 32462 and position.y >= 32507 and position.y <= 32509
+end
+
 local currentEvent = nil
 
 local function clearRoomDrume(centerPosition, rangeX, rangeY)
@@ -44,7 +51,7 @@ local function clearRoomDrume(centerPosition, rangeX, rangeY)
 end
 
 local drumeAction = Action()
-function drumeAction.onUse(player, item, fromPosition, target, toPosition, isHotkey)
+function RemasteredStartDrumeSkirmish(player, toPosition)
 	local bossAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isBossAccessUnlocked and Remastered.Gameplay.isBossAccessUnlocked()
 
 	if not isPlayerOnStartTile(player) then
@@ -139,11 +146,17 @@ function drumeAction.onUse(player, item, fromPosition, target, toPosition, isHot
 	return true
 end
 
+function drumeAction.onUse(player, item, fromPosition, target, toPosition, isHotkey)
+	if not isPlayerOnStartTile(player) and not isDrumeUsePosition(toPosition) and not isDrumeUsePosition(item:getPosition()) then
+		return false
+	end
+	return RemasteredStartDrumeSkirmish(player, toPosition)
+end
+
 drumeAction:aid(59601)
-drumeAction:position(Position(32456, 32508, 6))
-drumeAction:position(Position(32457, 32508, 6))
-drumeAction:position(Position(32458, 32508, 6))
-drumeAction:position(Position(32459, 32508, 6))
-drumeAction:position(Position(32460, 32508, 6))
-drumeAction:position(Position(32461, 32508, 6))
+for x = 32455, 32462 do
+	for y = 32507, 32509 do
+		drumeAction:position(Position(x, y, 6))
+	end
+end
 drumeAction:register()

@@ -324,6 +324,9 @@ function onUseRope(player, item, fromPosition, target, toPosition, isHotkey)
 	if toPosition.x == CONTAINER_POSITION then
 		return false
 	end
+	if player:getPosition().z == 6 and player:getPosition().x >= 32457 and player:getPosition().x <= 32461 and player:getPosition().y == 32508 and RemasteredStartDrumeSkirmish then
+		return RemasteredStartDrumeSkirmish(player, toPosition)
+	end
 	local tile = Tile(toPosition)
 	if tile and tile:isRopeSpot() then
 		player:teleportTo(toPosition:moveUpstairs())

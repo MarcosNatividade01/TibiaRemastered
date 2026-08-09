@@ -9,6 +9,7 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Flexibilizados `BossLever`, portais manuais de Feaster, Kilmaresh, Grimvale, Candia, Dangerous Depth, Soulpit, Drume e Dream Courts para ignorar level, time lock e sequencias previas quando o modo de boss global esta ativo.
 - Corrigido o fluxo do Drume em Bounac para aceitar qualquer tile da fila da alavanca, liberar elevador/teleport e concluir a etapa ao matar Drume mesmo entrando pelo bypass global.
 - Registrada a corda/alavanca do Drume tambem pelas posicoes da sala, evitando "Sorry, not possible" quando o mapa nao traz o action id esperado.
+- Adicionado fallback no handler global da rope para iniciar o Drume diretamente quando o jogador estiver nos tiles do desafio em Bounac.
 - Mantido o bloqueio de sala ocupada para evitar sobrepor lutas enquanto outro jogador ainda esta dentro do boss.
 
 ## [0.1.45-test] - Acessos de quest e bosses sem espera
