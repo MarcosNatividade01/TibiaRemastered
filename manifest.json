@@ -1,6 +1,6 @@
 {
     "version":  "0.1.46-test",
-    "generatedAt":  "2026-08-09T13:10:12",
+    "generatedAt":  "2026-08-09T13:36:18",
     "hashAlgorithm":  "SHA256",
     "files":  [
                   {
@@ -13,9 +13,9 @@
                   },
                   {
                       "path":  "CHANGELOG.md",
-                      "sha256":  "ee474260032fa6d4175c9367fb7ff5f7c9cde5b8d7ad76255e1ba02f7b768606",
-                      "size":  39030,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/CHANGELOG.md?v=0.1.46-test\u0026sha=ee474260032fa6d4175c9367fb7ff5f7c9cde5b8d7ad76255e1ba02f7b768606",
+                      "sha256":  "23fe96e2fe89bb2aa98eaae5a713756f964d243a0cf4d34f336681fe083efb4f",
+                      "size":  39164,
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/CHANGELOG.md?v=0.1.46-test\u0026sha=23fe96e2fe89bb2aa98eaae5a713756f964d243a0cf4d34f336681fe083efb4f",
                       "overwrite":  true,
                       "category":  "CHANGELOG.md"
                   },
@@ -177172,6 +177172,14 @@
                       "category":  "Server"
                   },
                   {
+                      "path":  "Server/data-global/scripts/quests/the_order_of_lion_quest/moveevent_drume_exit.lua",
+                      "sha256":  "d815be115161ba6298a28797032f3aec2d02b6a300d1853af20760cce61d0366",
+                      "size":  491,
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data-global/scripts/quests/the_order_of_lion_quest/moveevent_drume_exit.lua?v=0.1.46-test\u0026sha=d815be115161ba6298a28797032f3aec2d02b6a300d1853af20760cce61d0366",
+                      "overwrite":  true,
+                      "category":  "Server"
+                  },
+                  {
                       "path":  "Server/data-global/scripts/quests/the_order_of_lion_quest/moveevent_elevator.lua",
                       "sha256":  "d0cd61b190cc54432e8c1d976e17a3253a2ce4da37b32b06f04296c3e2a49790",
                       "size":  1096,
@@ -183773,9 +183781,9 @@
                   },
                   {
                       "path":  "Server/data-global/startup/tables/teleport.lua",
-                      "sha256":  "34a70f051b5e74c9c696ae2ad3893935fab6dd2771ce22b644ee03cff389b595",
-                      "size":  10768,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data-global/startup/tables/teleport.lua?v=0.1.46-test\u0026sha=34a70f051b5e74c9c696ae2ad3893935fab6dd2771ce22b644ee03cff389b595",
+                      "sha256":  "0a576de1b13a4baee38173cd1b1ba59be027226b7c87adb5e0420e51abd6641b",
+                      "size":  10902,
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data-global/startup/tables/teleport.lua?v=0.1.46-test\u0026sha=0a576de1b13a4baee38173cd1b1ba59be027226b7c87adb5e0420e51abd6641b",
                       "overwrite":  true,
                       "category":  "Server"
                   },
