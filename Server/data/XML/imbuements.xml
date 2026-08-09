@@ -25,19 +25,19 @@
   <category id="18" name="Skillboost (Fist Fighting)" agressive="1" />
   <category id="19" name="Paralysis Removal" agressive="0" />
   <imbuement name="Strike" base="1" category="3" iconid="1" premium="0" storage="0" scrollid="51800">
-    <attribute key="description" value="Raises crit hit damage by 22% and crit hit chance by 15%." />
-    <attribute key="effect" type="skill" value="critical" bonus="2250" chance="1500" />
+    <attribute key="description" value="Raises crit hit damage by 30.38% and crit hit chance by 20.25%." />
+    <attribute key="effect" type="skill" value="critical" bonus="3038" chance="2025" />
     <attribute key="item" value="11444" count="20" />
   </imbuement>
   <imbuement name="Strike" base="2" category="3" iconid="2" premium="1" storage="0" scrollid="51742">
-    <attribute key="description" value="Raises crit hit damage by 38% and crit hit chance by 15%." />
-    <attribute key="effect" type="skill" value="critical" bonus="3750" chance="1500" />
+    <attribute key="description" value="Raises crit hit damage by 50.63% and crit hit chance by 20.25%." />
+    <attribute key="effect" type="skill" value="critical" bonus="5063" chance="2025" />
     <attribute key="item" value="11444" count="20" />
     <attribute key="item" value="10311" count="25" />
   </imbuement>
   <imbuement name="Strike" base="3" category="3" iconid="3" premium="1" storage="50501" scrollid="51462">
-    <attribute key="description" value="Raises crit hit damage by 75% and crit hit chance by 15%." />
-    <attribute key="effect" type="skill" value="critical" bonus="7500" chance="1500" />
+    <attribute key="description" value="Raises crit hit damage by 101.25% and crit hit chance by 20.25%." />
+    <attribute key="effect" type="skill" value="critical" bonus="10125" chance="2025" />
     <attribute key="item" value="11444" count="20" />
     <attribute key="item" value="10311" count="25" />
     <attribute key="item" value="22728" count="5" />
@@ -241,37 +241,37 @@
     <attribute key="item" value="14012" count="10" />
   </imbuement>
   <imbuement name="Vampirism" base="1" category="1" iconid="46" premium="0" storage="0" scrollid="51812">
-    <attribute key="description" value="Converts 8% of damage to hit points." />
-    <attribute key="effect" type="skill" value="lifeleech" bonus="750" chance="150" />
+    <attribute key="description" value="Converts 10.13% of damage to hit points." />
+    <attribute key="effect" type="skill" value="lifeleech" bonus="1013" chance="203" />
     <attribute key="item" value="9685" count="25" />
   </imbuement>
   <imbuement name="Vampirism" base="2" category="1" iconid="47" premium="1" storage="0" scrollid="51744">
-    <attribute key="description" value="Converts 15% of damage to hit points." />
-    <attribute key="effect" type="skill" value="lifeleech" bonus="1500" chance="150" />
+    <attribute key="description" value="Converts 20.25% of damage to hit points." />
+    <attribute key="effect" type="skill" value="lifeleech" bonus="2025" chance="203" />
     <attribute key="item" value="9685" count="25" />
     <attribute key="item" value="9633" count="15" />
   </imbuement>
   <imbuement name="Vampirism" base="3" category="1" iconid="48" premium="1" storage="50488" scrollid="51464">
-    <attribute key="description" value="Converts 38% of damage to hit points." />
-    <attribute key="effect" type="skill" value="lifeleech" bonus="3750" chance="150" />
+    <attribute key="description" value="Converts 50.63% of damage to hit points." />
+    <attribute key="effect" type="skill" value="lifeleech" bonus="5063" chance="203" />
     <attribute key="item" value="9685" count="25" />
     <attribute key="item" value="9633" count="15" />
     <attribute key="item" value="9663" count="5" />
   </imbuement>
   <imbuement name="Void" base="1" category="2" iconid="49" premium="0" storage="0" scrollid="51813">
-    <attribute key="description" value="Converts 4% of damage to mana." />
-    <attribute key="effect" type="skill" value="manaleech" bonus="450" chance="150" />
+    <attribute key="description" value="Converts 6.08% of damage to mana." />
+    <attribute key="effect" type="skill" value="manaleech" bonus="608" chance="203" />
     <attribute key="item" value="11492" count="25" />
   </imbuement>
   <imbuement name="Void" base="2" category="2" iconid="50" premium="1" storage="0" scrollid="51747">
-    <attribute key="description" value="Converts 8% of damage to mana." />
-    <attribute key="effect" type="skill" value="manaleech" bonus="750" chance="150" />
+    <attribute key="description" value="Converts 10.13% of damage to mana." />
+    <attribute key="effect" type="skill" value="manaleech" bonus="1013" chance="203" />
     <attribute key="item" value="11492" count="25" />
     <attribute key="item" value="20200" count="25" />
   </imbuement>
   <imbuement name="Void" base="3" category="2" iconid="51" premium="1" storage="50494" scrollid="51467">
-    <attribute key="description" value="Converts 12% of damage to mana." />
-    <attribute key="effect" type="skill" value="manaleech" bonus="1200" chance="150" />
+    <attribute key="description" value="Converts 16.2% of damage to mana." />
+    <attribute key="effect" type="skill" value="manaleech" bonus="1620" chance="203" />
     <attribute key="item" value="11492" count="25" />
     <attribute key="item" value="20200" count="25" />
     <attribute key="item" value="22730" count="5" />

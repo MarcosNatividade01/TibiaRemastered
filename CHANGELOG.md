@@ -2,6 +2,11 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.44-test] - Imbuements ofensivos +35%
+
+- Aumentados em 35% os efeitos de roubo de vida, roubo de mana e critico em `Server/data/XML/imbuements.xml`.
+- Atualizadas as descricoes de Strike, Vampirism e Void para refletir os novos valores publicados.
+
 ## [0.1.43-test] - Reparo de login local
 
 - Adicionado `Scripts/Repair-LocalLoginAccount.ps1` para recriar ou corrigir com seguranca uma conta local no banco `otserv`, gerar hash SHA1 compativel, garantir personagem ativo e testar `/login.php` sem expor sessionkey.
