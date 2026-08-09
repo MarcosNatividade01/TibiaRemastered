@@ -1,6 +1,6 @@
 {
     "version":  "0.1.46-test",
-    "generatedAt":  "2026-08-09T13:36:18",
+    "generatedAt":  "2026-08-09T17:30:37",
     "hashAlgorithm":  "SHA256",
     "files":  [
                   {
@@ -13,9 +13,9 @@
                   },
                   {
                       "path":  "CHANGELOG.md",
-                      "sha256":  "23fe96e2fe89bb2aa98eaae5a713756f964d243a0cf4d34f336681fe083efb4f",
-                      "size":  39164,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/CHANGELOG.md?v=0.1.46-test\u0026sha=23fe96e2fe89bb2aa98eaae5a713756f964d243a0cf4d34f336681fe083efb4f",
+                      "sha256":  "1a3b1435a7ae3184e0a0fe1f2f596a4da002375c373de8a60d5e9a645cfd3fc8",
+                      "size":  39331,
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/CHANGELOG.md?v=0.1.46-test\u0026sha=1a3b1435a7ae3184e0a0fe1f2f596a4da002375c373de8a60d5e9a645cfd3fc8",
                       "overwrite":  true,
                       "category":  "CHANGELOG.md"
                   },
@@ -177093,9 +177093,9 @@
                   },
                   {
                       "path":  "Server/data-global/scripts/quests/the_order_of_lion_quest/action_drume.lua",
-                      "sha256":  "819589ae8620f7b0a2adea8531ad08ce06783d650a3a27a9d682a2e9aefa55c7",
+                      "sha256":  "8c8a38e30a323f6ede2db858bb620b5214f06a88d909ee895c2c8e316702777f",
                       "size":  5363,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data-global/scripts/quests/the_order_of_lion_quest/action_drume.lua?v=0.1.46-test\u0026sha=819589ae8620f7b0a2adea8531ad08ce06783d650a3a27a9d682a2e9aefa55c7",
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data-global/scripts/quests/the_order_of_lion_quest/action_drume.lua?v=0.1.46-test\u0026sha=8c8a38e30a323f6ede2db858bb620b5214f06a88d909ee895c2c8e316702777f",
                       "overwrite":  true,
                       "category":  "Server"
                   },
@@ -177117,9 +177117,9 @@
                   },
                   {
                       "path":  "Server/data-global/scripts/quests/the_order_of_lion_quest/creaturescripts_commander_kills.lua",
-                      "sha256":  "eea0657d14a235f3f99cb110b9bb6613666f235d8c1f1cd5642268b35a27be63",
-                      "size":  1922,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data-global/scripts/quests/the_order_of_lion_quest/creaturescripts_commander_kills.lua?v=0.1.46-test\u0026sha=eea0657d14a235f3f99cb110b9bb6613666f235d8c1f1cd5642268b35a27be63",
+                      "sha256":  "29b82f84367d6bb9d5c8ba4161edb995614a52bc51a356e5704acbeec558f096",
+                      "size":  1933,
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data-global/scripts/quests/the_order_of_lion_quest/creaturescripts_commander_kills.lua?v=0.1.46-test\u0026sha=29b82f84367d6bb9d5c8ba4161edb995614a52bc51a356e5704acbeec558f096",
                       "overwrite":  true,
                       "category":  "Server"
                   },
@@ -177173,9 +177173,9 @@
                   },
                   {
                       "path":  "Server/data-global/scripts/quests/the_order_of_lion_quest/moveevent_drume_exit.lua",
-                      "sha256":  "d815be115161ba6298a28797032f3aec2d02b6a300d1853af20760cce61d0366",
-                      "size":  491,
-                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data-global/scripts/quests/the_order_of_lion_quest/moveevent_drume_exit.lua?v=0.1.46-test\u0026sha=d815be115161ba6298a28797032f3aec2d02b6a300d1853af20760cce61d0366",
+                      "sha256":  "e67f45af25bb5002362be7f204cb4ae3b1b7ba3930960b1f412b00f8bf1d223c",
+                      "size":  1010,
+                      "url":  "https://raw.githubusercontent.com/MarcosNatividade01/TibiaRemastered/main/Server/data-global/scripts/quests/the_order_of_lion_quest/moveevent_drume_exit.lua?v=0.1.46-test\u0026sha=e67f45af25bb5002362be7f204cb4ae3b1b7ba3930960b1f412b00f8bf1d223c",
                       "overwrite":  true,
                       "category":  "Server"
                   },

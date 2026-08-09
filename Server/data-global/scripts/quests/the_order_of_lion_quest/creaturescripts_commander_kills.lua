@@ -1,6 +1,6 @@
 local config = {
 	centerPosition = Position(32439, 32523, 7), -- Center Room
-	exitPosition = Position(32453, 32503, 7), -- Exit Position
+	exitPosition = Position(32457, 32508, 6), -- Safe challenge room exit
 	rangeX = 22,
 	rangeY = 16,
 }

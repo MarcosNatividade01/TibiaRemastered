@@ -11,7 +11,7 @@ local config = {
 	},
 	firstPlayerPosition = Position(32457, 32508, 6),
 	centerPosition = Position(32439, 32523, 7),
-	exitPosition = Position(32453, 32503, 7),
+	exitPosition = Position(32457, 32508, 6),
 	newPosition = Position(32453, 32510, 7),
 	rangeX = 22,
 	rangeY = 16,

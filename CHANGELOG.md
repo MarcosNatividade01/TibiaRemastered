@@ -12,6 +12,7 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Adicionado fallback no handler global da rope para iniciar o Drume diretamente quando o jogador estiver nos tiles do desafio em Bounac.
 - Registrados IDs extras de rope (`7884`, `7895`, `20206`, `21375`, `31366`) para garantir que o client chame o handler mesmo usando variantes de corda.
 - Corrigido o portal de saida do Drume em Bounac (`47404`, `32469,32503,7`) com MoveEvent dedicado e registro na tabela de teleports.
+- Alterada a saida do Drume para a sala segura da corda (`32457,32508,6`) e adicionado fallback por clique no portal, evitando morte ao sair por tempo ou pelo portal.
 - Mantido o bloqueio de sala ocupada para evitar sobrepor lutas enquanto outro jogador ainda esta dentro do boss.
 
 ## [0.1.45-test] - Acessos de quest e bosses sem espera
