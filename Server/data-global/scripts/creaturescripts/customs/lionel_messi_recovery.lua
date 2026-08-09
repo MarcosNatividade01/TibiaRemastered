@@ -1,28 +1,54 @@
 local lionelMessiRecovery = CreatureEvent("LionelMessiRecovery")
 
 local playerName = "Lionel Messi"
-local recoveryStorage = 910252
+local helmetRecoveryStorage = 910252
+local weaponRecoveryStorage = 910253
+local powerfulStrikeScrollId = 51462
+local powerfulVampirismScrollId = 51464
 local powerfulVoidScrollId = 51467
 
+local function applyScrollToItem(player, item, scrollId)
+	if not item or not item.getImbuementSlot or item:getImbuementSlot() <= 0 then
+		return false
+	end
+
+	local scrollCountBefore = player:getItemCount(scrollId)
+	local scroll = player:addItem(scrollId, 1, true)
+	if not scroll then
+		return false
+	end
+
+	player:applyImbuementScrollToItem(scrollId, item)
+	local scrollCountAfter = player:getItemCount(scrollId)
+	if scrollCountAfter > scrollCountBefore then
+		player:removeItem(scrollId, scrollCountAfter - scrollCountBefore)
+	end
+	return true
+end
+
 function lionelMessiRecovery.onLogin(player)
-	if player:getName() ~= playerName or player:getStorageValue(recoveryStorage) == 1 then
+	if player:getName() ~= playerName then
 		return true
 	end
 
-	local helmet = player:getSlotItem(CONST_SLOT_HEAD)
-	if helmet and helmet:getId() == 3392 and helmet.getImbuementSlot and helmet:getImbuementSlot() > 0 then
-		local scrollCountBefore = player:getItemCount(powerfulVoidScrollId)
-		local scroll = player:addItem(powerfulVoidScrollId, 1, true)
-		if scroll then
-			player:applyImbuementScrollToItem(powerfulVoidScrollId, helmet)
-			local scrollCountAfter = player:getItemCount(powerfulVoidScrollId)
-			if scrollCountAfter > scrollCountBefore then
-				player:removeItem(powerfulVoidScrollId, scrollCountAfter - scrollCountBefore)
-			end
+	if player:getStorageValue(helmetRecoveryStorage) ~= 1 then
+		local helmet = player:getSlotItem(CONST_SLOT_HEAD)
+		if helmet and helmet:getId() == 3392 then
+			applyScrollToItem(player, helmet, powerfulVoidScrollId)
 		end
+		player:setStorageValue(helmetRecoveryStorage, 1)
 	end
 
-	player:setStorageValue(recoveryStorage, 1)
+	if player:getStorageValue(weaponRecoveryStorage) ~= 1 then
+		local weapon = player:getSlotItem(CONST_SLOT_LEFT) or player:getSlotItem(CONST_SLOT_RIGHT)
+		if weapon and weapon:getId() == 7434 then
+			applyScrollToItem(player, weapon, powerfulStrikeScrollId)
+			applyScrollToItem(player, weapon, powerfulVampirismScrollId)
+			applyScrollToItem(player, weapon, powerfulVoidScrollId)
+		end
+		player:setStorageValue(weaponRecoveryStorage, 1)
+	end
+
 	player:save()
 	return true
 end

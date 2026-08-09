@@ -1,6 +1,6 @@
 {
   "version": "0.1.46-test",
-  "generatedAt": "2026-08-09T18:05:09",
+  "generatedAt": "2026-08-09T21:15:05",
   "hashAlgorithm": "SHA256",
   "files": [
     {
@@ -13,8 +13,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "d99d1f135e2bac8033530cc58ba794949400f534ca89ffb4c9a5bc9021dd842b",
-      "size": 39630,
+      "sha256": "8d73b1d4dda12a7b205d0f22e3654e648f5cf2aac7f01ac6e60a82e00697cc5d",
+      "size": 39785,
       "url": "",
       "overwrite": true,
       "category": "CHANGELOG.md"
@@ -163821,8 +163821,8 @@
     },
     {
       "path": "Server/data-global/scripts/creaturescripts/customs/lionel_messi_recovery.lua",
-      "sha256": "160d27413405f13b32e2f5a30fd912c2cc5d0612b58319137e40abb18ad0a298",
-      "size": 1021,
+      "sha256": "84b4743e619fd45d9821c14fc5499ffabab7f8dd1284107950e16770ee929c74",
+      "size": 1728,
       "url": "",
       "overwrite": true,
       "category": "Server"

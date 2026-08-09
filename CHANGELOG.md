@@ -15,6 +15,7 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Alterada a saida do Drume para a sala segura da corda (`32457,32508,6`) e adicionado fallback por clique no portal, evitando morte ao sair por tempo ou pelo portal.
 - Corrigido o portal de saida do Drume para usar action id de teleporte valido (`39009`) e o handler generico agora aceita `actionid`, garantindo a saida ao pisar no portal.
 - Adicionada recuperacao do Lionel Messi para reaplicar Mana Leech/Powerful Void no helmet no proximo login apos o rollback.
+- Expandida a recuperacao do Lionel Messi para reaplicar na arma `7434` os imbuements Powerful Strike, Powerful Vampirism e Powerful Void apos o rollback.
 - Mantido o bloqueio de sala ocupada para evitar sobrepor lutas enquanto outro jogador ainda esta dentro do boss.
 
 ## [0.1.45-test] - Acessos de quest e bosses sem espera
