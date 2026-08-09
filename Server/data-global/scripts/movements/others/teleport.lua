@@ -7,7 +7,7 @@ function teleport.onStepIn(creature, item, position, fromPosition)
 		return true
 	end
 
-	local setting = TeleportUnique[item.uid]
+	local setting = TeleportUnique[item.uid] or TeleportAction[item.actionid]
 	if setting then
 		player:teleportTo(setting.destination)
 		player:getPosition():sendMagicEffect(setting.effect)
@@ -17,6 +17,7 @@ end
 
 for uniqueRange = 38001, 40000 do
 	teleport:uid(uniqueRange)
+	teleport:aid(uniqueRange)
 end
 
 teleport:register()

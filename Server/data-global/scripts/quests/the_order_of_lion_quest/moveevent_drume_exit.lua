@@ -17,7 +17,7 @@ function drumeExit.onStepIn(creature, item, position, fromPosition)
 	return leaveDrumeRoom(creature:getPlayer())
 end
 
-drumeExit:aid(47404)
+drumeExit:aid(39009, 47404)
 drumeExit:position(exitPortalPosition)
 drumeExit:position(Position(32468, 32503, 7))
 drumeExit:position(Position(32469, 32502, 7))
@@ -32,7 +32,7 @@ function drumeExitAction.onUse(player, item, fromPosition, target, toPosition, i
 	return leaveDrumeRoom(player)
 end
 
-drumeExitAction:aid(47404)
+drumeExitAction:aid(39009, 47404)
 drumeExitAction:position(exitPortalPosition)
 drumeExitAction:id(2824)
 drumeExitAction:register()

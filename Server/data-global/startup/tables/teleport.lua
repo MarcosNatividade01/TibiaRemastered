@@ -65,13 +65,6 @@ TeleportAction = {
 			{ x = 33777, y = 32192, z = 14 },
 		},
 	},
-	-- The Order of the Lion Quest - Drume exit
-	[47404] = {
-		itemId = 2824,
-		itemPos = {
-			{ x = 32469, y = 32503, z = 7 },
-		},
-	},
 }
 
 TeleportUnique = {
@@ -423,6 +416,13 @@ TeleportUnique = {
 		itemId = 775,
 		itemPos = { x = 33640, y = 32559, z = 13 },
 		destination = { x = 33618, y = 32523, z = 15 },
+		effect = CONST_ME_TELEPORT,
+	},
+	-- The Order of the Lion Quest - Drume exit
+	[39009] = {
+		itemId = 2824,
+		itemPos = { x = 32469, y = 32503, z = 7 },
+		destination = { x = 32457, y = 32508, z = 6 },
 		effect = CONST_ME_TELEPORT,
 	},
 }
