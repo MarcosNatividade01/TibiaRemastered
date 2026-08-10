@@ -2,6 +2,12 @@
 setlocal
 cd /d "%~dp0"
 
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0preparar_cliente.ps1"
+if errorlevel 1 (
+    pause
+    exit /b 1
+)
+
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0ligar_servidor.ps1"
 if errorlevel 1 (
     pause

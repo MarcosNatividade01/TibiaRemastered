@@ -1715,6 +1715,34 @@ function Get-TrmRuntimeConfigResolved {
     }
 }
 
+function Test-TrmSmartAppControlEnabled {
+    try {
+        $policy = Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy' -ErrorAction Stop
+        return ([int]$policy.VerifiedAndReputablePolicyState -eq 1)
+    } catch {
+        return $false
+    }
+}
+
+function Assert-TrmClientCanRun {
+    param([string]$ClientExe)
+
+    if (-not (Test-Path -LiteralPath $ClientExe)) {
+        throw "Client exe not found: $ClientExe"
+    }
+
+    $signature = Get-AuthenticodeSignature -LiteralPath $ClientExe
+    if ($signature.Status -eq 'Valid') {
+        return
+    }
+
+    if ((Test-TrmSmartAppControlEnabled) -and $signature.Status -eq 'HashMismatch') {
+        throw "O Windows bloqueou o client pelo Smart App Control/Controle de Aplicativo.`r`nArquivo: $ClientExe`r`nMotivo: assinatura digital quebrada (HashMismatch) em binario modificado.`r`nPara jogar com este client local, abra Seguranca do Windows > Controle de aplicativo e navegador > Smart App Control, desative o Smart App Control, reinicie o computador e abra o jogo novamente."
+    }
+
+    throw "Assinatura digital do client nao esta valida: $($signature.Status). Arquivo: $ClientExe"
+}
+
 function Ensure-TrmLocalServerStarted {
     param([object]$Resolved, [scriptblock]$ProgressCallback)
     Ensure-TrmDatabaseServer -Config $Resolved.config -ProgressCallback $ProgressCallback
@@ -1837,6 +1865,7 @@ function Start-TrmClientForWorld {
     $resolved = Get-TrmRuntimeConfigResolved
     Ensure-TrmProjectStructure
     Ensure-TrmPlayerPackage -Config $resolved.config -ServerExe $resolved.serverExe -ClientExe $resolved.clientExe -ProgressCallback $ProgressCallback
+    Assert-TrmClientCanRun -ClientExe $resolved.clientExe
     $webPort = [int]$resolved.config.webServerPort
     $loginPort = [int](@($resolved.config.serverPorts)[0])
     $remoteAccountBaseUrl = ''
@@ -2176,7 +2205,7 @@ function Start-TrmGame {
     if (-not [System.IO.Path]::IsPathRooted($clientWorkingDirectory)) { $clientWorkingDirectory = Join-Path $root $clientWorkingDirectory }
     Ensure-TrmPlayerPackage -Config $config -ServerExe $serverExe -ClientExe $clientExe -ProgressCallback $ProgressCallback
     if (-not (Test-Path $serverExe)) { throw "Server exe not found: $serverExe" }
-    if (-not (Test-Path $clientExe)) { throw "Client exe not found: $clientExe" }
+    Assert-TrmClientCanRun -ClientExe $clientExe
 
     Ensure-TrmDatabaseServer -Config $config -ProgressCallback $ProgressCallback
     Ensure-TrmWebEndpoint -Config $config -ProgressCallback $ProgressCallback

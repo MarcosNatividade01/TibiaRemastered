@@ -2,6 +2,11 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.47-test] - Diagnostico de Smart App Control
+
+- Adicionada validacao de assinatura do client antes da abertura para detectar `HashMismatch` com Smart App Control ativo.
+- O launcher e os atalhos agora explicam que o bloqueio vem do Controle de Aplicativo do Windows e indicam o caminho correto em Seguranca do Windows.
+
 ## [0.1.46-test] - Desbloqueio global de quest doors e bosses
 
 - Adicionados `gameplay.unlockQuestAccess` e `gameplay.unlockBossAccess` como chaves globais Remastered para liberar portas, portais e entradas especiais sem depender de quest feita.
@@ -453,8 +458,6 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Criada a estrutura inicial do repositorio.
 - Adicionados arquivos base para README, roadmap, ideias, versao e manifest.
 - Adicionado `.gitignore` para proteger dados reais e arquivos sensiveis.
-
-
 
 
 

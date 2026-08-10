@@ -5,12 +5,43 @@ $clientExe = Join-Path $clientRoot 'bin\client-local.exe'
 $webEngine = Join-Path $clientRoot 'bin\Qt6WebEngineCore.dll'
 $packageJson = Join-Path $clientRoot 'package.json'
 
+function Test-SmartAppControlEnabled {
+    try {
+        $policy = Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy' -ErrorAction Stop
+        return ([int]$policy.VerifiedAndReputablePolicyState -eq 1)
+    } catch {
+        return $false
+    }
+}
+
+function Assert-ClientCanRun {
+    param([string]$Path)
+
+    $signature = Get-AuthenticodeSignature -LiteralPath $Path
+    if ($signature.Status -eq 'Valid') {
+        return
+    }
+
+    if ((Test-SmartAppControlEnabled) -and $signature.Status -eq 'HashMismatch') {
+        Write-Host 'O Windows bloqueou este client pelo Smart App Control/Controle de Aplicativo.' -ForegroundColor Red
+        Write-Host "Arquivo: $Path" -ForegroundColor Yellow
+        Write-Host 'Motivo: a assinatura digital esta quebrada (HashMismatch), entao o Windows nao permite executar este binario modificado.' -ForegroundColor Yellow
+        Write-Host 'Para jogar com este client local, abra: Seguranca do Windows > Controle de aplicativo e navegador > Smart App Control, e desative o Smart App Control. Depois reinicie o computador e abra o jogo novamente.' -ForegroundColor Yellow
+        exit 1
+    }
+
+    Write-Host "Assinatura digital do client nao esta valida: $($signature.Status)" -ForegroundColor Red
+    exit 1
+}
+
 foreach ($required in @($clientExe, $webEngine, $packageJson)) {
     if (-not (Test-Path -LiteralPath $required)) {
         Write-Host "Arquivo necessario ausente: $required" -ForegroundColor Red
         exit 1
     }
 }
+
+Assert-ClientCanRun -Path $clientExe
 
 $version = (Get-Content -LiteralPath $packageJson -Raw | ConvertFrom-Json).version
 if ($version -notlike '15.24*') {
