@@ -30,8 +30,7 @@ function Assert-ClientCanRun {
         exit 1
     }
 
-    Write-Host "Assinatura digital do client nao esta valida: $($signature.Status)" -ForegroundColor Red
-    exit 1
+    Write-Host "Aviso: assinatura digital do client nao esta valida: $($signature.Status). Tentando abrir mesmo assim porque o Smart App Control nao esta ativo." -ForegroundColor Yellow
 }
 
 foreach ($required in @($clientExe, $webEngine, $packageJson)) {

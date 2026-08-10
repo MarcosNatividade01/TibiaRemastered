@@ -1740,7 +1740,7 @@ function Assert-TrmClientCanRun {
         throw "O Windows bloqueou o client pelo Smart App Control/Controle de Aplicativo.`r`nArquivo: $ClientExe`r`nMotivo: assinatura digital quebrada (HashMismatch) em binario modificado.`r`nPara jogar com este client local, abra Seguranca do Windows > Controle de aplicativo e navegador > Smart App Control, desative o Smart App Control, reinicie o computador e abra o jogo novamente."
     }
 
-    throw "Assinatura digital do client nao esta valida: $($signature.Status). Arquivo: $ClientExe"
+    return
 }
 
 function Ensure-TrmLocalServerStarted {

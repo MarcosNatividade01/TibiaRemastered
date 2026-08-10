@@ -2,6 +2,11 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.48-test] - Client com SAC desativado
+
+- Ajustada a validacao do client para tratar `HashMismatch` como bloqueio apenas quando o Smart App Control esta ativo.
+- Com o Smart App Control desativado, o launcher passa a tentar abrir o client local mesmo com assinatura invalida.
+
 ## [0.1.47-test] - Diagnostico de Smart App Control
 
 - Adicionada validacao de assinatura do client antes da abertura para detectar `HashMismatch` com Smart App Control ativo.
@@ -458,7 +463,6 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Criada a estrutura inicial do repositorio.
 - Adicionados arquivos base para README, roadmap, ideias, versao e manifest.
 - Adicionado `.gitignore` para proteger dados reais e arquivos sensiveis.
-
 
 
 
