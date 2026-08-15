@@ -11,11 +11,14 @@ end
 
 local levelDoor = Action()
 function levelDoor.onUse(player, item, fromPosition, target, toPosition, isHotkey)
-	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
-
 	for index, value in ipairs(LevelDoorTable) do
 		if value.closedDoor == item.itemid then
-			if questAccessUnlocked or (item.actionid > 0 and player:getLevel() >= item.actionid - 1000) then
+			local requiredLevel = item.actionid > 0 and item.actionid - 1000 or 0
+			if requiredLevel > 0 and Remastered and Remastered.Gameplay and Remastered.Gameplay.getReducedAccessLevel then
+				requiredLevel = Remastered.Gameplay.getReducedAccessLevel(requiredLevel)
+			end
+
+			if requiredLevel <= 0 or player:getLevel() >= requiredLevel then
 				item:transform(value.openDoor)
 				item:getPosition():sendSingleSoundEffect(SOUND_EFFECT_TYPE_ACTION_OPEN_DOOR)
 				player:teleportTo(toPosition, true)

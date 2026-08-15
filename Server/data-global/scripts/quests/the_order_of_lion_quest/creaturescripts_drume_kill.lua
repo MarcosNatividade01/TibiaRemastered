@@ -5,8 +5,7 @@ local areaMax = Position(32398, 32485, 2)
 
 function drumeKill.onDeath(creature, corpse, lastHitKiller, mostDamageKiller)
 	onDeathForParty(creature, mostDamageKiller, function(creature, player)
-		local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
-		if questAccessUnlocked or player:getStorageValue(Storage.Quest.U12_40.TheOrderOfTheLion.KesarMission) == 4 then
+		if player:getStorageValue(Storage.Quest.U12_40.TheOrderOfTheLion.KesarMission) == 4 then
 			player:setStorageValue(Storage.Quest.U12_40.TheOrderOfTheLion.KesarMission, 5)
 			player:setStorageValue(Storage.Quest.U12_40.TheOrderOfTheLion.AugustinDoor, 1)
 		end

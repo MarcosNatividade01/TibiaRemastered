@@ -38,6 +38,7 @@ local config = {
 
 local othersDesert = Action()
 function othersDesert.onUse(player, item, fromPosition, target, toPosition, isHotkey)
+	local itemAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.canBypassAccess and Remastered.Gameplay.canBypassAccess("useItem")
 	item:transform(item.itemid == 2772 and 2773 or 2772)
 
 	if item.itemid ~= 2772 then
@@ -51,7 +52,7 @@ function othersDesert.onUse(player, item, fromPosition, target, toPosition, isHo
 		local creature = Tile(config[i].fromPosition):getTopCreature()
 		if creature and creature:isPlayer() then
 			local sacrificeItem = Tile(config[i].sacrificePosition):getItemById(config[i].sacrificeId)
-			if not sacrificeItem then
+			if not itemAccessUnlocked and not sacrificeItem then
 				player:sendCancelMessage(creature:getName() .. " is missing " .. creature:getPossessivePronoun() .. " sacrifice on the altar.")
 				position:sendMagicEffect(CONST_ME_POFF)
 				return true
@@ -70,7 +71,7 @@ function othersDesert.onUse(player, item, fromPosition, target, toPosition, isHo
 	for i = 1, #players do
 		local entry = players[i]
 		local sacrificeItem = Tile(entry.config.sacrificePosition):getItemById(entry.config.sacrificeId)
-		if sacrificeItem then
+		if not itemAccessUnlocked and sacrificeItem then
 			sacrificeItem:remove()
 		end
 

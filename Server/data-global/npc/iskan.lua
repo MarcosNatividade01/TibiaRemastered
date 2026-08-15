@@ -65,11 +65,12 @@ end
 local function creatureSayCallback(npc, creature, type, message)
 	local player = Player(creature)
 	local playerId = player:getId()
+	local npcAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.canBypassAccess and Remastered.Gameplay.canBypassAccess("npc")
 
 	if not npcHandler:checkInteraction(npc, creature) then
 		return false
 	end
-	if player:getStorageValue(Storage.Quest.U8_0.BarbarianTest.Questline) < 8 then
+	if not npcAccessUnlocked and player:getStorageValue(Storage.Quest.U8_0.BarbarianTest.Questline) < 8 then
 		return true
 	end
 	if MsgContains(message, "passage") then
@@ -117,7 +118,7 @@ local function creatureSayCallback(npc, creature, type, message)
 			player:setStorageValue(Storage.Quest.U8_0.TheIceIslands.Mission01, 1) -- Questlog The Ice Islands Quest, Befriending the Musher
 			npcHandler:setTopic(playerId, 0)
 		elseif npcHandler:getTopic(playerId) == 2 then
-			if player:getStorageValue(Storage.Quest.U8_0.TheIceIslands.Questline) >= 3 then
+			if npcAccessUnlocked or player:getStorageValue(Storage.Quest.U8_0.TheIceIslands.Questline) >= 3 then
 				player:teleportTo(Position(32325, 31049, 7))
 				player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 				npcHandler:setTopic(playerId, 0)

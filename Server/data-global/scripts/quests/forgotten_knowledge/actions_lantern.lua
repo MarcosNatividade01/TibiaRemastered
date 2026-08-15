@@ -6,6 +6,7 @@ local config = {
 local forgottenKnowledgeLantern = Action()
 function forgottenKnowledgeLantern.onUse(player, item, fromPosition, target, toPosition, isHotkey)
 	local lantern = config[item.itemid]
+	local doorAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isDoorAccessUnlocked and Remastered.Gameplay.isDoorAccessUnlocked()
 	if not lantern then
 		return true
 	end
@@ -17,7 +18,9 @@ function forgottenKnowledgeLantern.onUse(player, item, fromPosition, target, toP
 		player:getPosition():sendMagicEffect(CONST_ME_ENERGYAREA)
 		local msg = "As you start polishing the lantern it begins to glow in an otherworldly light."
 		if player:getPosition():getDistance(Position(32891, 31619, 10)) < 2 then
-			if not player:getItemById(23733, true) then
+			if doorAccessUnlocked then
+				msg = "In the light of the ghostsilver lantern you discover an otherwise invisible door. It is unlocked."
+			elseif not player:getItemById(23733, true) then
 				msg = "In the light of the ghostsilver lantern you discover an otherwise invisible door. But you lack the key to open it."
 			else
 				msg = "In the light of the ghostsilver lantern you discover an otherwise invisible door. As you have the fitting key you can pass."

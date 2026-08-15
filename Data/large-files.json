@@ -1,0 +1,16 @@
+{
+    "version":  "0.1.49-test",
+    "generatedAt":  "2026-08-15T17:43:05",
+    "files":  [
+                  {
+                      "path":  "Server/data-global/world/world.otbm",
+                      "sha256":  "74144a405c79a98b22b9aa3f4c01811592401be966baa579f969c2a3feb118cd",
+                      "size":  194946289,
+                      "parts":  [
+                                    "Server/data-global/world/map-parts/world.otbm.part001",
+                                    "Server/data-global/world/map-parts/world.otbm.part002",
+                                    "Server/data-global/world/map-parts/world.otbm.part003"
+                                ]
+                  }
+              ]
+}

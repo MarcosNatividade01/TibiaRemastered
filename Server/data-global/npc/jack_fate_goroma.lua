@@ -53,6 +53,7 @@ end
 local function creatureSayCallback(npc, creature, type, message)
 	local player = Player(creature)
 	local playerId = player:getId()
+	local npcAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.canBypassAccess and Remastered.Gameplay.canBypassAccess("npc")
 
 	if not npcHandler:checkInteraction(npc, creature) then
 		return false
@@ -63,7 +64,10 @@ local function creatureSayCallback(npc, creature, type, message)
 	end
 
 	if table.contains({ "sail", "passage", "wreck", "liberty bay", "ship" }, message) then
-		if player:getStorageValue(Storage.Quest.U7_8.TheShatteredIsles.AccessToGoroma) ~= 1 then
+		if npcAccessUnlocked then
+			npcHandler:say("Do you want to travel back to Liberty Bay?", npc, creature)
+			npcHandler:setTopic(playerId, 4)
+		elseif player:getStorageValue(Storage.Quest.U7_8.TheShatteredIsles.AccessToGoroma) ~= 1 then
 			if player:getStorageValue(Storage.Quest.U7_8.TheShatteredIsles.Shipwrecked) < 1 then
 				npcHandler:say("I'd love to bring you back to Liberty Bay, but as you can see, my ship is ruined. I also hurt my leg and can barely move. Can you help me?", npc, creature)
 				npcHandler:setTopic(playerId, 1)

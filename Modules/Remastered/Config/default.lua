@@ -1,10 +1,10 @@
 return {
-	version = "0.1.46-test",
+	version = "0.1.49-test",
 	environment = "local",
 	debug = false,
 	build = {
-		commit = "a8e34a7229d879b44451d69bcc53fc50ab2d83e6",
-		label = "0.1.46-quest-boss-unlock",
+		commit = "release-0.1.49-test",
+		label = "0.1.49-free-exploration",
 	},
 
 	balance = {
@@ -36,6 +36,19 @@ return {
 	gameplay = {
 		unlockQuestAccess = true,
 		unlockBossAccess = true,
+		unlockDoorAccess = true,
+		freeExploration = {
+			enabled = true,
+			ignoreQuestAccess = true,
+			ignoreQuestKeys = true,
+			ignoreQuestItems = true,
+			ignoreNpcAccess = true,
+			ignoreTeleportAccess = true,
+			ignoreUseItemAccess = true,
+			accessRequirementMultiplier = 0.50,
+			levelRequirementMultiplier = 0.50,
+			minimumItemRequirement = 1,
+		},
 		globalEvents = {
 			timezone = "UTC",
 			events = {

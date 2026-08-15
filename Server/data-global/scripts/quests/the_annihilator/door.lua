@@ -2,8 +2,9 @@ local door = Action()
 
 function door.onUse(player, item, fromPosition, target, toPosition, isHotkey)
 	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	local doorAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isDoorAccessUnlocked and Remastered.Gameplay.isDoorAccessUnlocked()
 
-	if not questAccessUnlocked and player:getStorageValue(Storage.Quest.U7_24.TheAnnihilator.Reward) == 1 then
+	if not doorAccessUnlocked and not questAccessUnlocked and player:getStorageValue(Storage.Quest.U7_24.TheAnnihilator.Reward) == 1 then
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "The door seems to be sealed against unwanted intruders.")
 		return true
 	end

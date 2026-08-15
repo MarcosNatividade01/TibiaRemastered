@@ -475,6 +475,10 @@ end
 local freeQuests = CreatureEvent("FreeQuests")
 
 function freeQuests.onLogin(player)
+	if Remastered and Remastered.Gameplay and Remastered.Gameplay.isFreeExplorationEnabled and Remastered.Gameplay.isFreeExplorationEnabled() then
+		return true
+	end
+
 	if not configManager.getBoolean(configKeys.TOGGLE_FREE_QUEST) or player:getStorageValue(Storage.FreeQuests) == stage then
 		return true
 	end

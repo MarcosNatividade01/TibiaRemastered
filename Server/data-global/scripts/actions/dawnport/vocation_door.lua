@@ -25,14 +25,15 @@ local vocationDoor = Action()
 
 function vocationDoor.onUse(player, item, target, position, fromPosition)
 	local door = vocationDoors[item.uid]
+	local doorAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isDoorAccessUnlocked and Remastered.Gameplay.isDoorAccessUnlocked()
 	--Check Oressa storage before choose vocation
-	if player:getStorageValue(Storage.Dawnport.DoorVocation) == door.vocation then
+	if doorAccessUnlocked or player:getStorageValue(Storage.Dawnport.DoorVocation) == door.vocation then
 		-- Remove Mainland smuggling items
 		removeMainlandSmugglingItems(player)
 		player:teleportTo(door.destination)
 		player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "Open the chest and take your gear, young " .. player:getVocation():getName():lower() .. "!")
-	elseif player:getStorageValue(Storage.Dawnport.DoorVocation) ~= door.vocation then
+	else
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "The door seems to be sealed against unwanted intruders.")
 	end
 	return true

@@ -27,15 +27,15 @@ end
 
 local keyDoor = Action()
 function keyDoor.onUse(player, item, fromPosition, target, toPosition, isHotkey)
-	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	local doorAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isDoorAccessUnlocked and Remastered.Gameplay.isDoorAccessUnlocked()
 
 	-- It is locked msg
-	if not questAccessUnlocked and (table.contains(keyLockedDoor, item.itemid) or (table.contains(keyUnlockedDoor, item.itemid) and table.contains({ 1001, 101 }, item.actionid))) then
+	if not doorAccessUnlocked and (table.contains(keyLockedDoor, item.itemid) or (table.contains(keyUnlockedDoor, item.itemid) and table.contains({ 1001, 101 }, item.actionid))) then
 		player:sendTextMessage(MESSAGE_LOOK, "It is locked.")
 		return true
 	end
 
-	if questAccessUnlocked then
+	if doorAccessUnlocked then
 		for index, value in ipairs(KeyDoorTable) do
 			if value.lockedDoor == item.itemid or value.closedDoor == item.itemid then
 				item:transform(value.openDoor)
@@ -65,7 +65,7 @@ function keyDoor.onUse(player, item, fromPosition, target, toPosition, isHotkey)
 	end
 
 	-- Key use on door (locked key door)
-	if questAccessUnlocked and target and target.itemid then
+	if doorAccessUnlocked and target and target.itemid then
 		for index, value in ipairs(KeyDoorTable) do
 			if value.lockedDoor == target.itemid or value.closedDoor == target.itemid then
 				target:transform(value.openDoor)

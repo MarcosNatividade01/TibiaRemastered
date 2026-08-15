@@ -27,6 +27,8 @@ local config = {
 
 local elementalSpheresLever = Action()
 function elementalSpheresLever.onUse(player, item, fromPosition, target, toPosition, isHotkey)
+	local bossAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isBossAccessUnlocked and Remastered.Gameplay.isBossAccessUnlocked()
+
 	if item.itemid ~= 2772 then
 		item:transform(2772)
 		return true
@@ -46,7 +48,7 @@ function elementalSpheresLever.onUse(player, item, fromPosition, target, toPosit
 	for i = 1, #config do
 		local creature = Tile(config[i].position):getTopCreature()
 		if creature and creature:isPlayer() then
-			if creature:getItemCount(config[i].itemid) < 1 or creature:getStorageValue(Storage.Quest.U8_2.ElementalSpheres.QuestLine) < 1 then
+			if not bossAccessUnlocked and (creature:getItemCount(config[i].itemid) < 1 or creature:getStorageValue(Storage.Quest.U8_2.ElementalSpheres.QuestLine) < 1) then
 				player:say("Every participating player must have completed the Elemental Spheres quest and carry the matching elemental rare item.", TALKTYPE_MONSTER_SAY, false, 0, Position(33268, 31835, 10))
 				return true
 			end

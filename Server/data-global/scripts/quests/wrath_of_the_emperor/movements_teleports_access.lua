@@ -41,6 +41,14 @@ local config = {
 }
 
 local function tpX(i, player, position)
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	if questAccessUnlocked then
+		if position == config[i].teleportPos then
+			return config[i].destinationA
+		end
+		return config[i].destinationB
+	end
+
 	if player:getStorageValue(config[i].Access) == 1 then
 		if position == config[i].teleportPos then
 			return config[i].destinationA

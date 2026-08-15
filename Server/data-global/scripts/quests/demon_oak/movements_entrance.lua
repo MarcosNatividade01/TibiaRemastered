@@ -7,6 +7,17 @@ function entrance.onStepIn(creature, item, position, fromPosition)
 	end
 
 	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	if questAccessUnlocked then
+		if #Game.getSpectators(DEMON_OAK_POSITION, false, true, 9, 9, 6, 6) == 0 then
+			player:teleportTo(DEMON_OAK_ENTER_POSITION)
+			player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
+		else
+			player:teleportTo(DEMON_OAK_KICK_POSITION)
+			player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
+		end
+		return true
+	end
+
 	if not questAccessUnlocked and player:getStorageValue(Storage.Quest.U8_2.TheDemonOak.Done) >= 1 then
 		player:teleportTo(DEMON_OAK_KICK_POSITION)
 		player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)

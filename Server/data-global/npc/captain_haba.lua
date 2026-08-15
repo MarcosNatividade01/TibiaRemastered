@@ -75,6 +75,7 @@ end
 local function creatureSayCallback(npc, creature, type, message)
 	local player = Player(creature)
 	local playerId = player:getId()
+	local npcAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.canBypassAccess and Remastered.Gameplay.canBypassAccess("npc")
 
 	if not npcHandler:checkInteraction(npc, creature) then
 		return false
@@ -82,7 +83,11 @@ local function creatureSayCallback(npc, creature, type, message)
 
 	if table.contains({ "mission", "hunt", "passage" }, message:lower()) then
 		if MsgContains(message, "passage") then
-			if player:getStorageValue(Storage.Quest.U8_2.TheHuntForTheSeaSerpent.FishForASerpent) < 5 then
+			if npcAccessUnlocked then
+				npcHandler:say("A'right, wanna put out to sea?", npc, creature)
+				npcHandler:setTopic(playerId, 2)
+				return true
+			elseif player:getStorageValue(Storage.Quest.U8_2.TheHuntForTheSeaSerpent.FishForASerpent) < 5 then
 				npcHandler:say("Hold your horses! First we need to get more {bait} fo' the sea serpent. Bring me the fish I requested and we can set sails immediately.", npc, creature)
 				return true
 			end
@@ -106,7 +111,7 @@ local function creatureSayCallback(npc, creature, type, message)
 			npcHandler:say("Let's go fo' a {hunt} and bring the beast down!", npc, creature) --test
 			player:teleportTo(Position(31942, 31047, 6))
 			player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
-			if player:getStorageValue(Storage.Quest.U8_2.TheHuntForTheSeaSerpent.QuestLine) < 0 then
+			if not npcAccessUnlocked and player:getStorageValue(Storage.Quest.U8_2.TheHuntForTheSeaSerpent.QuestLine) < 0 then
 				player:setStorageValue(Storage.Quest.U8_2.TheHuntForTheSeaSerpent.QuestLine, 1)
 			end
 			npcHandler:setTopic(playerId, 0)

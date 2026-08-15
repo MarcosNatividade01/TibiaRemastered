@@ -8,8 +8,11 @@ function shortcut.onStepIn(creature, item, toPosition, fromPosition)
 		return true
 	end
 
-	if player:getStorageValue(Storage.Quest.U9_4.LiquidBlackQuest.Visitor) >= 4 then
-		player:setStorageValue(Storage.Quest.U9_4.LiquidBlackQuest.Visitor, 5)
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	if questAccessUnlocked or player:getStorageValue(Storage.Quest.U9_4.LiquidBlackQuest.Visitor) >= 4 then
+		if not questAccessUnlocked then
+			player:setStorageValue(Storage.Quest.U9_4.LiquidBlackQuest.Visitor, 5)
+		end
 		player:teleportTo(enterPosition)
 		player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 	else

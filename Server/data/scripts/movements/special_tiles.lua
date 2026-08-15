@@ -16,7 +16,11 @@ function tile.onStepIn(creature, item, position, fromPosition)
 	item:transform(increasing[item.itemid])
 
 	if item.actionid >= 1000 then
-		if player:getLevel() < item.actionid - 1000 then
+		local requiredLevel = item.actionid - 1000
+		if Remastered and Remastered.Gameplay and Remastered.Gameplay.getReducedAccessLevel then
+			requiredLevel = Remastered.Gameplay.getReducedAccessLevel(requiredLevel)
+		end
+		if player:getLevel() < requiredLevel then
 			player:teleportTo(fromPosition, false)
 			position:sendMagicEffect(CONST_ME_MAGIC_BLUE)
 			player:sendTextMessage(MESSAGE_LOOK, "The tile seems to be protected against unwanted intruders.")
@@ -47,7 +51,8 @@ function tile.onStepIn(creature, item, position, fromPosition)
 		end
 	end
 
-	if item.actionid ~= 0 and player:getStorageValue(item.actionid) <= 0 then
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	if not questAccessUnlocked and item.actionid ~= 0 and player:getStorageValue(item.actionid) <= 0 then
 		player:teleportTo(fromPosition, false)
 		position:sendMagicEffect(CONST_ME_MAGIC_BLUE)
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "The tile seems to be protected against unwanted intruders.")

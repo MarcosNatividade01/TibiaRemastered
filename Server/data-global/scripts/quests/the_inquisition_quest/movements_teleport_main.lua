@@ -184,6 +184,14 @@ function teleportMain.onStepIn(creature, item, position, fromPosition)
 	end
 
 	local teleport = teleports[item.uid]
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	if questAccessUnlocked then
+		player:teleportTo(teleport.newPos)
+		player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
+		player:say(teleport.text, TALKTYPE_MONSTER_SAY)
+		return true
+	end
+
 	if teleport.alwaysSetStorage and player:getStorageValue(Storage.Quest.U8_2.TheInquisitionQuest.EnterTeleport) < teleport.storage then
 		player:setStorageValue(Storage.Quest.U8_2.TheInquisitionQuest.EnterTeleport, teleport.storage)
 	end

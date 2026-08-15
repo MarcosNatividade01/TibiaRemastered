@@ -2,12 +2,13 @@ local chayenneLever = Action()
 
 function chayenneLever.onUse(player, item, fromPosition, itemEx, toPosition)
 	if item.itemid == 2772 then
+		local itemAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.canBypassAccess and Remastered.Gameplay.canBypassAccess("item")
 		if Game.getStorageValue(Storage.ChayenneKeyTime) > os.time() then
 			player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You need to wait few minutes to use again.")
 			return true
 		end
 
-		if player:getItemCount(14682) < 1 then
+		if not itemAccessUnlocked and player:getItemCount(14682) < 1 then
 			player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You do not have the Chayenne's magical key.")
 			return true
 		end

@@ -48,21 +48,24 @@ end
 local function creatureSayCallback(npc, creature, type, message)
 	local player = Player(creature)
 	local playerId = player:getId()
+	local npcAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.canBypassAccess and Remastered.Gameplay.canBypassAccess("npc")
 
 	if not npcHandler:checkInteraction(npc, creature) then
 		return false
 	end
 
 	if MsgContains(message, "mission") or MsgContains(message, "pass") then
-		if player:getStorageValue(Storage.Quest.U8_6.WrathOfTheEmperor.Questline) == 13 then
+		if npcAccessUnlocked or player:getStorageValue(Storage.Quest.U8_6.WrathOfTheEmperor.Questline) == 13 then
 			npcHandler:say("You want entranzzze to zzze zzzity?", npc, creature)
 			npcHandler:setTopic(playerId, 1)
 		end
 	elseif MsgContains(message, "yes") then
 		if npcHandler:getTopic(playerId) == 1 then
 			npcHandler:say("Mh, zzzezzze paperzzz zzzeem legit, I have orderzzz to let you pazzz. Zzzo be it.", npc, creature)
-			player:setStorageValue(Storage.Quest.U8_6.WrathOfTheEmperor.Questline, 22)
-			player:setStorageValue(Storage.Quest.U8_6.WrathOfTheEmperor.Mission05, 2) --Questlog, Wrath of the Emperor "Mission 05: New in Town"
+			if not npcAccessUnlocked then
+				player:setStorageValue(Storage.Quest.U8_6.WrathOfTheEmperor.Questline, 22)
+				player:setStorageValue(Storage.Quest.U8_6.WrathOfTheEmperor.Mission05, 2) --Questlog, Wrath of the Emperor "Mission 05: New in Town"
+			end
 			player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 			player:teleportTo(Position(33114, 31197, 7), false)
 			player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)

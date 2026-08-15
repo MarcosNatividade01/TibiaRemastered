@@ -6,8 +6,9 @@ local actions_doorInvisible = Action()
 
 function actions_doorInvisible.onUse(player, item, fromPosition, target, toPosition, isHotkey)
 	local iPos = item:getPosition()
+	local doorAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isDoorAccessUnlocked and Remastered.Gameplay.isDoorAccessUnlocked()
 
-	if player:getStorageValue(doorStorage) < 1 then
+	if not doorAccessUnlocked and player:getStorageValue(doorStorage) < 1 then
 		if player:getItemCount(lanternId) >= 1 then
 			player:setStorageValue(doorStorage, 1)
 			player:setStorageValue(Count, player:getStorageValue(Count) + 1)

@@ -64,12 +64,13 @@ end
 local function creatureSayCallback(npc, creature, type, message)
 	local player = Player(creature)
 	local playerId = player:getId()
+	local npcAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.canBypassAccess and Remastered.Gameplay.canBypassAccess("npc")
 
 	if not npcHandler:checkInteraction(npc, creature) then
 		return false
 	end
 
-	if MsgContains(message, "sail") and player:getStorageValue(Storage.Quest.U12_60.APiratesTail.TentuglyKilled) == 1 then
+	if MsgContains(message, "sail") and (npcAccessUnlocked or player:getStorageValue(Storage.Quest.U12_60.APiratesTail.TentuglyKilled) == 1) then
 		npcHandler:say("There are two different routes. The dangerous one will be available once a day and it is likely that a seemonster will attack the ship once again. And a {safe} route that we can take directly there.", npc, creature)
 		npcHandler:setTopic(playerId, 1)
 	elseif MsgContains(message, "safe") and npcHandler:getTopic(playerId) == 1 then

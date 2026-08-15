@@ -21,7 +21,8 @@ function checkThrone.onStepIn(creature, item, position, fromPosition)
 		return true
 	end
 
-	if player:getStorageValue(thrones.storage) ~= thrones.value then
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	if not questAccessUnlocked and player:getStorageValue(thrones.storage) ~= thrones.value then
 		player:teleportTo(fromPosition, true)
 		player:say("You've not absorbed energy from this throne.", TALKTYPE_MONSTER_SAY)
 	end

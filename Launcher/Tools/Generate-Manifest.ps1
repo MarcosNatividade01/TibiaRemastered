@@ -4,14 +4,36 @@ param(
     [string]$RawBaseUrl = '',
     [string]$Output = '',
     [string]$VersionOutput = '',
-    [int64]$MaxFileBytes = 100MB
+    [int64]$MaxFileBytes = 100MB,
+    [switch]$UseGitIndex,
+    [string]$GeneratedAt = ''
 )
 
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
+$script:gitCatFileProcess = $null
+$script:gitCatFileInput = $null
+$script:gitCatFileOutput = $null
 
 if ([string]::IsNullOrWhiteSpace($Output)) { $Output = Join-Path $Root 'manifest.json' }
 if ([string]::IsNullOrWhiteSpace($VersionOutput)) { $VersionOutput = Join-Path $Root 'version.json' }
+if ([string]::IsNullOrWhiteSpace($GeneratedAt)) {
+    $GeneratedAt = (Get-Date).ToString('s')
+} else {
+    $generatedAtValue = $null
+    foreach ($format in @('s', 'yyyy-MM-ddTHH:mm:ss', 'MM/dd/yyyy HH:mm:ss', 'M/d/yyyy H:mm:ss', 'dd/MM/yyyy HH:mm:ss', 'd/M/yyyy H:mm:ss')) {
+        try {
+            $generatedAtValue = [DateTime]::ParseExact($GeneratedAt, $format, [System.Globalization.CultureInfo]::InvariantCulture)
+            break
+        } catch {
+            # Continue through the accepted cross-locale timestamp formats.
+        }
+    }
+    if ($null -eq $generatedAtValue) {
+        throw "GeneratedAt must be an ISO 8601 or unambiguous date/time value: $GeneratedAt"
+    }
+    $GeneratedAt = $generatedAtValue.ToString('s')
+}
 
 $excludeRoots = @(
     'UserData','Logs','Backup','Backups','Saves','Save','.git','.github','.vs','.vscode','.idea',
@@ -59,7 +81,7 @@ function Get-GitPublishablePathSet([string]$Base) {
         Set-Location $Base
         $inside = & git rev-parse --is-inside-work-tree 2>$null
         if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($inside)) { return $set }
-        $paths = & git ls-files --cached --others --exclude-standard
+        $paths = if ($UseGitIndex) { & git ls-files --cached } else { & git ls-files --cached --others --exclude-standard }
         foreach ($path in @($paths)) {
             if (-not [string]::IsNullOrWhiteSpace($path)) {
                 [void]$set.Add(([string]$path -replace '\\','/'))
@@ -128,6 +150,83 @@ function Get-GitPublishedFileInfo([string]$Path) {
     return [pscustomobject]@{Sha256=$hash; Size=$bytes.Length}
 }
 
+function Read-GitBatchLine([System.IO.Stream]$Stream) {
+    $bytes = New-Object System.Collections.Generic.List[byte]
+    while ($true) {
+        $value = $Stream.ReadByte()
+        if ($value -lt 0) { throw 'Unexpected end of git cat-file output.' }
+        if ($value -eq 10) { break }
+        $bytes.Add([byte]$value)
+    }
+    return [System.Text.Encoding]::UTF8.GetString($bytes.ToArray())
+}
+
+function Initialize-GitIndexReader {
+    if ($script:gitCatFileProcess) { return }
+    $gitCommand = Get-Command git -ErrorAction Stop
+    $processInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $processInfo.FileName = $gitCommand.Source
+    $processInfo.WorkingDirectory = $Root
+    $processInfo.Arguments = 'cat-file --batch'
+    $processInfo.UseShellExecute = $false
+    $processInfo.RedirectStandardOutput = $true
+    $processInfo.RedirectStandardInput = $true
+    $processInfo.RedirectStandardError = $true
+    $processInfo.CreateNoWindow = $true
+
+    $script:gitCatFileProcess = New-Object System.Diagnostics.Process
+    $script:gitCatFileProcess.StartInfo = $processInfo
+    [void]$script:gitCatFileProcess.Start()
+    $script:gitCatFileInput = $script:gitCatFileProcess.StandardInput
+    $script:gitCatFileOutput = $script:gitCatFileProcess.StandardOutput.BaseStream
+}
+
+function Get-GitIndexFileInfo([string]$Relative) {
+    Initialize-GitIndexReader
+    $script:gitCatFileInput.WriteLine(':' + $Relative)
+    $script:gitCatFileInput.Flush()
+
+    $header = Read-GitBatchLine $script:gitCatFileOutput
+    if ($header -notmatch '^[0-9a-f]+ blob (\d+)$') {
+        throw "Unable to read staged file '$Relative': $header"
+    }
+    $size = [int64]$Matches[1]
+    if ($size -gt [int]::MaxValue) { throw "Staged file '$Relative' is too large to hash." }
+    $bytes = New-Object byte[] ([int]$size)
+    $offset = 0
+    while ($offset -lt $bytes.Length) {
+        $read = $script:gitCatFileOutput.Read($bytes, $offset, $bytes.Length - $offset)
+        if ($read -le 0) { throw "Unexpected end of staged file '$Relative'." }
+        $offset += $read
+    }
+    if ($script:gitCatFileOutput.ReadByte() -ne 10) {
+        throw "Invalid git cat-file terminator for '$Relative'."
+    }
+
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $hash = ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-','').ToLowerInvariant()
+    } finally {
+        $sha.Dispose()
+    }
+    return [pscustomobject]@{Sha256=$hash; Size=$size}
+}
+
+function Close-GitIndexReader {
+    if (-not $script:gitCatFileProcess) { return }
+    try {
+        $script:gitCatFileInput.Close()
+        if (-not $script:gitCatFileProcess.WaitForExit(5000)) {
+            $script:gitCatFileProcess.Kill()
+        }
+    } finally {
+        $script:gitCatFileProcess.Dispose()
+        $script:gitCatFileProcess = $null
+        $script:gitCatFileInput = $null
+        $script:gitCatFileOutput = $null
+    }
+}
+
 function Write-Utf8NoBomFile {
     param(
         [Parameter(Mandatory=$true)][string]$Path,
@@ -164,7 +263,7 @@ $versionJson = [pscustomobject]@{
     name = 'TibiaRemastered'
     version = $Version
     channel = 'dev'
-    releaseDate = (Get-Date -Format 'yyyy-MM-dd')
+    releaseDate = ([DateTime]$GeneratedAt).ToString('yyyy-MM-dd')
     minimumLauncherVersion = '0.1.0'
 }
 Write-Utf8NoBomFile -Path $VersionOutput -Content ($versionJson | ConvertTo-Json -Depth 8)
@@ -174,7 +273,7 @@ $largeFilesDataPath = Join-Path $Root 'Data\large-files.json'
 if ($largeFiles.Count -gt 0) {
     $largeFilesData = [pscustomobject]@{
         version = $Version
-        generatedAt = (Get-Date).ToString('s')
+        generatedAt = $GeneratedAt
         files = @($largeFiles)
     }
     Write-Utf8NoBomFile -Path $largeFilesDataPath -Content ($largeFilesData | ConvertTo-Json -Depth 8)
@@ -186,27 +285,44 @@ $publishablePaths = Get-GitPublishablePathSet $Root
 $filterByGit = ($publishablePaths.Count -gt 0)
 
 $files = @()
-Get-ChildItem -Path $Root -File -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
-    $rel = Convert-ToRelativePath -Base $Root -Path $_.FullName
-    if (Test-Ignored $rel) { return }
-    if ($filterByGit -and -not $publishablePaths.Contains($rel)) { return }
-    if ($_.Length -gt $MaxFileBytes) { return }
-    $fileInfo = Get-GitPublishedFileInfo $_.FullName
-    $overwrite = -not ($rel.StartsWith('Config/', [System.StringComparison]::OrdinalIgnoreCase))
-    $category = ($rel.Split('/')[0])
-    $files += [pscustomobject]@{
-        path = $rel
-        sha256 = $fileInfo.Sha256
-        size = $fileInfo.Size
-        url = Get-FileUrl -Relative $rel -Hash $fileInfo.Sha256
-        overwrite = $overwrite
-        category = $category
+if ($UseGitIndex) {
+    foreach ($rel in @($publishablePaths | Sort-Object)) {
+        if (Test-Ignored $rel) { continue }
+        $fileInfo = Get-GitIndexFileInfo $rel
+        if ($fileInfo.Size -gt $MaxFileBytes) { continue }
+        $overwrite = -not ($rel.StartsWith('Config/', [System.StringComparison]::OrdinalIgnoreCase))
+        $files += [pscustomobject]@{
+            path = $rel
+            sha256 = $fileInfo.Sha256
+            size = $fileInfo.Size
+            url = Get-FileUrl -Relative $rel -Hash $fileInfo.Sha256
+            overwrite = $overwrite
+            category = ($rel.Split('/')[0])
+        }
+    }
+    Close-GitIndexReader
+} else {
+    Get-ChildItem -Path $Root -File -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
+        $rel = Convert-ToRelativePath -Base $Root -Path $_.FullName
+        if (Test-Ignored $rel) { return }
+        if ($filterByGit -and -not $publishablePaths.Contains($rel)) { return }
+        if ($_.Length -gt $MaxFileBytes) { return }
+        $fileInfo = Get-GitPublishedFileInfo $_.FullName
+        $overwrite = -not ($rel.StartsWith('Config/', [System.StringComparison]::OrdinalIgnoreCase))
+        $files += [pscustomobject]@{
+            path = $rel
+            sha256 = $fileInfo.Sha256
+            size = $fileInfo.Size
+            url = Get-FileUrl -Relative $rel -Hash $fileInfo.Sha256
+            overwrite = $overwrite
+            category = ($rel.Split('/')[0])
+        }
     }
 }
 
 $manifest = [pscustomobject]@{
     version = $Version
-    generatedAt = (Get-Date).ToString('s')
+    generatedAt = $GeneratedAt
     hashAlgorithm = 'SHA256'
     files = @($files | Sort-Object path)
     largeFiles = @($largeFiles | Sort-Object path)

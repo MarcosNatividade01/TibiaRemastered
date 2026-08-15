@@ -4,7 +4,8 @@ function othersCalassa.onUse(player, item, fromPosition, target, toPosition, isH
 		return false
 	end
 
-	if player:getStorageValue(Storage.Quest.U7_8.OrientalOutfits.FirstOrientalAddon) ~= 1 or player:hasOutfit(player:getSex() == PLAYERSEX_FEMALE and 150 or 146, 1) then
+	local doorAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isDoorAccessUnlocked and Remastered.Gameplay.isDoorAccessUnlocked()
+	if not doorAccessUnlocked and (player:getStorageValue(Storage.Quest.U7_8.OrientalOutfits.FirstOrientalAddon) ~= 1 or player:hasOutfit(player:getSex() == PLAYERSEX_FEMALE and 150 or 146, 1)) then
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "The door seems to be sealed against unwanted intruders.")
 		return true
 	end

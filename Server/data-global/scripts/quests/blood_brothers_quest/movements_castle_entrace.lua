@@ -7,7 +7,8 @@ function castleEntrance.onStepIn(creature, item, position, fromPosition)
 		return true
 	end
 	local player = Player(creature)
-	if player:getStorageValue(STORAGE_HIDDEN_ENTRANCE) == 1 then
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	if questAccessUnlocked or player:getStorageValue(STORAGE_HIDDEN_ENTRANCE) == 1 then
 		player:teleportTo(Position(32953, 31483, 6))
 	else
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "A strange force prevents you from entering.")

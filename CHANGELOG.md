@@ -2,6 +2,18 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.49-test] - Modo exploracao livre sem concluir quests
+
+- Adicionada configuracao central `gameplay.freeExploration` para separar acesso fisico de progresso, quest log e rewards.
+- Liberadas quest doors, key doors, special tiles, teleports de quest e rotas condicionais de NPC sem conceder chaves, itens ou storages.
+- Reduzidos em 50%, com arredondamento para cima, os requisitos de level e quantidades que ainda precisem ser mantidos para acesso.
+- Liberadas passagens reais de Dream Courts, Demon Oak, Pits of Inferno, Inquisition, Wrath of the Emperor, Dangerous Depths, Blood Brothers, Children of the Revolution, Explorer Society, Beregar, Shattered Isles, Liquid Black e Targuna.
+- Liberados mecanismos com item em Desert Dungeon, Chayenne Realm, Dream Courts e portais de carving da Explorer Society, sem consumir o item no caminho alternativo.
+- Desativado o sistema legado `FreeQuests` durante a exploracao livre para impedir conclusao automatica de quest, alteracao de quest log e entrega indireta de progresso.
+- Preservadas as verificacoes de reward, chest, kill tracking, cooldowns e mecanicas internas de boss; corrigidos bypasses antigos que ainda escreviam storage ao entrar antecipadamente.
+- Adicionados relatorios completos antes/depois e quatro testes automatizados de acesso, reducao de requisito, uso de item e protecao contra duplicacao.
+- O gerador de manifest agora aceita `-UseGitIndex`, permitindo publicar somente o conjunto selecionado mesmo com alteracoes locais validas fora da versao.
+
 ## [0.1.48-test] - Client com SAC desativado
 
 - Ajustada a validacao do client para tratar `HashMismatch` como bloqueio apenas quando o Smart App Control esta ativo.
@@ -463,6 +475,5 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Criada a estrutura inicial do repositorio.
 - Adicionados arquivos base para README, roadmap, ideias, versao e manifest.
 - Adicionado `.gitignore` para proteger dados reais e arquivos sensiveis.
-
 
 

@@ -70,6 +70,7 @@ function movements_acessTeleports.onStepIn(creature, item, position, fromPositio
 	if not player then
 		return true
 	end
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
 
 	local iPos = item:getPosition()
 	local dreamScarTeleport = Position(32208, 32033, 13)
@@ -87,7 +88,7 @@ function movements_acessTeleports.onStepIn(creature, item, position, fromPositio
 
 	for _, k in pairs(default) do
 		if k.itemPosition == iPos then
-			if player:getStorageValue(k.neededStorage) >= k.value then
+			if questAccessUnlocked or player:getStorageValue(k.neededStorage) >= k.value then
 				player:teleportTo(k.toPosition)
 				if k.msg then
 					player:sendTextMessage(MESSAGE_EVENT_ADVANCE, k.msg)

@@ -63,9 +63,10 @@ end
 local function creatureSayCallback(npc, creature, type, message)
 	local player = Player(creature)
 	local playerId = player:getId()
+	local npcAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.canBypassAccess and Remastered.Gameplay.canBypassAccess("npc")
 
 	if MsgContains(message, "pass") or MsgContains(message, "in") then
-		if player:getStorageValue(Storage.Quest.U12_40.TheOrderOfTheLion.AccessEasternSide) >= 1 then
+		if npcAccessUnlocked or player:getStorageValue(Storage.Quest.U12_40.TheOrderOfTheLion.AccessEasternSide) >= 1 then
 			player:teleportTo(destinationIn)
 			player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 			npcHandler:say("Right this way.", npc, creature)
@@ -81,7 +82,7 @@ local function creatureSayCallback(npc, creature, type, message)
 	end
 
 	if MsgContains(message, "out") then
-		if player:getStorageValue(Storage.Quest.U12_40.TheOrderOfTheLion.AccessEasternSide) >= 1 then
+		if npcAccessUnlocked or player:getStorageValue(Storage.Quest.U12_40.TheOrderOfTheLion.AccessEasternSide) >= 1 then
 			player:teleportTo(destinationOut)
 			player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 			npcHandler:say("Safe travels, traveller.", npc, creature)
@@ -92,7 +93,11 @@ local function creatureSayCallback(npc, creature, type, message)
 	end
 
 	if message:lower() == "yes" and npcHandler:getTopic(playerId) == 1 then
-		if player:getStorageValue(Storage.Quest.U12_40.TheOrderOfTheLion.BounacTrust) >= 5 then
+		if npcAccessUnlocked then
+			player:teleportTo(destinationIn)
+			player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
+			npcHandler:say("Right this way.", npc, creature)
+		elseif player:getStorageValue(Storage.Quest.U12_40.TheOrderOfTheLion.BounacTrust) >= 5 then
 			grantAccess(player, npc, creature)
 		else
 			npcHandler:say({

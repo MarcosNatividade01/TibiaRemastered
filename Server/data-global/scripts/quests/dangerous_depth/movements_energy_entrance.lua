@@ -14,6 +14,7 @@ function energyEntrance.onStepIn(creature, item, position, fromPosition, toPosit
 	if not player then
 		return true
 	end
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
 
 	local function hasWarzoneAccess()
 		return player:getStorageValue(Storage.Quest.U9_60.BigfootsBurden.Warzone1Access) == 1 and player:getStorageValue(Storage.Quest.U9_60.BigfootsBurden.Warzone2Access) == 1 and player:getStorageValue(Storage.Quest.U9_60.BigfootsBurden.Warzone3Access) == 1
@@ -21,7 +22,7 @@ function energyEntrance.onStepIn(creature, item, position, fromPosition, toPosit
 
 	if player:getPosition() == Position(33831, 32138, 14) then
 		local status = player:getStorageValue(Storage.Quest.U11_50.DangerousDepths.Scouts.Points)
-		if (hasWarzoneAccess() and status >= 10) or (not hasWarzoneAccess() and status >= 15) then
+		if questAccessUnlocked or (hasWarzoneAccess() and status >= 10) or (not hasWarzoneAccess() and status >= 15) then
 			player:teleportTo(Position(34023, 32037, 14))
 		else
 			player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You can not use this portal yet.")
@@ -31,7 +32,7 @@ function energyEntrance.onStepIn(creature, item, position, fromPosition, toPosit
 		player:teleportTo(Position(33831, 32141, 14))
 	elseif player:getPosition() == Position(33784, 32205, 14) then
 		local status = player:getStorageValue(Storage.Quest.U11_50.DangerousDepths.Dwarves.Points)
-		if (hasWarzoneAccess() and status >= 10) or (not hasWarzoneAccess() and status >= 15) then
+		if questAccessUnlocked or (hasWarzoneAccess() and status >= 10) or (not hasWarzoneAccess() and status >= 15) then
 			player:teleportTo(Position(33921, 32401, 14))
 		else
 			player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You can not use this portal yet.")
@@ -41,7 +42,7 @@ function energyEntrance.onStepIn(creature, item, position, fromPosition, toPosit
 		player:teleportTo(Position(33782, 32205, 14))
 	elseif player:getPosition() == Position(33829, 32187, 14) then
 		local status = player:getStorageValue(Storage.Quest.U11_50.DangerousDepths.Gnomes.Points)
-		if (hasWarzoneAccess() and status >= 10) or (not hasWarzoneAccess() and status >= 15) then
+		if questAccessUnlocked or (hasWarzoneAccess() and status >= 10) or (not hasWarzoneAccess() and status >= 15) then
 			player:teleportTo(Position(33982, 32236, 14))
 		else
 			player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You can not use this portal yet.")

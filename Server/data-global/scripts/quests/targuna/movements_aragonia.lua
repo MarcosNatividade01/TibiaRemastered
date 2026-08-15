@@ -12,8 +12,9 @@ function matildaTravel.onStepIn(creature, item, position, fromPosition)
 	if not player then
 		return true
 	end
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
 
-	if player:getStorageValue(TREASURE_MISSION) < 1 then
+	if not questAccessUnlocked and player:getStorageValue(TREASURE_MISSION) < 1 then
 		player:teleportTo(fromPosition)
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You should speak to Sterling before riding Matilda to Aragonia.")
 		return true
@@ -23,7 +24,7 @@ function matildaTravel.onStepIn(creature, item, position, fromPosition)
 	ARAGONIA_ARRIVAL:sendMagicEffect(CONST_ME_TELEPORT)
 	player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "Matilda carries you across the sea to Aragonia. Defeat the pirates and rescue the turtle eggs!")
 
-	if player:getStorageValue(TREASURE_MISSION) == 1 then
+	if not questAccessUnlocked and player:getStorageValue(TREASURE_MISSION) == 1 then
 		player:setStorageValue(TREASURE_MISSION, 2)
 	end
 	return true

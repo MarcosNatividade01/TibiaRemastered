@@ -1,7 +1,8 @@
 local inquisitionUngreez = Action()
 
 function inquisitionUngreez.onUse(player, item, fromPosition, target, toPosition, isHotkey)
-	if player:getStorageValue(Storage.Quest.U8_2.TheInquisitionQuest.Questline) == 18 then
+	local doorAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isDoorAccessUnlocked and Remastered.Gameplay.isDoorAccessUnlocked()
+	if doorAccessUnlocked or player:getStorageValue(Storage.Quest.U8_2.TheInquisitionQuest.Questline) == 18 then
 		if item.actionid == 1004 then
 			if item.itemid == 5113 then
 				player:teleportTo(toPosition, true)

@@ -49,13 +49,14 @@ local TheNewFrontier = Storage.Quest.U8_54.TheNewFrontier
 local function creatureSayCallback(npc, creature, type, message)
 	local player = Player(creature)
 	local playerId = player:getId()
+	local npcAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.canBypassAccess and Remastered.Gameplay.canBypassAccess("npc")
 
 	if not npcHandler:checkInteraction(npc, creature) then
 		return false
 	end
 
 	if MsgContains(message, "trip") or MsgContains(message, "passage") then
-		if player:getStorageValue(TheNewFrontier.Questline) >= 24 then
+		if npcAccessUnlocked or player:getStorageValue(TheNewFrontier.Questline) >= 24 then
 			npcHandler:say("You want trip to Izzle of Zzao?", npc, creature)
 			npcHandler:setTopic(playerId, 1)
 		else

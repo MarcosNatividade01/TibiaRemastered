@@ -391,7 +391,8 @@ toggleImbuementNonAggressiveFightOnly = false
 -- NOTE: Only quests that are in the "freequests.lua" script table will work
 -- toggleFreeQuest = enable/disable the system
 -- freeQuestStage = if you add more quests to the table, change this value to run freeQuest again
-toggleFreeQuest = true
+-- Free exploration bypasses access checks without completing quests or writing storages.
+toggleFreeQuest = false
 freeQuestStage = 2
 
 -- Deaths

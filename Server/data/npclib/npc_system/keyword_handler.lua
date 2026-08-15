@@ -38,6 +38,60 @@ if KeywordHandler == nil then
 		self.action(player, self.parameters.npcHandler, message)
 	end
 
+	local function canBypassNpcTravelCondition(node)
+		local parameters = node and node.parameters
+		if not parameters or not parameters.destination then
+			return false
+		end
+
+		return Remastered
+			and Remastered.Gameplay
+			and Remastered.Gameplay.canBypassAccess
+			and Remastered.Gameplay.canBypassAccess("npc")
+	end
+
+	local function keywordListsMatch(first, second)
+		if not first or not second or #first ~= #second then
+			return false
+		end
+
+		for index = 1, #first do
+			if first[index] ~= second[index] then
+				return false
+			end
+		end
+		return true
+	end
+
+	local function nodeLeadsToTravel(node)
+		if node.parameters and node.parameters.destination then
+			return true
+		end
+
+		for _, child in pairs(node.children or {}) do
+			if nodeLeadsToTravel(child) then
+				return true
+			end
+		end
+		return false
+	end
+
+	local function isNpcAccessDenialNode(node, parent)
+		if not node.condition or not parent or not Remastered or not Remastered.Gameplay or not Remastered.Gameplay.canBypassAccess or not Remastered.Gameplay.canBypassAccess("npc") then
+			return false
+		end
+
+		-- Travel NPCs commonly register a conditional denial node immediately
+		-- before an unconditional node with the same keyword. Skip only that
+		-- denial; travel price, destination and quest actions remain untouched.
+		for _, sibling in pairs(parent.children or {}) do
+			if sibling ~= node and keywordListsMatch(node.keywords, sibling.keywords) and nodeLeadsToTravel(sibling) then
+				return true
+			end
+		end
+		return false
+	end
+
 	-- Returns true if message contains all patterns/strings found in keywords.
 	function KeywordNode:checkMessage(player, message)
 		if self.keywords.callback ~= nil then
@@ -46,7 +100,7 @@ if KeywordHandler == nil then
 				return false
 			end
 
-			if self.condition and not self.condition(Player(player), data) then
+			if self.condition and not self.condition(Player(player), data) and not canBypassNpcTravelCondition(self) then
 				return false
 			end
 			return true
@@ -67,7 +121,7 @@ if KeywordHandler == nil then
 			end
 		end
 
-		if self.condition and not self.condition(Player(player), data) then
+		if self.condition and not self.condition(Player(player), data) and not canBypassNpcTravelCondition(self) then
 			return false
 		end
 		return true
@@ -179,7 +233,7 @@ if KeywordHandler == nil then
 		local playerId = player:getId()
 		local messageLower = message:lower()
 		for _, childNode in pairs(node.children) do
-			if childNode:checkMessage(player, messageLower) then
+			if not isNpcAccessDenialNode(childNode, node) and childNode:checkMessage(player, messageLower) then
 				local oldLast = self.lastNode[playerId]
 				self.lastNode[playerId] = childNode
 				-- Make sure node is the parent of childNode (as one node can be parent to several nodes).

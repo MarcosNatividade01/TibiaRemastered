@@ -97,11 +97,13 @@ local actions_questDoors = Action()
 function actions_questDoors.onUse(player, item, fromPosition, target, toPosition, isHotkey)
 	local iPos = item:getPosition()
 	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
+	local doorAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isDoorAccessUnlocked and Remastered.Gameplay.isDoorAccessUnlocked()
+	local accessUnlocked = doorAccessUnlocked or questAccessUnlocked
 
 	for _, p in pairs(doors) do
 		if iPos == p.doorPosition and not (player:getPosition() == p.doorPosition) then
 			if p.help == "Tomb" then
-				if questAccessUnlocked or player:getStorageValue(p.storage) < p.value then
+				if accessUnlocked or player:getStorageValue(p.storage) < p.value then
 					player:teleportTo(toPosition, true)
 					item:transform(item.itemid + 1)
 					addEvent(closeDoor, 2000, iPos, item.itemid)
@@ -109,7 +111,7 @@ function actions_questDoors.onUse(player, item, fromPosition, target, toPosition
 					player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "The door seems to be sealed against unwanted intruders.")
 				end
 			elseif p.help == "Medusa" then
-				if player:getStorageValue(p.storage) < 1 then
+				if not accessUnlocked and player:getStorageValue(p.storage) < 1 then
 					player:setStorageValue(p.storage, 1)
 					local count = player:getStorageValue(Storage.Quest.U12_00.TheDreamCourts.TheSevenKeys.Count)
 					player:setStorageValue(Storage.Quest.U12_00.TheDreamCourts.TheSevenKeys.Count, (count < 0 and 1 or count + 1))
@@ -120,7 +122,7 @@ function actions_questDoors.onUse(player, item, fromPosition, target, toPosition
 				player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 				addEvent(closeDoor, 2000, iPos, item.itemid)
 			elseif p.help == "Lock" then
-				if questAccessUnlocked or player:getStorageValue(p.storage) >= p.value then
+				if accessUnlocked or player:getStorageValue(p.storage) >= p.value then
 					local newPos = (iPos.y < player:getPosition().y) and Position(iPos.x, iPos.y - 1, iPos.z) or Position(iPos.x, iPos.y + 1, iPos.z)
 					player:teleportTo(newPos)
 					player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
@@ -130,11 +132,11 @@ function actions_questDoors.onUse(player, item, fromPosition, target, toPosition
 					return true
 				end
 			elseif p.help == "Open/Close" then
-				if questAccessUnlocked or player:getStorageValue(p.storage) >= p.value then
+				if accessUnlocked or player:getStorageValue(p.storage) >= p.value then
 					item:transform((item.itemid == 30033) and 30035 or 30033)
 				end
 			else
-				if questAccessUnlocked or player:getStorageValue(p.storage) >= p.value then
+				if accessUnlocked or player:getStorageValue(p.storage) >= p.value then
 					player:teleportTo(toPosition, true)
 					item:transform(item.itemid + 1)
 					addEvent(closeDoor, 2000, iPos, item.itemid)

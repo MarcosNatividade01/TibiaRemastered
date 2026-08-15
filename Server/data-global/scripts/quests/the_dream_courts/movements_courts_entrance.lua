@@ -131,12 +131,13 @@ function movements_courtsEntrance.onStepIn(creature, item, position, fromPositio
 	if not player then
 		return true
 	end
+	local questAccessUnlocked = Remastered and Remastered.Gameplay and Remastered.Gameplay.isQuestAccessUnlocked and Remastered.Gameplay.isQuestAccessUnlocked()
 
 	local posItem = item:getPosition()
 
 	for _, k in pairs(config) do
 		if k.hisPosition == posItem then
-			if player:getStorageValue(k.storage) >= k.value then
+			if questAccessUnlocked or player:getStorageValue(k.storage) >= k.value then
 				player:teleportTo(k.toPosition)
 			else
 				player:teleportTo(fromPosition)
