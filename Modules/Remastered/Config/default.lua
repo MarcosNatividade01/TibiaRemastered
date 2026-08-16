@@ -1,10 +1,10 @@
 return {
-	version = "0.1.50-test",
+	version = "0.1.51-test",
 	environment = "local",
 	debug = false,
 	build = {
-		commit = "release-0.1.50-test",
-		label = "0.1.50-clickable-npcs",
+		commit = "release-0.1.51-test",
+		label = "0.1.51-buddel-travel-fix",
 	},
 
 	balance = {

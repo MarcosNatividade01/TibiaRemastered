@@ -52,6 +52,9 @@ end
 
 -- Travel
 local function addTravelKeyword(keyword, text, destination, randomDestination, randomNumber, condition, ringCheck, ringRemove, helheimAccess)
+	-- Free exploration: keep one deterministic paid dialogue branch for every
+	-- destination. Duplicate conditional branches made Buddel ignore clicks.
+	condition, ringCheck, helheimAccess = function() return true end, nil, nil
 	if helheimAccess then
 		keywordHandler:addKeyword({ keyword }, StdModule.say, { npcHandler = npcHandler, text = text }, helheimAccess)
 	end
@@ -64,16 +67,16 @@ local function addTravelKeyword(keyword, text, destination, randomDestination, r
 		if randomNumber then
 			normalTravel:addChildKeyword({ "yes" }, StdModule.travel, { npcHandler = npcHandler, premium = false, cost = 50, discount = "postman", destination = destination }, randomNumber)
 		end
-		normalTravel:addChildKeyword({ "yes" }, StdModule.travel, { npcHandler = npcHandler, premium = false, cost = 50, discount = "postman", destination = randomDestination }, randomNumber)
+		normalTravel:addChildKeyword({ "yes" }, StdModule.travel, { npcHandler = npcHandler, premium = false, cost = 50, discount = "postman", destination = randomDestination })
 	end
 
 	if condition then
-		local travelKeyword = keywordHandler:addKeyword({ keyword }, StdModule.say, { npcHandler = npcHandler, text = text, cost = 50, discount = "postman" }, condition)
+		local travelKeyword = keywordHandler:addKeyword({ keyword }, StdModule.say, { npcHandler = npcHandler, text = text .. " Give me 50 gold and I bring you there. Do you want to travel?", cost = 50, discount = "postman" }, condition)
 		travelKeyword:addChildKeyword({ "no" }, StdModule.say, { npcHandler = npcHandler, text = "You shouldn't miss the experience.", reset = true })
 		if randomNumber then
 			travelKeyword:addChildKeyword({ "yes" }, StdModule.travel, { npcHandler = npcHandler, premium = false, cost = 50, discount = "postman", destination = destination }, randomNumber)
 		end
-		travelKeyword:addChildKeyword({ "yes" }, StdModule.travel, { npcHandler = npcHandler, premium = false, cost = 50, discount = "postman", destination = randomDestination }, randomNumber)
+		travelKeyword:addChildKeyword({ "yes" }, StdModule.travel, { npcHandler = npcHandler, premium = false, cost = 50, discount = "postman", destination = randomDestination })
 	end
 end
 
@@ -128,7 +131,7 @@ end)
 -- Kick
 keywordHandler:addKeyword({ "kick" }, StdModule.kick, { npcHandler = npcHandler, text = "Get out o' here!*HICKS*", destination = { Position(32020, 31297, 7), Position(32021, 31297, 7), Position(32022, 31297, 7) } })
 
-keywordHandler:addKeyword({ "passage" }, StdModule.say, { npcHandler = npcHandler, text = "Where are we at the moment? Is this Svargrond? Ahh yes!*HICKS* Where do you want to go?" })
+keywordHandler:addKeyword({ "passage" }, StdModule.say, { npcHandler = npcHandler, text = "Where are we at the moment? This is the Raider Camp!*HICKS* Where do you want to go? {Svargrond}, {Okolnir}, {Helheim} or {Tyrsung}?" })
 keywordHandler:addAliasKeyword({ "trip" })
 keywordHandler:addAliasKeyword({ "go" })
 keywordHandler:addAliasKeyword({ "sail" })

@@ -2,6 +2,14 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.51-test] - Correcao definitiva das viagens de Buddel
+
+- Corrigidos os cinco pontos de Buddel para sempre responder aos destinos clicados, sem depender de storage de quest no modo de exploracao livre.
+- Os dialogos de passagem agora mostram explicitamente os destinos disponiveis e a confirmacao clicavel Yes/No.
+- Corrigido o fallback aleatorio que reutilizava a condicao probabilistica e podia fazer o NPC ignorar a confirmacao.
+- Mantidos o custo de 50 gold, o desconto do Postman e a mecanica de Buddel eventualmente levar o jogador ao destino errado.
+- Reposta uma unica Cobra Club na backpack principal de Lionel Messi, com backup integral do banco e protecao contra duplicacao; o item de personagem nao faz parte do Git.
+
 ## [0.1.50-test] - Dialogos de NPC prioritariamente clicaveis
 
 - Adicionada uma camada central de apresentacao que transforma keywords publicas e contextuais em opcoes curtas entre chaves, preservando a digitacao manual.
@@ -485,4 +493,3 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Criada a estrutura inicial do repositorio.
 - Adicionados arquivos base para README, roadmap, ideias, versao e manifest.
 - Adicionado `.gitignore` para proteger dados reais e arquivos sensiveis.
-

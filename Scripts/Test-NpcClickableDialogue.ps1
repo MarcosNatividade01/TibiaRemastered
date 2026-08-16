@@ -94,4 +94,13 @@ $cassino = Read-ProjectFile 'Server\data-global\npc\cassino.lua'
 Assert-Match $cassino '\{High\}\s*/\s*\{Low\}' 'Cassino high/low choices are not independently clickable.'
 Assert-Match $cassino '\{1\}.*\{2\}.*\{3\}.*\{4\}.*\{5\}.*\{6\}' 'Cassino number choices are not independently clickable.'
 
+foreach ($buddelFile in @('buddel.lua', 'buddel_tyrsung.lua', 'buddel_helheim.lua', 'buddel_okolnir.lua', 'buddel_raider_camp.lua')) {
+    $buddel = Read-ProjectFile "Server\data-global\npc\$buddelFile"
+    Assert-Match $buddel 'condition, ringCheck, helheimAccess = function\(\) return true end, nil, nil' "$buddelFile still requires quest storage for travel dialogue."
+    Assert-Match $buddel 'Do you want to travel\?' "$buddelFile does not expose a clickable Yes/No confirmation."
+    if ($buddel -match 'destination = randomDestination \}, randomNumber') {
+        throw "$buddelFile can still ignore Yes when the random fallback condition fails."
+    }
+}
+
 Write-Output "PASS: $($npcFiles.Count) NPC files audited; $($handlerFiles.Count) interactive NPCs use the click-first central layer with manual keyword compatibility."
