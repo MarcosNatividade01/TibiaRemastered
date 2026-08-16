@@ -1,10 +1,10 @@
 return {
-	version = "0.1.49-test",
+	version = "0.1.50-test",
 	environment = "local",
 	debug = false,
 	build = {
-		commit = "release-0.1.49-test",
-		label = "0.1.49-free-exploration",
+		commit = "release-0.1.50-test",
+		label = "0.1.50-clickable-npcs",
 	},
 
 	balance = {

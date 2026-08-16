@@ -407,6 +407,7 @@ if NpcHandler == nil then
 				local playerName = player:getName() or -1
 				local parseInfo = { [TAG_PLAYERNAME] = playerName }
 				msg = self:parseMessage(msg, parseInfo)
+				msg = NpcClickable.format(self, msg, npc, player, true)
 				self:say(msg, npc, player)
 			end
 		end
@@ -619,6 +620,7 @@ if NpcHandler == nil then
 			end
 			-- The "self.talkDelayTimeForOutgoingMessages * 1000" = Interval for sending subsequent messages from the first
 			local parsedMessage = self:parseMessage(msgs[messagesTable], parseInfo, player, messageString)
+			parsedMessage = NpcClickable.format(self, parsedMessage, npc, player, false)
 			npc:sayWithDelay(npcUniqueId, parsedMessage, TALKTYPE_PRIVATE_NP, ((messagesTable - 1) * self.talkDelay + self.talkDelayTimeForOutgoingMessages * 1000), self.eventDelayedSay[playerId][messagesTable], playerUniqueId)
 			ret[#ret + 1] = self.eventDelayedSay[playerId][messagesTable]
 		end
@@ -636,6 +638,7 @@ if NpcHandler == nil then
 		if type(message) == "table" then
 			return self:doNPCTalkALot(message, delay, npc, player)
 		end
+		message = NpcClickable.format(self, message, npc, player, false)
 
 		if self:getEventDelayedSay(playerId) then
 			self:cancelNPCTalk(self:getEventDelayedSay(playerId))
@@ -653,7 +656,7 @@ if NpcHandler == nil then
 				if useDelay and useDelay == true then
 					self:say(value, npc, player, delay or 1000)
 				else
-					npc:talk(Player(player), value)
+					npc:talk(Player(player), NpcClickable.format(self, value, npc, Player(player), false))
 				end
 				return true
 			end

@@ -2,6 +2,16 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.50-test] - Dialogos de NPC prioritariamente clicaveis
+
+- Adicionada uma camada central de apresentacao que transforma keywords publicas e contextuais em opcoes curtas entre chaves, preservando a digitacao manual.
+- Destinos de barcos e transportes, Trade, banco, quests, tasks, blessings, promotion, imbuement e confirmacoes Yes/No passam a ser apresentados por clique quando o fluxo atual permitir.
+- Mantidas storages, rewards, compras, teleports e aceite de missoes na logica original; exibir ou clicar numa opcao apenas equivale a digitar a mesma keyword.
+- Corrigido o fluxo de NPCs antigos que guardam a condicao de acesso no no pai e o destino no filho Yes, sem liberar rotas gratuitas baseadas em item.
+- Corrigido o markup agrupado do Cassino para opcoes independentes e seguras.
+- Auditados 1.113 arquivos do datapack ativo: 1.105 NPCs interativos cobertos, 508 ja clicaveis e 597 convertidos pela camada central.
+- Adicionados relatorios antes/depois e teste automatizado para barcos, carpet, shop, bank, quest, task, Yana, blessing, submenus, Yes/No e isolamento por jogador.
+
 ## [0.1.49-test] - Modo exploracao livre sem concluir quests
 
 - Adicionada configuracao central `gameplay.freeExploration` para separar acesso fisico de progresso, quest log e rewards.
@@ -475,5 +485,4 @@ Todas as alteracoes importantes do projeto serao documentadas aqui.
 - Criada a estrutura inicial do repositorio.
 - Adicionados arquivos base para README, roadmap, ideias, versao e manifest.
 - Adicionado `.gitignore` para proteger dados reais e arquivos sensiveis.
-
 

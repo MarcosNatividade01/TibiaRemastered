@@ -38,9 +38,26 @@ if KeywordHandler == nil then
 		self.action(player, self.parameters.npcHandler, message)
 	end
 
+	local function nodeLeadsToTravel(node)
+		if node.parameters and node.parameters.destination then
+			return true
+		end
+
+		for _, child in pairs(node.children or {}) do
+			if nodeLeadsToTravel(child) then
+				return true
+			end
+		end
+		return false
+	end
+
 	local function canBypassNpcTravelCondition(node)
 		local parameters = node and node.parameters
-		if not parameters or not parameters.destination then
+		-- A number of classic travel NPCs put the access condition on the
+		-- parent offer and the destination on its Yes child. Bypass that
+		-- access condition only when the offer has a real fare; do not turn
+		-- item-based free-travel branches into unconditional routes.
+		if not parameters or (not parameters.destination and not (parameters.cost ~= nil and nodeLeadsToTravel(node))) then
 			return false
 		end
 
@@ -61,19 +78,6 @@ if KeywordHandler == nil then
 			end
 		end
 		return true
-	end
-
-	local function nodeLeadsToTravel(node)
-		if node.parameters and node.parameters.destination then
-			return true
-		end
-
-		for _, child in pairs(node.children or {}) do
-			if nodeLeadsToTravel(child) then
-				return true
-			end
-		end
-		return false
 	end
 
 	local function isNpcAccessDenialNode(node, parent)
