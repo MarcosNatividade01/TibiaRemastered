@@ -1,10 +1,10 @@
 return {
-	version = "0.1.52-test",
+	version = "0.1.53-test",
 	environment = "local",
 	debug = false,
 	build = {
-		commit = "release-0.1.52-test",
-		label = "0.1.52-triple-exercise-training",
+		commit = "release-0.1.53-test",
+		label = "0.1.53-god-room-portal-fix",
 	},
 
 	balance = {

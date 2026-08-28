@@ -2,6 +2,13 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.53-test] - Correcao dos portais da sala do GOD
+
+- Identificados no mapa dois magic portals com destino invalido `0,0,0` em `32821,31533,10` e `32823,31533,10`.
+- Adicionado fallback por posicao para levar o jogador ao templo de sua cidade, usando o templo de Thais como destino de seguranca.
+- Os dois portais agora funcionam tanto ao pisar quanto ao clicar, sem alterar o mapa binario.
+- Adicionado teste automatizado para preservar coordenadas, destino e as duas formas de ativacao.
+
 ## [0.1.52-test] - Treino triplo com exercise weapons
 
 - Alterado o ganho de skill e magic level das exercise weapons de 1x para 3x por carga no pacote publicado.
