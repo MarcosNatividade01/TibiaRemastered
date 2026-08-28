@@ -1,10 +1,10 @@
 return {
-	version = "0.1.51-test",
+	version = "0.1.52-test",
 	environment = "local",
 	debug = false,
 	build = {
-		commit = "release-0.1.51-test",
-		label = "0.1.51-buddel-travel-fix",
+		commit = "release-0.1.52-test",
+		label = "0.1.52-triple-exercise-training",
 	},
 
 	balance = {
@@ -25,6 +25,7 @@ return {
 		bossCooldownDisabled = true,
 		weaponProficiencyRequirementMultiplier = 1.0 / 3.0,
 		weaponProficiencyExperienceMultiplier = 3.0,
+		exerciseWeaponSkillMultiplier = 3.0,
 		bossTiers = {
 			weak = { difficultyMultiplier = 0.65 },
 			medium = { difficultyMultiplier = 0.50 },

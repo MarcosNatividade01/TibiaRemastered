@@ -42,6 +42,14 @@ local exerciseWeaponsTable = {
 
 local dummies = Game.getDummies()
 
+local function getExerciseWeaponSkillMultiplier()
+	local configuredMultiplier = Remastered
+		and Remastered.Config
+		and Remastered.Config.get
+		and tonumber(Remastered.Config.get("balance.exerciseWeaponSkillMultiplier", 3.0))
+	return math.max(configuredMultiplier or 3.0, 0)
+end
+
 local function leaveExerciseTraining(playerId, targetItem)
 	if _G.OnExerciseTraining[playerId] then
 		stopEvent(_G.OnExerciseTraining[playerId].event)
@@ -108,7 +116,9 @@ local function exerciseTrainingEvent(playerId, tilePosition, weaponId, dummyId)
 		return false
 	end
 
-	local rate = dummies[dummyId] / 100
+	-- Exercise weapons grant three times the normal progress per charge by default.
+	-- This is independent from attack/exercise animation speed multipliers.
+	local rate = (dummies[dummyId] / 100) * getExerciseWeaponSkillMultiplier()
 	local isMagic = exerciseWeaponsTable[weaponId].skill == SKILL_MAGLEVEL
 	if isMagic then
 		player:addManaSpent(600 * rate)

@@ -2,6 +2,12 @@
 
 Todas as alteracoes importantes do projeto serao documentadas aqui.
 
+## [0.1.52-test] - Treino triplo com exercise weapons
+
+- Alterado o ganho de skill e magic level das exercise weapons de 1x para 3x por carga no pacote publicado.
+- Mantidos inalterados o consumo de uma carga, o intervalo entre golpes e os bonus dos dummies.
+- Adicionados fallback de runtime e teste automatizado para impedir que o multiplicador desapareca em atualizacoes futuras.
+
 ## [0.1.51-test] - Correcao definitiva das viagens de Buddel
 
 - Corrigidos os cinco pontos de Buddel para sempre responder aos destinos clicados, sem depender de storage de quest no modo de exploracao livre.

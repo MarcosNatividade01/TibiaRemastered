@@ -37,4 +37,11 @@ if ($soulWarReward -notmatch 'soulWarQuest:get\("final-reward"\)') {
     throw 'Soul War final reward anti-duplication guard is not intact.'
 }
 
+$exerciseConfig = Get-Content -LiteralPath (Join-Path $Root 'Modules\Remastered\Config\default.lua') -Raw
+$exerciseScript = Get-Content -LiteralPath (Join-Path $Root 'Server\data\scripts\actions\items\exercise_training_weapons.lua') -Raw
+if ($exerciseConfig -notmatch 'exerciseWeaponSkillMultiplier\s*=\s*3\.0' -or
+    $exerciseScript -notmatch 'dummies\[dummyId\] / 100\) \* getExerciseWeaponSkillMultiplier\(\)') {
+    throw 'Exercise weapons are not configured to grant triple skill progress per charge.'
+}
+
 Write-Output 'PASS: free exploration is enabled; automatic completion and duplicate rewards remain blocked.'
